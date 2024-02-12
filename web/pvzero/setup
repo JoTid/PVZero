@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta name="viewport" charset="UTF-8" content="width=device-width, initial-scale=1, user-scalable=yes; text/html; charset=utf-8">
+    <title>BBS Setup</title>
+    <link rel="stylesheet" href="/css/base.css">
+  </head>
+  <body style="padding-top:58px;">
+    <div id="header"></div>
+    <div class="base-panel">
+        <form action="/pvzero/config/save" method="post">
+          <div class="noorder">
+            <div>
+                <label id="lbl_check_interval" for="check_interval">Prüfintervall</label>
+                <input type="range" min="1" max="60" value="1" class="slider" id="check_interval" name="check_interval" oninput="this.nextElementSibling.value = this.value">
+                <output id="check_interval_output">1</output>
+                <label id="info_check_interval">Stunden zwischen zwei Prüfungen. Standard: 10 Sekunden.</label>
+            </div>
+            <div>
+                <label id="lbl_taster_func" for="taster_func">Taster function</label>
+                <select id="taster_func" name="taster_func" size="1">
+                  <option value="0" selected>keine</option>
+                  <option value="1">jetzt prüfen</option>
+                </select>
+                <label id="info_taster_func">Funktion des blauen Tasters. Standard: jetzt prüfen</label>
+            </div>
+            <div class="line_named">Shelly Em3</div>
+            <div>
+                <label id="lbl_shellyEm3Uri" for="shellyEm3Uri">Shelly Em3 Uri</label>
+                <input id="shellyEm3Uri" type="text" name="shellyEm3Uri" placeholder="http://192.168.1.131/">
+                <label id="info_shellyEm3Uri">/status wird angehängt.</label>
+            </div>
+            <div>
+              <label id="lbl_voltage" for="voltage">Spannung</label>
+              <input id="voltage" type="text" name="voltage" placeholder="38">
+              <label id="info_voltage">Ausgangsspannung des Step-Up Konverters. Über die Spannung und dem aktuellen Verbrauch wird die Stropmstärke geregelt.</label>
+            </div>
+            <div>
+              <label id="lbl_max_amperage" for="max_amperage">Maximale Stromstärke</label>
+              <input id="max_amperage" type="text" name="max_amperage" placeholder="10">
+              <label id="info_max_amperage">Maximale Stromstärke, die über den Step-Up Konverter geregelt werden soll.</label>
+            </div>
+        
+        </div>
+          <input id="npt_apply" type="submit" name="apply" value="Apply">
+        </form>
+        <br>
+    </div>
+
+    <script>var jsons = [ ["/pvzero/config.json", "fillPVZeroConfig"] ];</script>
+    <script src="/js/postload.js"></script>
+    <script type="text/javascript">
+      function fillPVZeroConfig(data, url) {
+        ["check_interval", "shellyEm3Uri", "taster_func", "voltage", "max_amperage"
+        ].forEach(function(id,idy,arr) {
+          document.getElementById(id).value = data["pvzero"][id];
+        });
+        document.getElementById("check_interval_output").value = data["pvzero"]["check_interval"];
+        // setTimeout(getJSON.bind(null, "/bbs/config.json", "fillBbsConfig"), 3000);
+      }
+    </script>
+  </body>
+</html>
