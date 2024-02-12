@@ -9,7 +9,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-3.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,7 +28,7 @@ using namespace PVZERO;
 const char* FRIMWARE_VERSION = "1.0.0";
 uint32_t TIMEOUT_WIFI = 60000;
 uint32_t msStart = 0;
-PVZEROClass pvzero;
+PVZeroClass pvzero;
 
 // const String formatBytes(size_t const& bytes) {            // lesbare Anzeige der Speichergrößen
 //   return bytes < 1024 ? static_cast<String>(bytes) + " Byte" : bytes < 1048576 ? static_cast<String>(bytes / 1024.0) + " KB" : static_cast<String>(bytes / 1048576.0) + " MB";
@@ -63,21 +63,20 @@ void setup() {
     Serial.println(ESP.getFreeHeap());
     Serial.println("acconfig");
     if (I::get().config().paramWifiDisabled) {
-        SI::get().deviceState().setState(DeviceState::State::STANDALONE);
+        PZI::get().deviceState().setState(DeviceState::State::STANDALONE);
     } else {
-        SI::get().deviceState().setState(DeviceState::State::INIT, TIMEOUT_WIFI);
+        PZI::get().deviceState().setState(DeviceState::State::INIT, TIMEOUT_WIFI);
     }
     Serial.println("initialized");
 }
-
 
 void loop() {
     EWC::I::get().server().loop();
     if (WiFi.status() == WL_CONNECTED) {
         if (!onceAfterConnect) {
-            I::get().logger() << "connected, " << SI::get().time().str() << endl;
+            I::get().logger() << "connected, " << PZI::get().time().str() << endl;
             onceAfterConnect = true;
-            SI::get().deviceState().setState(DeviceState::State::INIT);
+            PZI::get().deviceState().setState(DeviceState::State::INIT);
         }
     }
     pvzero.loop();

@@ -1,6 +1,6 @@
 /**************************************************************
 
-This file is a part of Solar EinspeseRegelungsSystem mit Shelly Em3
+This file is a part of
 https://github.com/JoTid/PVZero
 
 Copyright [2020] Alexander Tiderko
@@ -9,7 +9,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-3.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -89,25 +89,25 @@ void ShellyEm3Connector::loop()
     //     return;  // we are sleeping now
     // }
     _infoState = String("");
-    if (SI::get().time().isDisturb()) {
+    if (PZI::get().time().isDisturb()) {
         _currentState = DO_NOT_DISTURB;
         _infoState += "bitte nicht stoeren phase";
         return;
     }
-    if (_sleeper.finished() && SI::get().config().shellyEm3Uri.length() > 0)
+    if (_sleeper.finished() && PZI::get().config().shellyEm3Uri.length() > 0)
     {
         _infoState = String("Lese status vom Shelly Em3 Modul");
         WiFiClient client;
         HTTPClient http;
         // Send request
         http.useHTTP10(true);
-        String request_uri = String(SI::get().config().shellyEm3Uri) + "/status";
+        String request_uri = String(PZI::get().config().shellyEm3Uri) + "/status";
         EWC::I::get().logger() << F("ShellyEm3Connector: request_uri: ")  << request_uri << endl;
         http.begin(client, request_uri.c_str());
         int httpCode = http.GET();
         if (httpCode != 200) {
             EWC::I::get().logger() << F("ShellyEm3Connector: fehler beim holen der aktuellen Verbrauchswerte vom Shelly") << endl;
-            _infoState = "Fehler beim holen der aktuellen Verbrauchswerte vom Shelly " + String(SI::get().config().shellyEm3Uri) + "/status";
+            _infoState = "Fehler beim holen der aktuellen Verbrauchswerte vom Shelly " + String(PZI::get().config().shellyEm3Uri) + "/status";
             _currentCurrent = -1;
         } else {
             DynamicJsonDocument doc(2048);
@@ -116,12 +116,12 @@ void ShellyEm3Connector::loop()
             deserializeJson(doc, jsonStr);
             _currentExcess = (int)doc["total_power"];
             EWC::I::get().logger() << F("ShellyEm3Connector: aktueller Verbrauch: ")  << _currentExcess  << " W" << endl;
-            _currentCurrent += _currentExcess / SI::get().config().voltage;
+            _currentCurrent += _currentExcess / PZI::get().config().voltage;
             if (_currentCurrent < 0) {
                 _currentCurrent = 0;
                 _infoState = "Akku wird nicht entladen!";
-            } else if (_currentCurrent > SI::get().config().maxAmperage) {
-                _currentCurrent = SI::get().config().maxAmperage;
+            } else if (_currentCurrent > PZI::get().config().maxAmperage) {
+                _currentCurrent = PZI::get().config().maxAmperage;
                 _infoState = "Maximale erlaubte Einspasung!";
             } else {
                 _infoState = "";
@@ -130,10 +130,10 @@ void ShellyEm3Connector::loop()
         if (_callbackState != NULL) {
             // _callbackState(_state, duration);
         }
-        _sleepUntil = SI::get().time().str(SI::get().config().checkInterval);
-        // sleeper().sleep(SI::get().config().checkInterval * 1000);
-        // EWC::I::get().logger() << F("sleep for ") << SI::get().config().checkInterval << "sec" << endl;
-        _sleeper.sleep(SI::get().config().checkInterval * 1000);
+        _sleepUntil = PZI::get().time().str(PZI::get().config().checkInterval);
+        // sleeper().sleep(PZI::get().config().checkInterval * 1000);
+        // EWC::I::get().logger() << F("sleep for ") << PZI::get().config().checkInterval << "sec" << endl;
+        _sleeper.sleep(PZI::get().config().checkInterval * 1000);
         _currentState = SLEEP;
     }
 }

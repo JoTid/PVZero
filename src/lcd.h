@@ -3,7 +3,7 @@
 This file is a part of
 https://github.com/JoTid/PVZero
 
-Copyright [2020] Alexander Tiderko
+Copyright [2020] Johann Tiderko
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,37 +18,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 **************************************************************/
-#ifndef PVZERO_CONFIG_H
-#define PVZERO_CONFIG_H
+#ifndef PVZERO_LED_H
+#define PVZERO_LED_H
 
-#include <map>
 #include <Arduino.h>
-#include "ewcConfigInterface.h"
-#include "pvzero_interface.h"
-#include "defaults.h"
 
 namespace PVZERO {
 
-class Config : public EWC::ConfigInterface {
+class LCD {
 public:
-    Config();
-    ~Config();
-    void setup(JsonDocument& config, bool resetConfig=false);
-    void fillJson(JsonDocument& config);
-    void fromJson(JsonDocument& config);
-    /** === parameter  === **/
-    int checkInterval;
-    String shellyEm3Uri;
-    int voltage;
-    int maxAmperage;
-
-    // LCD enabled
-    bool lcdEnabled;
-    // taster configuration parameter
-    uint8_t tasterFunc;
-
+    LCD();
+    ~LCD();
+    void setup(bool resetConfig=false);
+    void loop();
+    
 protected:
-    void _initParameter();
 };
 }; // namespace
 

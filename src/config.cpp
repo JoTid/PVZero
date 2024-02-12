@@ -1,6 +1,6 @@
 /**************************************************************
 
-This file is a part of Solar EinspeseRegelungsSystem mit Shelly Em3
+This file is a part of
 https://github.com/JoTid/PVZero
 
 Copyright [2020] Alexander Tiderko
@@ -9,7 +9,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-3.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -50,6 +50,7 @@ void Config::fillJson(JsonDocument& config)
     config["pvzero"]["shellyEm3Uri"] = shellyEm3Uri;
     config["pvzero"]["voltage"] = voltage;
     config["pvzero"]["max_amperage"] = maxAmperage;
+    config["pvzero"]["lcd_enabled"] = lcdEnabled;
 }
 
 void Config::fromJson(JsonDocument& config)
@@ -74,6 +75,11 @@ void Config::fromJson(JsonDocument& config)
     if (!jv.isNull()) {
         maxAmperage = jv.as<int>();
     }
+    jv = config["pvzero"]["lcd_enabled"];
+    if (!jv.isNull())
+    {
+        lcdEnabled = jv.as<bool>();
+    }
 }
 
 void Config::_initParameter()
@@ -86,4 +92,5 @@ void Config::_initParameter()
     tasterFunc = TASTER_CHECK_NOW;
     voltage = 38;
     maxAmperage = 10;
+    lcdEnabled = false;
 }

@@ -1,6 +1,6 @@
 /**************************************************************
 
-This file is a part of Solar EinspeseRegelungsSystem mit Shelly Em3
+This file is a part of
 https://github.com/JoTid/PVZero
 
 Copyright [2020] Alexander Tiderko
@@ -9,7 +9,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-3.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,34 +29,37 @@ namespace EWC {
 };
 
 namespace PVZERO {
-class PVZEROClass;
+class PVZeroClass;
 class Config;
 class DeviceState;
 class ShellyEm3Connector;
+class LCD;
 
 class InterfaceData {
-  friend PVZEROClass;
+  friend PVZeroClass;
 
   public:
     InterfaceData();
 
-    PVZEROClass& pvzero() { return *_pvzero; }
+    PVZeroClass& pvzero() { return *_pvzero; }
     ShellyEm3Connector& shellyEm3Connector() { return *_shellyEm3Connector; }
     EWC::Time& time() { return *_time; }
     Config& config() { return *_config; }
     DeviceState& deviceState() { return *_deviceState; }
     EWC::ConfigServer& ewcServer() { return *_ewcServer; }
+    LCD& lcd() { return *_lcd; }
 
   private:
-    PVZEROClass* _pvzero;
+    PVZeroClass* _pvzero;
     EWC::Time* _time;
     Config* _config;
     DeviceState* _deviceState;
     ShellyEm3Connector *_shellyEm3Connector;
-    EWC::ConfigServer* _ewcServer;    
+    EWC::ConfigServer* _ewcServer;
+    LCD* _lcd;
 };
 
-class SI {
+class PZI {
   public:
     static PVZERO::InterfaceData& get();
 

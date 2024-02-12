@@ -1,6 +1,6 @@
 /**************************************************************
 
-This file is a part of Solar EinspeseRegelungsSystem mit Shelly Em3
+This file is a part of
 https://github.com/JoTid/PVZero
 
 Copyright [2020] Alexander Tiderko
@@ -9,7 +9,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-3.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,12 +22,12 @@ limitations under the License.
 
 using namespace PVZERO;
 
-InterfaceData SI::_interface;  // need to define the static variable
+InterfaceData PZI::_interface;  // need to define the static variable
 
 InterfaceData::InterfaceData()
 {
 }
 
-InterfaceData& SI::get() {
+InterfaceData& PZI::get() {
   return _interface;
 }

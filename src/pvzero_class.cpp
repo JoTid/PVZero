@@ -1,6 +1,6 @@
 /**************************************************************
 
-This file is a part of Solar EinspeseRegelungsSystem mit Shelly Em3
+This file is a part of
 https://github.com/JoTid/PVZero
 
 Copyright [2020] Alexander Tiderko
@@ -9,7 +9,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-3.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -35,23 +35,25 @@ using namespace PVZERO;
 #define MY_SHELLY_PIN 6
 #endif
 
-PVZEROClass::PVZEROClass()
+PVZeroClass::PVZeroClass()
 :   
     _shellyEm3Connector(MY_SHELLY_PIN) // pinPot=D6
 {
-    SI::get()._pvzero = this;
-    SI::get()._time = &_ewcTime;
-    SI::get()._config = &_config;
-    SI::get()._ewcServer = &_ewcServer;
-    SI::get()._deviceState = &_deviceState;
-    SI::get()._shellyEm3Connector = &_shellyEm3Connector;
+    PZI::get()._pvzero = this;
+    PZI::get()._time = &_ewcTime;
+    PZI::get()._config = &_config;
+    PZI::get()._ewcServer = &_ewcServer;
+    PZI::get()._deviceState = &_deviceState;
+    PZI::get()._shellyEm3Connector = &_shellyEm3Connector;
+    PZI::get()._lcd = &_lcd;
+    _timePrinted = false;
 }
 
-PVZEROClass::~PVZEROClass()
+PVZeroClass::~PVZeroClass()
 {
 }
 
-void PVZEROClass::setup()
+void PVZeroClass::setup()
 {
     EWC::I::get().configFS().addConfig(_ewcUpdater);
     EWC::I::get().configFS().addConfig(_ewcTime);
@@ -65,23 +67,23 @@ void PVZEROClass::setup()
     EWC::I::get().logger() << F("Setup Webserver") << endl;
     EWC::I::get().server().webserver().on(HOME_URI, std::bind(&ConfigServer::sendContentG, &EWC::I::get().server(), ws, FPSTR(PROGMEM_CONFIG_TEXT_HTML), HTML_WEB_INDEX_GZIP, sizeof(HTML_WEB_INDEX_GZIP)));
     EWC::I::get().server().webserver().on("/languages.json", std::bind(&ConfigServer::sendContentG, &EWC::I::get().server(), ws, FPSTR(PROGMEM_CONFIG_APPLICATION_JSON), JSON_WEB_LANGUAGES_GZIP, sizeof(JSON_WEB_LANGUAGES_GZIP)));
-    EWC::I::get().server().webserver().on("/pvzero/config.json", std::bind(&PVZEROClass::_onPVZeroConfig, this, ws));
+    EWC::I::get().server().webserver().on("/pvzero/config.json", std::bind(&PVZeroClass::_onPVZeroConfig, this, ws));
     // EWC::I::get().server().webserver().on("/bbs/cycle.svg", std::bind(&ConfigServer::sendContentG, &EWC::I::get().server(), ws, "image/svg+xml", SVG_BBS_CYCLE_GZIP, sizeof(SVG_BBS_CYCLE_GZIP)));
-    EWC::I::get().server().webserver().on("/pvzero/config/save", std::bind(&PVZEROClass::_onPVZeroSave, this, ws));
-    EWC::I::get().server().webserver().on("/pvzero/state.json", std::bind(&PVZEROClass::_onPVZeroState, this, ws));
-    EWC::I::get().server().webserver().on("/check", std::bind(&PVZEROClass::_onPVZeroCheck, this, ws));
-    // EWC::I::get().server().webserver().on("/cycle1/pump", std::bind(&PVZEROClass::_onBbsPump1, this, ws));
-    // EWC::I::get().server().webserver().on("/cycle2/pump", std::bind(&PVZEROClass::_onBbsPump2, this, ws));
+    EWC::I::get().server().webserver().on("/pvzero/config/save", std::bind(&PVZeroClass::_onPVZeroSave, this, ws));
+    EWC::I::get().server().webserver().on("/pvzero/state.json", std::bind(&PVZeroClass::_onPVZeroState, this, ws));
+    EWC::I::get().server().webserver().on("/check", std::bind(&PVZeroClass::_onPVZeroCheck, this, ws));
+    // EWC::I::get().server().webserver().on("/cycle1/pump", std::bind(&PVZeroClass::_onBbsPump1, this, ws));
+    // EWC::I::get().server().webserver().on("/cycle2/pump", std::bind(&PVZeroClass::_onBbsPump2, this, ws));
     EWC::I::get().server().webserver().on("/js/shelly_em3_connector.js", std::bind(&ConfigServer::sendContentG, &EWC::I::get().server(), ws, FPSTR(PROGMEM_CONFIG_APPLICATION_JS), JS_WEB_SHELLY_EM3_CONNECTOR_GZIP, sizeof(JS_WEB_SHELLY_EM3_CONNECTOR_GZIP)));
     _shellyEm3Connector.setup(EWC::I::get().configFS().resetDetected());
     _taster.setup(EWC::I::get().configFS().resetDetected());
     // _mqttHelper.setup(_ewcMqtt);
     _tsMeasLoopStart = millis();
-    _shellyEm3Connector.setCallbackState(std::bind(&PVZEROClass::_onPotState, this, std::placeholders::_1, std::placeholders::_2));
+    _shellyEm3Connector.setCallbackState(std::bind(&PVZeroClass::_onPotState, this, std::placeholders::_1, std::placeholders::_2));
     EWC::I::get().logger() << F("Setup ok") << endl;
 }
 
-void PVZEROClass::loop()
+void PVZeroClass::loop()
 {
     unsigned long ts_now = millis();
     _deviceState.loop();
@@ -113,7 +115,21 @@ void PVZEROClass::loop()
         // device initialization...
         return;
     }
-    if (SI::get().ewcServer().isConnected()) {
+    if (PZI::get().ewcServer().isConnected()) {
+        if (!_timePrinted)
+        {
+            // TODO update ntp time not only at start
+            I::get().logger() << "Check for NTP..." << endl;
+            _ewcTime.setupTime();
+            if (_ewcTime.timeAvailable())
+            {
+                _timePrinted = true;
+                // print current time
+                I::get().logger() << "Current time:" << _ewcTime.str() << endl;
+                // or current time in seconds
+                I::get().logger() << "  as seconds:" << _ewcTime.currentTime() << endl;
+            }
+        }
         _shellyEm3Connector.loop();
     } else {
         // TODO: check how to wake up
@@ -122,7 +138,7 @@ void PVZEROClass::loop()
     }
 }
 
-void PVZEROClass::_onPVZeroConfig(WebServer* webserver)
+void PVZeroClass::_onPVZeroConfig(WebServer* webserver)
 {
     I::get().logger() << F("[PVZERO] config request") << endl;
     if (!I::get().server().isAuthenticated(webserver)) {
@@ -136,7 +152,7 @@ void PVZEROClass::_onPVZeroConfig(WebServer* webserver)
     webserver->send(200, FPSTR(PROGMEM_CONFIG_APPLICATION_JSON), output);
 }
 
-void PVZEROClass::_onPVZeroSave(WebServer* webserver)
+void PVZeroClass::_onPVZeroSave(WebServer* webserver)
 {
     I::get().logger() << F("[PVZERO] save config request") << endl;
     if (!I::get().server().isAuthenticated(webserver)) {
@@ -182,7 +198,7 @@ void PVZEROClass::_onPVZeroSave(WebServer* webserver)
     I::get().server().sendPageSuccess(webserver, "PVZERO Config save", "Save successful!", "/pvzero/setup", "<pre id=\"json\">" + details + "</pre>");
 }
 
-void PVZEROClass::_onPVZeroState(WebServer* webserver)
+void PVZeroClass::_onPVZeroState(WebServer* webserver)
 {
     I::get().logger() << F("[PVZERO] state request") << endl;
     if (!I::get().server().isAuthenticated(webserver)) {
@@ -202,7 +218,7 @@ void PVZEROClass::_onPVZeroState(WebServer* webserver)
     webserver->send(200, FPSTR(PROGMEM_CONFIG_APPLICATION_JSON), output);
 }
 
-void PVZEROClass::_onPVZeroCheck(WebServer* webserver)
+void PVZeroClass::_onPVZeroCheck(WebServer* webserver)
 {
     I::get().logger() << F("[PVZERO] check request") << endl;
     if (!I::get().server().isAuthenticated(webserver)) {
@@ -214,7 +230,7 @@ void PVZEROClass::_onPVZeroCheck(WebServer* webserver)
     webserver->send(200, FPSTR(PROGMEM_CONFIG_APPLICATION_JSON), "{\"success\": true}");
 }
 
-void PVZEROClass::_onPotState(bool state, int duration)
+void PVZeroClass::_onPotState(bool state, int duration)
 {
     // _mqttHelper.publishC1Pump();
 }

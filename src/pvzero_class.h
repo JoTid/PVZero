@@ -1,6 +1,6 @@
 /**************************************************************
 
-This file is a part of Solar EinspeseRegelungsSystem mit Shelly Em3
+This file is a part of
 https://github.com/JoTid/PVZero
 
 Copyright [2020] Alexander Tiderko
@@ -9,7 +9,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-3.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -35,14 +35,15 @@ limitations under the License.
 // #include "sleeper.h"
 
 #include "taster.h"
+#include "lcd.h"
 
 namespace PVZERO {
 
-class PVZEROClass {
+class PVZeroClass {
 
 public:
-    PVZEROClass();
-    ~PVZEROClass();
+    PVZeroClass();
+    ~PVZeroClass();
     void setup();
     void loop();
 
@@ -53,6 +54,7 @@ protected:
     unsigned long _tsStartWaitForConnection = 0;
     unsigned long _tsMeasLoopStart = 0;
     unsigned long _maxPumpTime = 0;
+    bool _timePrinted;
     String _sleepInfoStr;
     Config _config;
     EWC::ConfigServer _ewcServer;
@@ -63,6 +65,7 @@ protected:
     DeviceState _deviceState;
     ShellyEm3Connector _shellyEm3Connector;
     Taster _taster;
+    LCD _lcd;
     void _onPVZeroConfig(WebServer* webserver);
     void _onPVZeroSave(WebServer* webserver);
     void _onPVZeroState(WebServer* webserver);
