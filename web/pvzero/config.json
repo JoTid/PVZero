@@ -3,7 +3,7 @@
         "version": "1.0.0",
         "check_interval": 10,
         "taster_func": 1,
-        "shellyEm3Uri": "http://192.168.1.131",
+        "shellyEm3Uri": "",
         "voltage": 38
     }
 }

@@ -81,7 +81,7 @@ void Config::_initParameter()
     _name = "pvzero-" + EWC::I::get().config().getChipId();
     checkInterval = 1;
     //deep_sleep("deep-sleep", "Deep sleep"),
-    shellyEm3Uri = "http://192.168.1.131";
+    shellyEm3Uri = "";
     // taster
     tasterFunc = TASTER_CHECK_NOW;
     voltage = 38;
