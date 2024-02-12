@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta name="viewport" charset="utf-8" content="width=device-width, initial-scale=1, user-scalable=yes">
+    <title>Bewaesserungsteuerung</title>
+    <link rel="stylesheet" href="/css/base.css">
+  </head>
+
+  <body style="padding-top:58px;">
+    <div id="header"></div>
+    <div class="base-panel">
+      <br>
+      <span id="pvzero_title" style="font-weight: bold; font-size: 2em;">PVZERO</span>
+      <span id="version">Unknown</span>
+      <button id="check_now" type="button" class="button_check">Jetzt prüfen</button>
+
+      <div id="shelly_em3" class="noorder">
+        <div class="line_named" >Shelly Em3</div>
+        <br>
+        <div id="current_excess">warte auf die Daten vom Shelly Em3... </div>
+        <div id="current_current"></div>
+        <div id="next_check"></div>
+        <label id="info_check_info"></label>
+      </div>
+      <br>
+    </div>
+    <script src="/js/postload.js"></script>
+    <script src="/js/shelly_em3_connector.js"></script>
+  </body>
+
+</html>
