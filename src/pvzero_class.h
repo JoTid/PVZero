@@ -35,7 +35,7 @@ limitations under the License.
 // #include "sleeper.h"
 
 #include "taster.h"
-#include "lcd.h"
+#include "lcd.hpp"
 
 namespace PVZERO {
 

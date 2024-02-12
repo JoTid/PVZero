@@ -2,6 +2,14 @@
 #include <Wire.h>
 #include "lcd.hpp"
 
+// using namespace EWC;
+using namespace PVZERO;
+
+#include <ewcLogger.h>
+#include "shelly_em3_connector.h"
+#include "config.h"
+#include "device_state.h"
+
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
 // // const char COPYRIGHT_SYMBOL[] = { 0xa9, '\0' };
 void u8g2_prepare(void);
