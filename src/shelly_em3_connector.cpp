@@ -116,16 +116,16 @@ void ShellyEm3Connector::loop()
             deserializeJson(doc, jsonStr);
             _currentExcess = (int)doc["total_power"];
             EWC::I::get().logger() << F("ShellyEm3Connector: aktueller Verbrauch: ")  << _currentExcess  << " W" << endl;
-            _currentCurrent += _currentExcess / PZI::get().config().voltage;
-            if (_currentCurrent < 0) {
-                _currentCurrent = 0;
-                _infoState = "Akku wird nicht entladen!";
-            } else if (_currentCurrent > PZI::get().config().maxAmperage) {
-                _currentCurrent = PZI::get().config().maxAmperage;
-                _infoState = "Maximale erlaubte Einspasung!";
-            } else {
-                _infoState = "";
-            }
+            // _currentCurrent += _currentExcess / PZI::get().config().voltage;
+            // if (_currentCurrent < 0) {
+            //     _currentCurrent = 0;
+            //     _infoState = "Akku wird nicht entladen!";
+            // } else if (_currentCurrent > PZI::get().config().maxAmperage) {
+            //     _currentCurrent = PZI::get().config().maxAmperage;
+            //     _infoState = "Maximale erlaubte Einspasung!";
+            // } else {
+            //     _infoState = "";
+            // }
         }
         if (_callbackState != NULL) {
             // _callbackState(_state, duration);
