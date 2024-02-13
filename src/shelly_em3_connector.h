@@ -47,8 +47,9 @@ public:
     String infoSleepUntil() { return _sleepUntil; }
     int currentExcess() { return _currentExcess; }
     int currentCurrent() { return _currentCurrent; }
+    bool isValid() {return btIsValidP; }
 
-protected:
+  protected:
     int _potPin;
 #ifdef ESP8266
     uint8_t _utcAddress;
@@ -61,6 +62,7 @@ protected:
     String _sleepUntil;
     long _currentExcess;
     long _currentCurrent;
+    long btIsValidP;
 };
 }; // namespace
 

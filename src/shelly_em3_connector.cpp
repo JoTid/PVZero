@@ -44,9 +44,10 @@ ShellyEm3Connector::ShellyEm3Connector(int potPin)
     _currentState = ShellyEm3Connector::State::UNKNOWN;
     _currentExcess = -1;
     _currentCurrent = 0;
+    btIsValidP = false;
 #ifdef ESP8266
-    // initialize utc addresses in sutup method
-    _utcAddress = 0;
+        // initialize utc addresses in sutup method
+        _utcAddress = 0;
 #endif
 }
 
@@ -109,23 +110,25 @@ void ShellyEm3Connector::loop()
             EWC::I::get().logger() << F("ShellyEm3Connector: fehler beim holen der aktuellen Verbrauchswerte vom Shelly") << endl;
             _infoState = "Fehler beim holen der aktuellen Verbrauchswerte vom Shelly " + String(PZI::get().config().shellyEm3Uri) + "/status";
             _currentCurrent = -1;
+            btIsValidP = false;
         } else {
-            DynamicJsonDocument doc(2048);
-            // deserializeJson(doc, http.getStream());
-            String jsonStr = http.getString();
-            deserializeJson(doc, jsonStr);
-            _currentExcess = (int)doc["total_power"];
-            EWC::I::get().logger() << F("ShellyEm3Connector: aktueller Verbrauch: ")  << _currentExcess  << " W" << endl;
-            // _currentCurrent += _currentExcess / PZI::get().config().voltage;
-            // if (_currentCurrent < 0) {
-            //     _currentCurrent = 0;
-            //     _infoState = "Akku wird nicht entladen!";
-            // } else if (_currentCurrent > PZI::get().config().maxAmperage) {
-            //     _currentCurrent = PZI::get().config().maxAmperage;
-            //     _infoState = "Maximale erlaubte Einspasung!";
-            // } else {
-            //     _infoState = "";
-            // }
+          btIsValidP = true;
+          DynamicJsonDocument doc(2048);
+          // deserializeJson(doc, http.getStream());
+          String jsonStr = http.getString();
+          deserializeJson(doc, jsonStr);
+          _currentExcess = (int)doc["total_power"];
+          EWC::I::get().logger() << F("ShellyEm3Connector: aktueller Verbrauch: ") << _currentExcess << " W" << endl;
+          // _currentCurrent += _currentExcess / PZI::get().config().voltage;
+          // if (_currentCurrent < 0) {
+          //     _currentCurrent = 0;
+          //     _infoState = "Akku wird nicht entladen!";
+          // } else if (_currentCurrent > PZI::get().config().maxAmperage) {
+          //     _currentCurrent = PZI::get().config().maxAmperage;
+          //     _infoState = "Maximale erlaubte Einspasung!";
+          // } else {
+          //     _infoState = "";
+          // }
         }
         if (_callbackState != NULL) {
             // _callbackState(_state, duration);
