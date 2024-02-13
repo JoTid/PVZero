@@ -10,7 +10,6 @@
 using namespace EWC;
 using namespace PVZERO;
 
-const char *FRIMWARE_VERSION = "1.0.0";
 uint32_t TIMEOUT_WIFI = 60000;
 uint32_t msStart = 0;
 PVZeroClass pvzero;
@@ -21,11 +20,6 @@ PVZeroClass pvzero;
 **                                                                                                                    **
 \*--------------------------------------------------------------------------------------------------------------------*/ 
 
-/**
- * @brief Application LCD software module
- * 
- */
-LCD *pclAppLcdG;
 
 bool onceAfterConnect = false;
 
@@ -47,10 +41,10 @@ void setup() {
    Serial.println("Starting setup...");
    
    //--------------------------------------------------------------------------------------------------- 
-   // initialise the LCD
+   // initialise the LCD and trigger first display
    //
-   pclAppLcdG = new LCD();
-   pclAppLcdG->init();
+   PZI::get().lcd().init();
+   PZI::get().lcd().process();
 
    //---------------------------------------------------------------------------------------------------
    // initialise the LCD
@@ -65,11 +59,16 @@ void setup() {
    Serial.println("acconfig");
    if (I::get().config().paramWifiDisabled)
    {
+     Serial.println("STANDALONE");
+     PZI::get().lcd().warning("Configuration required", "Connect to AP:", "- Name of AP -");
      PZI::get().deviceState().setState(DeviceState::State::STANDALONE);
    }
    else
    {
-     PZI::get().deviceState().setState(DeviceState::State::INIT, TIMEOUT_WIFI);
+    Serial.print("TIMEOUT_WIFI");
+    Serial.println(WiFi.SSID());
+    PZI::get().lcd().busy("Connecting to SSID:", "unknown");
+    PZI::get().deviceState().setState(DeviceState::State::INIT, TIMEOUT_WIFI);
    }
    Serial.println("initialized");
 }
@@ -90,6 +89,8 @@ void loop() {
        I::get().logger() << "connected, " << PZI::get().time().str() << endl;
        onceAfterConnect = true;
        PZI::get().deviceState().setState(DeviceState::State::INIT);
+
+       PZI::get().lcd().ok();
      }
    }
    pvzero.loop();
@@ -113,9 +114,5 @@ void loop() {
    //--------------------------------------------------------------------------------------------------- 
    // Trigger the application LCD
    //
-   pclAppLcdG->process();
-
-
-
-
+   PZI::get().lcd().process();
 }

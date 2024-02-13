@@ -39,6 +39,8 @@ limitations under the License.
 
 namespace PVZERO {
 
+#define FRIMWARE_VERSION "1.0.0"
+
 class PVZeroClass {
 
 public:
