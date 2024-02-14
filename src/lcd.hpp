@@ -39,7 +39,7 @@ namespace PVZERO
 /**
  * @brief Refresh time of LCD given in milliseconds
  */
-#define LCD_REFRESH_TIME 20
+#define LCD_REFRESH_TIME 500
 
 /**
  * @brief Time for toggle information in the footer line, given in milliseconds
@@ -49,7 +49,7 @@ namespace PVZERO
 /**
  * @brief Time for toggle information in the header line, given in milliseconds
  */
-#define LCD_HEADER_TOGGLE_TIME 5000
+#define LCD_HEADER_TOGGLE_TIME 10000
 
 /**
  * @brief Time for toggle warning icon, given in milliseconds

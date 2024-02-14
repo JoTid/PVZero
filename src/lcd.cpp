@@ -143,12 +143,16 @@ void LCD::footer(void)
     clStringT = WiFi.SSID();
     slDelayTimeT--;
   }
-  else if (slDelayTimeT > (((LCD_FOOTER_TOGGLE_TIME >> 1) / LCD_REFRESH_TIME) * (-1)))
+  else 
   {
     clStringT = WiFi.localIP().toString().c_str();
     slDelayTimeT--;
   }
-  else
+
+  //--------------------------------------------------------------------------------------------------- 
+  // reset the delay time counter
+  //
+  if (slDelayTimeT < (((LCD_FOOTER_TOGGLE_TIME >> 1) / LCD_REFRESH_TIME) * (-1)))
   {
     slDelayTimeT = (((LCD_FOOTER_TOGGLE_TIME >> 1) / LCD_REFRESH_TIME));
   }
@@ -175,6 +179,8 @@ void LCD::footer(void)
 void LCD::header(void)
 {
   String clStringT;
+  String clTimeT;
+  int32_t slSplitT;
   static int32_t slDelayTimeT = ((LCD_HEADER_TOGGLE_TIME >> 1) / LCD_REFRESH_TIME);
 
   //---------------------------------------------------------------------------------------------------
@@ -182,17 +188,32 @@ void LCD::header(void)
   //
   if (slDelayTimeT > 0)
   {
-    // \todo get the date to display
-    clStringT = "date";
-    slDelayTimeT--;
-  }
-  else if (slDelayTimeT > (((LCD_HEADER_TOGGLE_TIME >> 1) / LCD_REFRESH_TIME) * (-1)))
-  {
-    // \todo get the tine to display
-    clStringT = "time";
+    //------------------------------------------------------------------------------------------- 
+    // format date value to 12.02.24
+    //
+    clTimeT = PZI::get().time().str(); // get time in format 2018-05-28T16:00:13Z
+    clStringT  = clTimeT.substring(8,10);
+    clStringT += ".";
+    clStringT += clTimeT.substring(5,7);
+    clStringT += ".";
+    clStringT += clTimeT.substring(2,4);
     slDelayTimeT--;
   }
   else
+  {
+    //------------------------------------------------------------------------------------------- 
+    // format time value to 14:15
+    //
+    clTimeT = PZI::get().time().str(); // get time in format 2018-05-28T16:00:13Z
+    slSplitT = clTimeT.indexOf("T");
+    clStringT = clTimeT.substring(slSplitT+1, clTimeT.length()-3);
+    slDelayTimeT--;
+  }
+
+  //--------------------------------------------------------------------------------------------------- 
+  // reset the delay time counter
+  //  
+  if (slDelayTimeT < (((LCD_HEADER_TOGGLE_TIME >> 1) / LCD_REFRESH_TIME) * (-1)))
   {
     slDelayTimeT = (((LCD_HEADER_TOGGLE_TIME >> 1) / LCD_REFRESH_TIME));
   }
@@ -205,8 +226,8 @@ void LCD::header(void)
 
   //---------------------------------------------------------------------------------------------------
   // if time value is not available than display version number.
-  // \todo check for time is valid or not
-  if (0)
+  //
+  if (WiFi.isConnected() != true)
   {
     clStringT = "v";
     clStringT += FRIMWARE_VERSION;
@@ -272,7 +293,7 @@ void LCD::process(void)
     //-------------------------------------------------------------------------------------------
     // show informations in normal operation
     //
-    if (slPendingScreenP == eLCD_OK)
+    if ((slPendingScreenP == eLCD_OK) && (WiFi.isConnected() == true))
     {
       //-----------------------------------------------------------------------------------
       // Check the connection to the 3EM Meter is established and data is available
@@ -380,11 +401,15 @@ void LCD::warnScreen(void)
     u8g2.drawLine(64, 4, 64, 8);
     slDelayTimeT--;
   }
-  else if (slDelayTimeT > ((LCD_WARNING_TOGGLE_TIME / LCD_REFRESH_TIME) * (-1)))
+  else
   {
     slDelayTimeT--;
   }
-  else
+
+  //--------------------------------------------------------------------------------------------------- 
+  // reset the delay time counter
+  //
+  if (slDelayTimeT < ((LCD_WARNING_TOGGLE_TIME / LCD_REFRESH_TIME) * (-1)))
   {
     slDelayTimeT = (LCD_WARNING_TOGGLE_TIME / LCD_REFRESH_TIME);
   }
