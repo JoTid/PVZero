@@ -79,7 +79,7 @@ void PVZeroClass::setup()
     _taster.setup(EWC::I::get().configFS().resetDetected());
     // _mqttHelper.setup(_ewcMqtt);
     _tsMeasLoopStart = millis();
-    _shellyEm3Connector.setCallbackState(std::bind(&PVZeroClass::_onPotState, this, std::placeholders::_1, std::placeholders::_2));
+    _shellyEm3Connector.setCallbackState(std::bind(&PVZeroClass::_onTotalWatt, this, std::placeholders::_1, std::placeholders::_2));
     EWC::I::get().logger() << F("Setup ok") << endl;
 }
 
@@ -145,7 +145,7 @@ void PVZeroClass::_onPVZeroConfig(WebServer* webserver)
         I::get().logger() << F("[PVZERO] not sufficient authentication") << endl;
         return webserver->requestAuthentication();
     }
-    DynamicJsonDocument jsonDoc(512);
+    JsonDocument jsonDoc;
     _config.fillJson(jsonDoc);
     String output;
     serializeJson(jsonDoc, output);
@@ -159,7 +159,7 @@ void PVZeroClass::_onPVZeroSave(WebServer* webserver)
         I::get().logger() << F("[PVZERO] not sufficient authentication") << endl;
         return webserver->requestAuthentication();
     }
-    DynamicJsonDocument config(512);
+    JsonDocument config;
     if (webserver->hasArg("check_interval")) {
         long val = webserver->arg("check_interval").toInt();
         if (val > 0) {
@@ -205,7 +205,7 @@ void PVZeroClass::_onPVZeroState(WebServer* webserver)
         I::get().logger() << F("[PVZERO] not sufficient authentication") << endl;
         return webserver->requestAuthentication();
     }
-    DynamicJsonDocument jsonDoc(1024);
+    JsonDocument jsonDoc;
     JsonObject json = jsonDoc.to<JsonObject>();
     json["name"] = I::get().server().brand();
     json["version"] = I::get().server().version();
@@ -230,8 +230,9 @@ void PVZeroClass::_onPVZeroCheck(WebServer* webserver)
     webserver->send(200, FPSTR(PROGMEM_CONFIG_APPLICATION_JSON), "{\"success\": true}");
 }
 
-void PVZeroClass::_onPotState(bool state, int duration)
+void PVZeroClass::_onTotalWatt(bool state, int totalWatt)
 {
     // _mqttHelper.publishC1Pump();
+    I::get().logger() << F("[PVZERO] callback with state: ") << state << F(", Verbrauch: ") << totalWatt << endl;
 }
 

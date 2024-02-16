@@ -18,16 +18,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 **************************************************************/
-// #include <HttpClient.h>
-#include <WiFiClient.h>
-#include <Arduino.h>
 #ifdef ESP8266
-    #include <ESP8266HTTPClient.h>
     #include "ewcRTC.h"
 #elif defined(ESP32)
-    #include <HttpClient.h>
 #endif
 #include <extensions/ewcTime.h>
+#include <ewcTickerLED.h>
+#include <ewcInterface.h>
 #include "shelly_em3_connector.h"
 #include "ewcLogger.h"
 #include "config.h"
@@ -35,6 +32,11 @@ limitations under the License.
 
 using namespace EWC;
 using namespace PVZERO;
+
+void ShellyEm3Connector::startTaskImpl(void *_this)
+{
+    static_cast<ShellyEm3Connector *>(_this)->httpTask();
+}
 
 ShellyEm3Connector::ShellyEm3Connector(int potPin)
 {
@@ -44,6 +46,7 @@ ShellyEm3Connector::ShellyEm3Connector(int potPin)
     _currentState = ShellyEm3Connector::State::UNKNOWN;
     _currentExcess = -1;
     _currentCurrent = 0;
+    _isRequesting = false;
     btIsValidP = false;
 #ifdef ESP8266
         // initialize utc addresses in sutup method
@@ -65,11 +68,15 @@ void ShellyEm3Connector::setup(bool resetConfig)
     if (_reachedUpperLimit != 1) {
       _reachedUpperLimit = 0;
     }
+    _httpClient.useHTTP10(true);
+    _httpClient.setReuse(true);
     // pinMode(_potPin, OUTPUT);
     // digitalWrite(_potPin, LOW);
     // _sleeper->setup(resetConfig);
 #ifdef ESP8266
-    EWC::I::get().logger() << F("ShellyEm3Connector: reads from UTC (addr: ") << _utcAddress << F(") stored last state: ") << _reachedUpperLimit << endl;
+        EWC::I::get()
+            .logger()
+        << F("ShellyEm3Connector: reads from UTC (addr: ") << _utcAddress << F(") stored last state: ") << _reachedUpperLimit << endl;
 #endif
 }
 
@@ -95,44 +102,18 @@ void ShellyEm3Connector::loop()
         _infoState += "bitte nicht stoeren phase";
         return;
     }
-    if (_sleeper.finished() && PZI::get().config().shellyEm3Uri.length() > 0)
+    if (_sleeper.finished() && !_isRequesting && PZI::get().config().shellyEm3Uri.length() > 0)
     {
-        _infoState = String("Lese status vom Shelly Em3 Modul");
-        WiFiClient client;
-        HTTPClient http;
-        // Send request
-        http.useHTTP10(true);
-        String request_uri = String(PZI::get().config().shellyEm3Uri) + "/status";
-        EWC::I::get().logger() << F("ShellyEm3Connector: request_uri: ")  << request_uri << endl;
-        http.begin(client, request_uri.c_str());
-        int httpCode = http.GET();
-        if (httpCode != 200) {
-            EWC::I::get().logger() << F("ShellyEm3Connector: fehler beim holen der aktuellen Verbrauchswerte vom Shelly") << endl;
-            _infoState = "Fehler beim holen der aktuellen Verbrauchswerte vom Shelly " + String(PZI::get().config().shellyEm3Uri) + "/status";
-            _currentCurrent = -1;
-            btIsValidP = false;
-        } else {
-          btIsValidP = true;
-          DynamicJsonDocument doc(2048);
-          // deserializeJson(doc, http.getStream());
-          String jsonStr = http.getString();
-          deserializeJson(doc, jsonStr);
-          _currentExcess = (int)doc["total_power"];
-          EWC::I::get().logger() << F("ShellyEm3Connector: aktueller Verbrauch: ") << _currentExcess << " W" << endl;
-          // _currentCurrent += _currentExcess / PZI::get().config().voltage;
-          // if (_currentCurrent < 0) {
-          //     _currentCurrent = 0;
-          //     _infoState = "Akku wird nicht entladen!";
-          // } else if (_currentCurrent > PZI::get().config().maxAmperage) {
-          //     _currentCurrent = PZI::get().config().maxAmperage;
-          //     _infoState = "Maximale erlaubte Einspasung!";
-          // } else {
-          //     _infoState = "";
-          // }
-        }
-        if (_callbackState != NULL) {
-            // _callbackState(_state, duration);
-        }
+        _isRequesting = true;
+        I::get().led().start(1000, 500);
+        xTaskCreate(
+            this->startTaskImpl,           // Function that should be called
+            "GET current by http request", // Name of the task (for debugging)
+            2048,                         // Stack size (bytes)
+            this,                  // Parameter to pass
+            5,                             // Task priority
+            NULL                           // Task handle
+        );
         _sleepUntil = PZI::get().time().str(PZI::get().config().checkInterval);
         // sleeper().sleep(PZI::get().config().checkInterval * 1000);
         // EWC::I::get().logger() << F("sleep for ") << PZI::get().config().checkInterval << "sec" << endl;
@@ -154,4 +135,52 @@ String ShellyEm3Connector::state2string(ShellyEm3Connector::State state)
             return "SLEEP";
     }
     return "Unknown";
+}
+
+void ShellyEm3Connector::httpTask()
+{
+    _infoState = String("Lese status vom Shelly Em3 Modul");
+    // Send request
+    String request_uri = String(PZI::get().config().shellyEm3Uri) + "/status";
+    EWC::I::get().logger() << F("ShellyEm3Connector: request_uri: ") << request_uri << endl;
+    _httpClient.begin(_wifiClient, request_uri.c_str());
+    int httpCode = _httpClient.GET();
+    if (httpCode != 200)
+    {
+        EWC::I::get().logger() << F("ShellyEm3Connector: fehler beim holen der aktuellen Verbrauchswerte vom Shelly") << endl;
+        _infoState = "Fehler beim holen der aktuellen Verbrauchswerte vom Shelly " + String(PZI::get().config().shellyEm3Uri) + "/status";
+        _currentCurrent = -1;
+        btIsValidP = false;
+        if (_callbackState != NULL)
+        {
+            _callbackState(false, _currentCurrent);
+        }
+    }
+    else
+    {
+        btIsValidP = true;
+        JsonDocument doc;
+        // deserializeJson(doc, http.getStream());
+        String jsonStr = _httpClient.getString();
+        deserializeJson(doc, jsonStr);
+        _currentExcess = (int)doc["total_power"];
+        EWC::I::get().logger() << F("ShellyEm3Connector: aktueller Verbrauch: ") << _currentExcess << " W" << endl;
+        // _currentCurrent += _currentExcess / PZI::get().config().voltage;
+        // if (_currentCurrent < 0) {
+        //     _currentCurrent = 0;
+        //     _infoState = "Akku wird nicht entladen!";
+        // } else if (_currentCurrent > PZI::get().config().maxAmperage) {
+        //     _currentCurrent = PZI::get().config().maxAmperage;
+        //     _infoState = "Maximale erlaubte Einspasung!";
+        // } else {
+        //     _infoState = "";
+        // }
+        if (_callbackState != NULL)
+        {
+            _callbackState(true, _currentExcess);
+        }
+    }
+    _isRequesting = false;
+    vTaskDelete(NULL);
+    I::get().led().stop();
 }

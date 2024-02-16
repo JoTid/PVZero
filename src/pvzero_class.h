@@ -74,7 +74,7 @@ protected:
     void _onPVZeroCheck(WebServer* webserver);
     // void _onBbsPump1(WebServer* webserver);
     // void _onBbsPump2(WebServer* webserver);
-    void _onPotState(bool state, int duration);
+    void _onTotalWatt(bool state, int totalWatt);
 };
 }; // namespace
 

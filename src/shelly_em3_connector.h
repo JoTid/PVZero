@@ -21,6 +21,12 @@ limitations under the License.
 #ifndef PVZERO_SHELLY_EM3_CONNECTOR_H
 #define PVZERO_SHELLY_EM3_CONNECTOR_H
 
+#include <WiFiClient.h>
+#ifdef ESP8266
+#include <ESP8266HTTPClient.h>
+#elif defined(ESP32)
+#include <HttpClient.h>
+#endif
 #include <Arduino.h>
 #include "sleeper.h"
 
@@ -54,15 +60,21 @@ public:
 #ifdef ESP8266
     uint8_t _utcAddress;
 #endif
+    WiFiClient _wifiClient;
+    HTTPClient _httpClient;
     unsigned int _reachedUpperLimit;
     SellyStateCallback _callbackState;
     State _currentState;
     Sleeper _sleeper;
     String _infoState;
     String _sleepUntil;
+    bool _isRequesting;
     long _currentExcess;
     long _currentCurrent;
     long btIsValidP;
+
+    void httpTask();
+    static void startTaskImpl(void *);
 };
 }; // namespace
 
