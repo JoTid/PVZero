@@ -120,7 +120,6 @@ void PVZeroClass::loop()
         {
             // TODO update ntp time not only at start
             I::get().logger() << "Check for NTP..." << endl;
-            _ewcTime.setupTime();
             if (_ewcTime.timeAvailable())
             {
                 _timePrinted = true;
