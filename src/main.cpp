@@ -5,14 +5,14 @@
 #include <U8g2lib.h>
 #include <Wire.h>
 #include "lcd.hpp"
-#include "led.hpp"
 
 using namespace EWC;
 using namespace PVZERO;
 
+#define LED1_PIN 12
 uint32_t TIMEOUT_WIFI = 60000;
 uint32_t msStart = 0;
-PVZeroClass pvzero;
+PVZeroClass pvz;
 
 
 /*--------------------------------------------------------------------------------------------------------------------*\
@@ -28,12 +28,6 @@ bool onceAfterConnect = false;
 //                                                                                                                    //
 //--------------------------------------------------------------------------------------------------------------------// 
 void setup() {
-   //--------------------------------------------------------------------------------------------------- 
-   // initialise LED
-   //
-   ledInit();
-   ledSet(0, true);
-
    //--------------------------------------------------------------------------------------------------- 
    // Use serial interface for debug
    //
@@ -52,23 +46,30 @@ void setup() {
    Serial.println();
    Serial.print("ESP heap: ");
    Serial.println(ESP.getFreeHeap());
+   //---------------------------------------------------------------------------------------------------
+   // initialise EspWebConfig
+   //
    EWC::I::get().server().setBrand("PVZero", FRIMWARE_VERSION);
-   pvzero.setup();
+   EWC::I::get().led().enable(true, LED1_PIN, LOW);
+   //---------------------------------------------------------------------------------------------------
+   // initialise PVZero
+   //
+   pvz.setup();
    Serial.print("ESP heap: ");
    Serial.println(ESP.getFreeHeap());
    Serial.println("acconfig");
    if (I::get().config().paramWifiDisabled)
    {
-     Serial.println("STANDALONE");
-     PZI::get().lcd().warning("Configuration required", "Connect to AP:", "- Name of AP -");
-     PZI::get().deviceState().setState(DeviceState::State::STANDALONE);
+      Serial.println("STANDALONE");
+      PZI::get().lcd().warning("Configuration required", "Connect to AP:", "- Name of AP -");
+      PZI::get().deviceState().setState(DeviceState::State::STANDALONE);
    }
    else
    {
-    Serial.print("TIMEOUT_WIFI");
-    Serial.println(WiFi.SSID());
-    PZI::get().lcd().busy("Connecting to SSID:", "unknown");
-    PZI::get().deviceState().setState(DeviceState::State::INIT, TIMEOUT_WIFI);
+      Serial.print("TIMEOUT_WIFI");
+      Serial.println(WiFi.SSID());
+      PZI::get().lcd().busy("Connecting to SSID:", "unknown");
+      PZI::get().deviceState().setState(DeviceState::State::INIT, TIMEOUT_WIFI);
    }
    Serial.println("initialized");
 }
@@ -84,32 +85,19 @@ void loop() {
    EWC::I::get().server().loop();
    if (WiFi.status() == WL_CONNECTED)
    {
-     if (!onceAfterConnect)
-     {
-       I::get().logger() << "connected, " << PZI::get().time().str() << endl;
-       onceAfterConnect = true;
-       PZI::get().deviceState().setState(DeviceState::State::INIT);
-
-       PZI::get().lcd().ok();
-     }
-   }
-   pvzero.loop();
-
-   //--------------------------------------------------------------------------------------------------- 
-   // toggle LED
-   //
-   if (millis() > (ulLedTimeS + 500))
-   {
-      ulLedTimeS = millis();
-      if (ledIsOn(0))
+      if (!onceAfterConnect)
       {
-         ledSet(0, false);
+        I::get().logger() << "connected, " << PZI::get().time().str() << endl;
+        onceAfterConnect = true;
+        PZI::get().deviceState().setState(DeviceState::State::INIT);
+        PZI::get().lcd().ok();
       }
-      else
-      {
-         ledSet(0, true);
-      }
+   } else {
+      // TODO: test if we should reinit after reconnect?
+      onceAfterConnect = false;
    }
+
+   pvz.loop();
 
    //--------------------------------------------------------------------------------------------------- 
    // Trigger the application LCD

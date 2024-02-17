@@ -105,7 +105,7 @@ void ShellyEm3Connector::loop()
     if (_sleeper.finished() && !_isRequesting && PZI::get().config().shellyEm3Uri.length() > 0)
     {
         _isRequesting = true;
-        I::get().led().start(1000, 500);
+        I::get().led().start(1000, 250);
         xTaskCreate(
             this->startTaskImpl,           // Function that should be called
             "GET current by http request", // Name of the task (for debugging)
@@ -114,11 +114,6 @@ void ShellyEm3Connector::loop()
             5,                             // Task priority
             NULL                           // Task handle
         );
-        _sleepUntil = PZI::get().time().str(PZI::get().config().checkInterval);
-        // sleeper().sleep(PZI::get().config().checkInterval * 1000);
-        // EWC::I::get().logger() << F("sleep for ") << PZI::get().config().checkInterval << "sec" << endl;
-        _sleeper.sleep(PZI::get().config().checkInterval * 1000);
-        _currentState = SLEEP;
     }
 }
 
@@ -151,6 +146,7 @@ void ShellyEm3Connector::httpTask()
         _infoState = "Fehler beim holen der aktuellen Verbrauchswerte vom Shelly " + String(PZI::get().config().shellyEm3Uri) + "/status";
         _currentCurrent = -1;
         btIsValidP = false;
+        I::get().led().start(3000, 3000);
         if (_callbackState != NULL)
         {
             _callbackState(false, _currentCurrent);
@@ -179,8 +175,15 @@ void ShellyEm3Connector::httpTask()
         {
             _callbackState(true, _currentExcess);
         }
+        I::get().led().stop();
     }
+    EWC::I::get().logger() << F("ShellyEm3Connector: request finished... sleep ") << endl;
+    _sleepUntil = PZI::get().time().str(PZI::get().config().checkInterval);
+    // sleeper().sleep(PZI::get().config().checkInterval * 1000);
+    // EWC::I::get().logger() << F("sleep for ") << PZI::get().config().checkInterval << "sec" << endl;
+    _sleeper.sleep(PZI::get().config().checkInterval * 1000);
+    _currentState = SLEEP;
+
     _isRequesting = false;
     vTaskDelete(NULL);
-    I::get().led().stop();
 }
