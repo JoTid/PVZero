@@ -82,14 +82,12 @@ void LCD::ok()
 //--------------------------------------------------------------------------------------------------------------------//
 void LCD::busyScreen(void)
 {
-  static int32_t slDelayTimeT = 0 / LCD_REFRESH_TIME;
   static int32_t ulMoveS = 0;
   static bool btOperatorT = true;
 
   if (btOperatorT)
   {
-    if (slDelayTimeT == 0)
-      ulMoveS += 2;
+    ulMoveS += (400/LCD_REFRESH_TIME);
     if (ulMoveS >= 64)
     {
       btOperatorT = false;
@@ -97,8 +95,7 @@ void LCD::busyScreen(void)
   }
   else
   {
-    if (slDelayTimeT == 0)
-      ulMoveS -= 2;
+    ulMoveS -= (400/LCD_REFRESH_TIME);
     if (ulMoveS <= 0)
     {
       btOperatorT = true;
@@ -107,14 +104,6 @@ void LCD::busyScreen(void)
 
   u8g2.drawLine(64 - ulMoveS, 52, 64 + ulMoveS, 52);
 
-  if (slDelayTimeT > 0)
-  {
-    slDelayTimeT--;
-  }
-  else
-  {
-    slDelayTimeT = 0 / LCD_REFRESH_TIME;
-  }
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -362,6 +351,19 @@ void LCD::process(void)
       u8g2.setCursor(4, 16 + 12 + 12);
       u8g2.print(aclWarnLinesP[2]);
     }
+
+    //------------------------------------------------------------------------------------------- 
+    // disconnected from WiFi
+    //
+    else
+    {
+      busyScreen();
+      u8g2.drawStr(0, 15, String("No valid connection:").c_str());
+      u8g2.setFont(u8g2_font_10x20_tf);
+      u8g2.drawStr((128 - u8g2.getStrWidth(String("NO WiFi").c_str())) / 2, 30, String("NO WiFi").c_str());
+      u8g2.setFont(u8g2_font_6x10_tf);
+    }
+
 
     //-------------------------------------------------------------------------------------------
     // perform update of display
