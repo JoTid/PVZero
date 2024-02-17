@@ -2,11 +2,11 @@ var timerRefresh;
 var countNA = 0;
 
 window.addEventListener("DOMContentLoaded", function(event) {
-    document.getElementById('check_now').addEventListener("mousedown", function(){
-        call("/check");
-        clearTimeout(timerRefresh);
-        timerRefresh = setTimeout(getJSON.bind(null, "/pvzero/state.json", "fillPVZeroState"), 1000);
-    }, false);
+    // document.getElementById('check_now').addEventListener("mousedown", function(){
+    //     call("/check");
+    //     clearTimeout(timerRefresh);
+    //     timerRefresh = setTimeout(getJSON.bind(null, "/pvzero/state.json", "fillPVZeroState"), 1000);
+    // }, false);
 
     setTimeout(getJSON.bind(null, "/pvzero/state.json", "fillPVZeroState"), 1000);
     // getJSON("/pvzero/state.json", "fillPVZeroState");
@@ -65,7 +65,7 @@ var color_green = "rgb(34, 153, 7)";
 function updateCycle(cycle, data) {
     co = data[cycle];
     // document.getElementById("info_" + cycle).innerHTML = '<label id="info_check">' + data["check_info"] + "</label>";
-    document.getElementById("current_excess").innerHTML = '<label id="info_current_excess">' + data["current_excess"] + "</label>";
+    document.getElementById("consumption_power").innerHTML = '<label id="info_consumption_power">' + data["consumption_power"] + "</label>";
     
 }
 
@@ -73,19 +73,21 @@ function fillPVZeroState(data, url) {
     clearTimeout(timerRefresh);
     document.getElementById("pvzero_title").innerText = data["name"];
     document.getElementById("version").innerText = 'v' + data["version"];
-    document.getElementById("current_excess").innerText = 'Aktueller Verbrauch: ' + data["current_excess"] + ' W';
-    document.getElementById("current_current").innerText = 'Geregelte Stromstärke: ' + data["current_current"] + ' A';
+    document.getElementById("consumption_power").innerText = 'Aktueller Verbrauch: ' + data["consumption_power"] + ' W';
+    document.getElementById("feed_in_power").innerText =
+      "Einspeisung: " + data["feed_in_power"] + " W";
+    document.getElementById("check_interval").innerText =
+      "Prüfintervall: " + data["check_interval"] + "s";
     document.getElementById("info_check_info").innerText = data["check_info"];
-    document.getElementById("next_check").innerText = 'Nächste Prüfung: ' + data["next_check"];
 
-    if (data["current_excess"] == 0) {
+    if (data["consumption_power"] == 0) {
         countNA = 0;
-        timerRefresh = setTimeout(getJSON.bind(null, "/pvzero/state.json", "fillPVZeroState"), 2000);
+        timerRefresh = setTimeout(getJSON.bind(null, "/pvzero/state.json", "fillPVZeroState"), 1000);
     } else if ( countNA < 3) {
         countNA = countNA + 1;
-        timerRefresh = setTimeout(getJSON.bind(null, "/pvzero/state.json", "fillPVZeroState"), 2000);
+        timerRefresh = setTimeout(getJSON.bind(null, "/pvzero/state.json", "fillPVZeroState"), 1000);
     } else {
-        timerRefresh = setTimeout(getJSON.bind(null, "/pvzero/state.json", "fillPVZeroState"), 30000);
+        timerRefresh = setTimeout(getJSON.bind(null, "/pvzero/state.json", "fillPVZeroState"), 10000);
     }
 }
 

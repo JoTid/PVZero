@@ -22,12 +22,12 @@ limitations under the License.
 #include "generated/pvzeroSetupHTML.h"
 #include "generated/webIndexHTML.h"
 #include "generated/webLanguagesJSON.h"
-#include "generated/webShelly_em3_connectorJS.h"
+#include "generated/webShelly_3em_connectorJS.h"
 #include "pvzero_class.h"
 #include "pvzero_interface.h"
 
 using namespace EWC;
-using namespace PVZERO;
+using namespace PVZ;
 
 #if defined(ESP8266)
 #define MY_SHELLY_PIN D6
@@ -37,14 +37,14 @@ using namespace PVZERO;
 
 PVZeroClass::PVZeroClass()
 :   
-    _shellyEm3Connector(MY_SHELLY_PIN) // pinPot=D6
+    _shelly3emConnector(MY_SHELLY_PIN) // pinPot=D6
 {
-    PZI::get()._pvzero = this;
+    PZI::get()._pvz = this;
     PZI::get()._time = &_ewcTime;
     PZI::get()._config = &_config;
     PZI::get()._ewcServer = &_ewcServer;
     PZI::get()._deviceState = &_deviceState;
-    PZI::get()._shellyEm3Connector = &_shellyEm3Connector;
+    PZI::get()._shelly3emConnector = &_shelly3emConnector;
     PZI::get()._lcd = &_lcd;
     _timePrinted = false;
 }
@@ -74,12 +74,12 @@ void PVZeroClass::setup()
     EWC::I::get().server().webserver().on("/check", std::bind(&PVZeroClass::_onPVZeroCheck, this, ws));
     // EWC::I::get().server().webserver().on("/cycle1/pump", std::bind(&PVZeroClass::_onBbsPump1, this, ws));
     // EWC::I::get().server().webserver().on("/cycle2/pump", std::bind(&PVZeroClass::_onBbsPump2, this, ws));
-    EWC::I::get().server().webserver().on("/js/shelly_em3_connector.js", std::bind(&ConfigServer::sendContentG, &EWC::I::get().server(), ws, FPSTR(PROGMEM_CONFIG_APPLICATION_JS), JS_WEB_SHELLY_EM3_CONNECTOR_GZIP, sizeof(JS_WEB_SHELLY_EM3_CONNECTOR_GZIP)));
-    _shellyEm3Connector.setup(EWC::I::get().configFS().resetDetected());
+    EWC::I::get().server().webserver().on("/js/shelly_3em_connector.js", std::bind(&ConfigServer::sendContentG, &EWC::I::get().server(), ws, FPSTR(PROGMEM_CONFIG_APPLICATION_JS), JS_WEB_SHELLY_3EM_CONNECTOR_GZIP, sizeof(JS_WEB_SHELLY_3EM_CONNECTOR_GZIP)));
+    _shelly3emConnector.setup(EWC::I::get().configFS().resetDetected());
     _taster.setup(EWC::I::get().configFS().resetDetected());
     // _mqttHelper.setup(_ewcMqtt);
     _tsMeasLoopStart = millis();
-    _shellyEm3Connector.setCallbackState(std::bind(&PVZeroClass::_onTotalWatt, this, std::placeholders::_1, std::placeholders::_2));
+    _shelly3emConnector.setCallbackState(std::bind(&PVZeroClass::_onTotalWatt, this, std::placeholders::_1, std::placeholders::_2));
     EWC::I::get().logger() << F("Setup ok") << endl;
 }
 
@@ -130,7 +130,7 @@ void PVZeroClass::loop()
                 I::get().logger() << "  as seconds:" << _ewcTime.currentTime() << endl;
             }
         }
-        _shellyEm3Connector.loop();
+        _shelly3emConnector.loop();
     } else {
         // TODO: check how to wake up
         EWC::I::get().logger() << F("Switch to SOFTSLEEP") << endl;
@@ -140,9 +140,9 @@ void PVZeroClass::loop()
 
 void PVZeroClass::_onPVZeroConfig(WebServer* webserver)
 {
-    I::get().logger() << F("[PVZERO] config request") << endl;
+    I::get().logger() << F("[PVZ] config request") << endl;
     if (!I::get().server().isAuthenticated(webserver)) {
-        I::get().logger() << F("[PVZERO] not sufficient authentication") << endl;
+        I::get().logger() << F("[PVZ] not sufficient authentication") << endl;
         return webserver->requestAuthentication();
     }
     JsonDocument jsonDoc;
@@ -154,9 +154,9 @@ void PVZeroClass::_onPVZeroConfig(WebServer* webserver)
 
 void PVZeroClass::_onPVZeroSave(WebServer* webserver)
 {
-    I::get().logger() << F("[PVZERO] save config request") << endl;
+    I::get().logger() << F("[PVZ] save config request") << endl;
     if (!I::get().server().isAuthenticated(webserver)) {
-        I::get().logger() << F("[PVZERO] not sufficient authentication") << endl;
+        I::get().logger() << F("[PVZ] not sufficient authentication") << endl;
         return webserver->requestAuthentication();
     }
     JsonDocument config;
@@ -172,10 +172,10 @@ void PVZeroClass::_onPVZeroSave(WebServer* webserver)
             config["pvzero"]["taster_func"] = val;
         }
     }
-    if (webserver->hasArg("shellyEm3Uri")) {
-        String val = webserver->arg("shellyEm3Uri");
+    if (webserver->hasArg("shelly3emAddr")) {
+        String val = webserver->arg("shelly3emAddr");
         if (val.length() >= 0) {
-            config["pvzero"]["shellyEm3Uri"] = val;
+            config["pvzero"]["shelly3emAddr"] = val;
         }
     }
     if (webserver->hasArg("voltage")) {
@@ -195,24 +195,25 @@ void PVZeroClass::_onPVZeroSave(WebServer* webserver)
     I::get().configFS().save();
     String details;
     serializeJsonPretty(config["pvzero"], details);
-    I::get().server().sendPageSuccess(webserver, "PVZERO Config save", "Save successful!", "/pvzero/setup", "<pre id=\"json\">" + details + "</pre>");
+    I::get().server().sendPageSuccess(webserver, "PVZ Config save", "Save successful!", "/pvzero/setup", "<pre id=\"json\">" + details + "</pre>");
 }
 
 void PVZeroClass::_onPVZeroState(WebServer* webserver)
 {
-    I::get().logger() << F("[PVZERO] state request") << endl;
+    I::get().logger() << F("[PVZ] state request") << endl;
     if (!I::get().server().isAuthenticated(webserver)) {
-        I::get().logger() << F("[PVZERO] not sufficient authentication") << endl;
+        I::get().logger() << F("[PVZ] not sufficient authentication") << endl;
         return webserver->requestAuthentication();
     }
     JsonDocument jsonDoc;
     JsonObject json = jsonDoc.to<JsonObject>();
     json["name"] = I::get().server().brand();
     json["version"] = I::get().server().version();
-    json["current_excess"] = _shellyEm3Connector.currentExcess();
-    json["current_current"] = _shellyEm3Connector.currentCurrent();
-    json["check_info"] = _shellyEm3Connector.info();
-    json["next_check"] = _shellyEm3Connector.infoSleepUntil();
+    json["consumption_power"] = _shelly3emConnector.consumptionPower();
+    json["feed_in_power"] = _shelly3emConnector.feedInPower();
+    json["check_info"] = _shelly3emConnector.info();
+    json["check_interval"] = PZI::get().config().checkInterval;
+    json["next_check"] = _shelly3emConnector.infoSleepUntil();
     String output;
     serializeJson(json, output);
     webserver->send(200, FPSTR(PROGMEM_CONFIG_APPLICATION_JSON), output);
@@ -220,12 +221,12 @@ void PVZeroClass::_onPVZeroState(WebServer* webserver)
 
 void PVZeroClass::_onPVZeroCheck(WebServer* webserver)
 {
-    I::get().logger() << F("[PVZERO] check request") << endl;
+    I::get().logger() << F("[PVZ] check request") << endl;
     if (!I::get().server().isAuthenticated(webserver)) {
-        I::get().logger() << F("[PVZERO] not sufficient authentication") << endl;
+        I::get().logger() << F("[PVZ] not sufficient authentication") << endl;
         return webserver->requestAuthentication();
     }
-    // _shellyEm3Connector.sleeper().wakeup();
+    // _shelly3emConnector.sleeper().wakeup();
     // I::get().server().sendRedirect(webserver, HOME_URI);
     webserver->send(200, FPSTR(PROGMEM_CONFIG_APPLICATION_JSON), "{\"success\": true}");
 }
@@ -233,6 +234,6 @@ void PVZeroClass::_onPVZeroCheck(WebServer* webserver)
 void PVZeroClass::_onTotalWatt(bool state, int totalWatt)
 {
     // _mqttHelper.publishC1Pump();
-    I::get().logger() << F("[PVZERO] callback with state: ") << state << F(", Verbrauch: ") << totalWatt << endl;
+    I::get().logger() << F("[PVZ] callback with state: ") << state << F(", Verbrauch: ") << totalWatt << endl;
 }
 

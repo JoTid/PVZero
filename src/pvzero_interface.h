@@ -18,8 +18,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 **************************************************************/
-#ifndef PVZERO_INTERFACE_H
-#define PVZERO_INTERFACE_H
+#ifndef PVZ_INTERFACE_H
+#define PVZ_INTERFACE_H
 
 #include <Arduino.h>
 
@@ -28,11 +28,11 @@ namespace EWC {
   class Time;
 };
 
-namespace PVZERO {
+namespace PVZ {
 class PVZeroClass;
 class Config;
 class DeviceState;
-class ShellyEm3Connector;
+class Shelly3emConnector;
 class LCD;
 
 class InterfaceData {
@@ -41,8 +41,8 @@ class InterfaceData {
   public:
     InterfaceData();
 
-    PVZeroClass& pvzero() { return *_pvzero; }
-    ShellyEm3Connector& shellyEm3Connector() { return *_shellyEm3Connector; }
+    PVZeroClass& pvz() { return *_pvz; }
+    Shelly3emConnector& shelly3emConnector() { return *_shelly3emConnector; }
     EWC::Time& time() { return *_time; }
     Config& config() { return *_config; }
     DeviceState& deviceState() { return *_deviceState; }
@@ -50,21 +50,21 @@ class InterfaceData {
     LCD& lcd() { return *_lcd; }
 
   private:
-    PVZeroClass* _pvzero;
+    PVZeroClass* _pvz;
     EWC::Time* _time;
     Config* _config;
     DeviceState* _deviceState;
-    ShellyEm3Connector *_shellyEm3Connector;
+    Shelly3emConnector *_shelly3emConnector;
     EWC::ConfigServer* _ewcServer;
     LCD* _lcd;
 };
 
 class PZI {
   public:
-    static PVZERO::InterfaceData& get();
+    static PVZ::InterfaceData& get();
 
   private:
-    static PVZERO::InterfaceData _interface;
+    static PVZ::InterfaceData _interface;
 };
 
 }

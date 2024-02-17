@@ -20,7 +20,7 @@ limitations under the License.
 **************************************************************/
 #include "pvzero_interface.h"
 
-using namespace PVZERO;
+using namespace PVZ;
 
 InterfaceData PZI::_interface;  // need to define the static variable
 

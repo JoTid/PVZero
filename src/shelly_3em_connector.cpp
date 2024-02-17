@@ -25,27 +25,27 @@ limitations under the License.
 #include <extensions/ewcTime.h>
 #include <ewcTickerLED.h>
 #include <ewcInterface.h>
-#include "shelly_em3_connector.h"
+#include "shelly_3em_connector.h"
 #include "ewcLogger.h"
 #include "config.h"
 #include "pvzero_interface.h"
 
 using namespace EWC;
-using namespace PVZERO;
+using namespace PVZ;
 
-void ShellyEm3Connector::startTaskImpl(void *_this)
+void Shelly3emConnector::startTaskImpl(void *_this)
 {
-    static_cast<ShellyEm3Connector *>(_this)->httpTask();
+    static_cast<Shelly3emConnector *>(_this)->httpTask();
 }
 
-ShellyEm3Connector::ShellyEm3Connector(int potPin)
+Shelly3emConnector::Shelly3emConnector(int potPin)
 {
     mailStateChanged = false;
     _potPin = potPin;
     _callbackState = NULL;
-    _currentState = ShellyEm3Connector::State::UNKNOWN;
-    _currentExcess = -1;
-    _currentCurrent = 0;
+    _currentState = Shelly3emConnector::State::UNKNOWN;
+    _consumptionPower = -1;
+    _feedInPower = 0;
     _isRequesting = false;
     btIsValidP = false;
 #ifdef ESP8266
@@ -54,12 +54,12 @@ ShellyEm3Connector::ShellyEm3Connector(int potPin)
 #endif
 }
 
-ShellyEm3Connector::~ShellyEm3Connector()
+Shelly3emConnector::~Shelly3emConnector()
 {
     // delete _sleeper;
 }
 
-void ShellyEm3Connector::setup(bool resetConfig)
+void Shelly3emConnector::setup(bool resetConfig)
 {
 #ifdef ESP8266
     _utcAddress = EWC::I::get().rtc().get();
@@ -76,11 +76,11 @@ void ShellyEm3Connector::setup(bool resetConfig)
 #ifdef ESP8266
         EWC::I::get()
             .logger()
-        << F("ShellyEm3Connector: reads from UTC (addr: ") << _utcAddress << F(") stored last state: ") << _reachedUpperLimit << endl;
+        << F("Shelly3emConnector: reads from UTC (addr: ") << _utcAddress << F(") stored last state: ") << _reachedUpperLimit << endl;
 #endif
 }
 
-// long ShellyEm3Connector::_analog2percent(long analogValue)
+// long Shelly3emConnector::_analog2percent(long analogValue)
 // {
 //     float result = float(750 - analogValue) / 750.0 * 100.0;
 //     if (result > 100.0) {
@@ -91,7 +91,7 @@ void ShellyEm3Connector::setup(bool resetConfig)
 //     return long(result);
 // }
 
-void ShellyEm3Connector::loop()
+void Shelly3emConnector::loop()
 {
     // if (!sleeper().finished()) {
     //     return;  // we are sleeping now
@@ -102,7 +102,7 @@ void ShellyEm3Connector::loop()
         _infoState += "bitte nicht stoeren phase";
         return;
     }
-    if (_sleeper.finished() && !_isRequesting && PZI::get().config().shellyEm3Uri.length() > 0)
+    if (_sleeper.finished() && !_isRequesting && PZI::get().config().shelly3emAddr.length() > 0)
     {
         _isRequesting = true;
         I::get().led().start(1000, 250);
@@ -117,7 +117,7 @@ void ShellyEm3Connector::loop()
     }
 }
 
-String ShellyEm3Connector::state2string(ShellyEm3Connector::State state)
+String Shelly3emConnector::state2string(Shelly3emConnector::State state)
 {
     switch(state) {
         case ON_CHECK:
@@ -132,24 +132,28 @@ String ShellyEm3Connector::state2string(ShellyEm3Connector::State state)
     return "Unknown";
 }
 
-void ShellyEm3Connector::httpTask()
+void Shelly3emConnector::httpTask()
 {
     _infoState = String("Lese status vom Shelly Em3 Modul");
     // Send request
-    String request_uri = String(PZI::get().config().shellyEm3Uri) + "/status";
-    EWC::I::get().logger() << F("ShellyEm3Connector: request_uri: ") << request_uri << endl;
+    String uri = PZI::get().config().shelly3emAddr;
+    if (!uri.startsWith("http")) {
+        uri = String("http://") + uri;
+    }
+    String request_uri = uri + "/status";
+    EWC::I::get().logger() << F("Shelly3emConnector: request_uri: ") << request_uri << endl;
     _httpClient.begin(_wifiClient, request_uri.c_str());
     int httpCode = _httpClient.GET();
     if (httpCode != 200)
     {
-        EWC::I::get().logger() << F("ShellyEm3Connector: fehler beim holen der aktuellen Verbrauchswerte vom Shelly") << endl;
-        _infoState = "Fehler beim holen der aktuellen Verbrauchswerte vom Shelly " + String(PZI::get().config().shellyEm3Uri) + "/status";
-        _currentCurrent = -1;
+        EWC::I::get().logger() << F("Shelly3emConnector: fehler beim holen der aktuellen Verbrauchswerte vom Shelly") << endl;
+        _infoState = "Fehler beim holen der aktuellen Verbrauchswerte vom Shelly " + String(PZI::get().config().shelly3emAddr) + "/status";
+        _feedInPower = -1;
         btIsValidP = false;
         I::get().led().start(3000, 3000);
         if (_callbackState != NULL)
         {
-            _callbackState(false, _currentCurrent);
+            _callbackState(false, _feedInPower);
         }
     }
     else
@@ -159,25 +163,25 @@ void ShellyEm3Connector::httpTask()
         // deserializeJson(doc, http.getStream());
         String jsonStr = _httpClient.getString();
         deserializeJson(doc, jsonStr);
-        _currentExcess = (int)doc["total_power"];
-        EWC::I::get().logger() << F("ShellyEm3Connector: aktueller Verbrauch: ") << _currentExcess << " W" << endl;
-        // _currentCurrent += _currentExcess / PZI::get().config().voltage;
-        // if (_currentCurrent < 0) {
-        //     _currentCurrent = 0;
+        _consumptionPower = (int)doc["total_power"];
+        EWC::I::get().logger() << F("Shelly3emConnector: aktueller Verbrauch: ") << _consumptionPower << " W" << endl;
+        // _feedInPower += _consumptionPower / PZI::get().config().voltage;
+        // if (_feedInPower < 0) {
+        //     _feedInPower = 0;
         //     _infoState = "Akku wird nicht entladen!";
-        // } else if (_currentCurrent > PZI::get().config().maxAmperage) {
-        //     _currentCurrent = PZI::get().config().maxAmperage;
+        // } else if (_feedInPower > PZI::get().config().maxAmperage) {
+        //     _feedInPower = PZI::get().config().maxAmperage;
         //     _infoState = "Maximale erlaubte Einspasung!";
         // } else {
         //     _infoState = "";
         // }
         if (_callbackState != NULL)
         {
-            _callbackState(true, _currentExcess);
+            _callbackState(true, _consumptionPower);
         }
         I::get().led().stop();
     }
-    EWC::I::get().logger() << F("ShellyEm3Connector: request finished... sleep ") << endl;
+    EWC::I::get().logger() << F("Shelly3emConnector: request finished... sleep ") << endl;
     _sleepUntil = PZI::get().time().str(PZI::get().config().checkInterval);
     // sleeper().sleep(PZI::get().config().checkInterval * 1000);
     // EWC::I::get().logger() << F("sleep for ") << PZI::get().config().checkInterval << "sec" << endl;

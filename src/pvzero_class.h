@@ -19,8 +19,8 @@ limitations under the License.
 
 **************************************************************/
 
-#ifndef PVZERO_CLASS_H
-#define PVZERO_CLASS_H
+#ifndef PVZ_CLASS_H
+#define PVZ_CLASS_H
 
 #include <Arduino.h>
 #include <ewcConfigServer.h>
@@ -31,13 +31,13 @@ limitations under the License.
 #include <extensions/ewcMqtt.h>
 #include "config.h"
 #include "device_state.h"
-#include "shelly_em3_connector.h"
+#include "shelly_3em_connector.h"
 // #include "sleeper.h"
 
 #include "taster.h"
 #include "lcd.hpp"
 
-namespace PVZERO {
+namespace PVZ {
 
 #define FRIMWARE_VERSION "1.0.0"
 
@@ -65,7 +65,7 @@ protected:
     EWC::Mqtt _ewcMqtt;
     EWC::Mail _ewcMail;
     DeviceState _deviceState;
-    ShellyEm3Connector _shellyEm3Connector;
+    Shelly3emConnector _shelly3emConnector;
     Taster _taster;
     LCD _lcd;
     void _onPVZeroConfig(WebServer* webserver);

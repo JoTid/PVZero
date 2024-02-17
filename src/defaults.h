@@ -18,12 +18,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 **************************************************************/
-#ifndef PVZERO_DEFAULTS_H
-#define PVZERO_DEFAULTS_H
+#ifndef PVZ_DEFAULTS_H
+#define PVZ_DEFAULTS_H
 
 #include <Arduino.h>
 
-namespace PVZERO {
+namespace PVZ {
 
 const char HOME_URI[] = "/";
 

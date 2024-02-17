@@ -4,13 +4,13 @@
 
 #include <WiFi.h>
 #include <ewcLogger.h>
-#include "shelly_em3_connector.h"
+#include "shelly_3em_connector.h"
 #include "config.h"
 #include "device_state.h"
 #include "pvzero_class.h"
 
 using namespace EWC;
-using namespace PVZERO;
+using namespace PVZ;
 
 /*--------------------------------------------------------------------------------------------------------------------*\
 ** Definitions and variables of module                                                                                **
@@ -287,13 +287,13 @@ void LCD::process(void)
       //-----------------------------------------------------------------------------------
       // Check the connection to the 3EM Meter is established and data is available
       //
-      if (PZI::get().shellyEm3Connector().isValid())
+      if (PZI::get().shelly3emConnector().isValid())
       {
         u8g2.drawLine(0, 52, 128, 52);
 
         u8g2.setCursor(4, 16);
         clStringT = "Cons power: ";
-        clStringT += String(PZI::get().shellyEm3Connector().currentExcess());
+        clStringT += String(PZI::get().shelly3emConnector().consumptionPower());
         clStringT += " Wh";
         u8g2.print(clStringT);
 
@@ -316,7 +316,7 @@ void LCD::process(void)
         u8g2.setCursor(4, 16 + 12);
         u8g2.print("Check URL:");
         u8g2.setCursor(4, 16 + 12 + 12);
-        u8g2.print(PZI::get().config().shellyEm3Uri);
+        u8g2.print(PZI::get().config().shelly3emAddr);
       }
 
       //-----------------------------------------------------------------------------------

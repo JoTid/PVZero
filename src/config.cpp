@@ -25,7 +25,7 @@ limitations under the License.
 #include "taster.h"
 
 
-using namespace PVZERO;
+using namespace PVZ;
 
 Config::Config() : EWC::ConfigInterface("pvzero")
 {
@@ -47,7 +47,7 @@ void Config::fillJson(JsonDocument& config)
     config["pvzero"]["version"] = EWC::I::get().server().version();
     config["pvzero"]["check_interval"] = checkInterval;
     config["pvzero"]["taster_func"] = tasterFunc;
-    config["pvzero"]["shellyEm3Uri"] = shellyEm3Uri;
+    config["pvzero"]["shelly3emAddr"] = shelly3emAddr;
     config["pvzero"]["voltage"] = voltage;
     config["pvzero"]["max_amperage"] = maxAmperage;
     config["pvzero"]["lcd_enabled"] = lcdEnabled;
@@ -63,9 +63,9 @@ void Config::fromJson(JsonDocument& config)
     if (!jv.isNull()) {
         tasterFunc = jv.as<unsigned char>();
     }
-    jv = config["pvzero"]["shellyEm3Uri"];
+    jv = config["pvzero"]["shelly3emAddr"];
     if (!jv.isNull()) {
-        shellyEm3Uri = jv.as<String>();
+        shelly3emAddr = jv.as<String>();
     }
     jv = config["pvzero"]["voltage"];
     if (!jv.isNull()) {
@@ -87,7 +87,7 @@ void Config::_initParameter()
     _name = "pvzero-" + EWC::I::get().config().getChipId();
     checkInterval = 1;
     //deep_sleep("deep-sleep", "Deep sleep"),
-    shellyEm3Uri = "";
+    shelly3emAddr = "";
     // taster
     tasterFunc = TASTER_CHECK_NOW;
     voltage = 38;

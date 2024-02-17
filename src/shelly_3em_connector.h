@@ -18,8 +18,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 **************************************************************/
-#ifndef PVZERO_SHELLY_EM3_CONNECTOR_H
-#define PVZERO_SHELLY_EM3_CONNECTOR_H
+#ifndef PVZ_SHELLY_3EM_CONNECTOR_H
+#define PVZ_SHELLY_3EM_CONNECTOR_H
 
 #include <WiFiClient.h>
 #ifdef ESP8266
@@ -30,10 +30,10 @@ limitations under the License.
 #include <Arduino.h>
 #include "sleeper.h"
 
-namespace PVZERO {
+namespace PVZ {
     typedef std::function<void(bool, int)> SellyStateCallback;
 
-class ShellyEm3Connector {
+class Shelly3emConnector {
 public:
     enum State {
         UNKNOWN,
@@ -43,16 +43,16 @@ public:
     };
     // Sleeper& sleeper() { return *_sleeper; }
     bool mailStateChanged;  // use for state detection for e-mail send
-    ShellyEm3Connector(int potPin=A0);
-    ~ShellyEm3Connector();
+    Shelly3emConnector(int potPin=A0);
+    ~Shelly3emConnector();
     void setup(bool resetConfig=false);
     void loop();
     void setCallbackState(SellyStateCallback callback) { _callbackState = callback; }
-    String state2string(ShellyEm3Connector::State state);
+    String state2string(Shelly3emConnector::State state);
     String info() { return _infoState; }
     String infoSleepUntil() { return _sleepUntil; }
-    int currentExcess() { return _currentExcess; }
-    int currentCurrent() { return _currentCurrent; }
+    int consumptionPower() { return _consumptionPower; }
+    int feedInPower() { return _feedInPower; }
     bool isValid() {return btIsValidP; }
 
   protected:
@@ -69,8 +69,8 @@ public:
     String _infoState;
     String _sleepUntil;
     bool _isRequesting;
-    long _currentExcess;
-    long _currentCurrent;
+    long _consumptionPower;
+    long _feedInPower;
     long btIsValidP;
 
     void httpTask();

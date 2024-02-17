@@ -18,13 +18,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 **************************************************************/
-#ifndef PVZERO_SLEEP_H
-#define PVZERO_SLEEP_H
+#ifndef PVZ_SLEEP_H
+#define PVZ_SLEEP_H
 
 #include <Arduino.h>
 
 
-namespace PVZERO {
+namespace PVZ {
 
     // eine Stunde, da deepSleep max. 71 Minuten kann
     const unsigned long MAX_DEEP_SLEEP_SEC = 3600;

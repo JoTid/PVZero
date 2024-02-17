@@ -23,12 +23,12 @@ limitations under the License.
     #include <ewcRTC.h>
 #endif
 #include <ewcLogger.h>
-#include "shelly_em3_connector.h"
+#include "shelly_3em_connector.h"
 #include "config.h"
 
 
 using namespace EWC;
-using namespace PVZERO;
+using namespace PVZ;
 
 Taster::Taster(int pin) 
 {
@@ -67,7 +67,7 @@ void Taster::loop()
                 switch (PZI::get().config().tasterFunc) {
                 case TASTER_CHECK_NOW:
                     I::get().logger() << "[Taster] trigger check now" << endl;
-                    // PZI::get().shellyEm3Connector().sleeper().wakeup();
+                    // PZI::get().shelly3emConnector().sleeper().wakeup();
                     break;
                 default:
                     I::get().logger() << "[Taster] undefined action: " << PZI::get().config().tasterFunc << endl;

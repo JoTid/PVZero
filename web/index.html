@@ -3,7 +3,7 @@
 
   <head>
     <meta name="viewport" charset="utf-8" content="width=device-width, initial-scale=1, user-scalable=yes">
-    <title>Bewaesserungsteuerung</title>
+    <title>PVZero</title>
     <link rel="stylesheet" href="/css/base.css">
   </head>
 
@@ -11,22 +11,21 @@
     <div id="header"></div>
     <div class="base-panel">
       <br>
-      <span id="pvzero_title" style="font-weight: bold; font-size: 2em;">PVZERO</span>
+      <span id="pvzero_title" style="font-weight: bold; font-size: 2em;">PVZero</span>
       <span id="version">Unknown</span>
-      <button id="check_now" type="button" class="button_check">Jetzt prüfen</button>
 
-      <div id="shelly_em3" class="noorder">
-        <div class="line_named" >Shelly Em3</div>
+      <div id="shelly_3em" class="noorder">
+        <div class="line_named" >Shelly 3em</div>
         <br>
-        <div id="current_excess">warte auf die Daten vom Shelly Em3... </div>
-        <div id="current_current"></div>
-        <div id="next_check"></div>
+        <div id="consumption_power">warte auf die Daten vom Shelly 3em... </div>
+        <div id="feed_in_power"></div>
+        <div id="check_interval"></div>
         <label id="info_check_info"></label>
       </div>
       <br>
     </div>
     <script src="/js/postload.js"></script>
-    <script src="/js/shelly_em3_connector.js"></script>
+    <script src="/js/shelly_3em_connector.js"></script>
   </body>
 
 </html>

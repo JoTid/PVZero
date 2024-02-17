@@ -27,7 +27,7 @@ limitations under the License.
 #include "ewcInterface.h"
 
 using namespace EWC;
-using namespace PVZERO;
+using namespace PVZ;
 
 Sleeper::Sleeper()
 {

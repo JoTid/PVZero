@@ -18,12 +18,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 **************************************************************/
-#ifndef PVZERO_deviceState_H
-#define PVZERO_deviceState_H
+#ifndef PVZ_deviceState_H
+#define PVZ_deviceState_H
 
 #include "ewcConfigInterface.h"
 
-namespace PVZERO {
+namespace PVZ {
 class DeviceState {
 public:
     enum State {

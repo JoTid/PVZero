@@ -22,7 +22,7 @@ limitations under the License.
 #include "ewcLogger.h"
 
 using namespace EWC;
-using namespace PVZERO;
+using namespace PVZ;
 
 DeviceState::DeviceState()
 {

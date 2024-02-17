@@ -18,8 +18,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 **************************************************************/
-#ifndef PVZERO_CONFIG_H
-#define PVZERO_CONFIG_H
+#ifndef PVZ_CONFIG_H
+#define PVZ_CONFIG_H
 
 #include <map>
 #include <Arduino.h>
@@ -27,7 +27,7 @@ limitations under the License.
 #include "pvzero_interface.h"
 #include "defaults.h"
 
-namespace PVZERO {
+namespace PVZ {
 
 class Config : public EWC::ConfigInterface {
 public:
@@ -38,7 +38,7 @@ public:
     void fromJson(JsonDocument& config);
     /** === parameter  === **/
     int checkInterval;
-    String shellyEm3Uri;
+    String shelly3emAddr;
     int voltage;
     int maxAmperage;
 

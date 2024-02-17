@@ -7,11 +7,10 @@
 #include "lcd.hpp"
 
 using namespace EWC;
-using namespace PVZERO;
+using namespace PVZ;
 
 #define LED1_PIN 12
 uint32_t TIMEOUT_WIFI = 60000;
-uint32_t msStart = 0;
 PVZeroClass pvz;
 
 

@@ -18,12 +18,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 **************************************************************/
-#ifndef PVZERO_TASTER_H
-#define PVZERO_TASTER_H
+#ifndef PVZ_TASTER_H
+#define PVZ_TASTER_H
 
 #include <Arduino.h>
 
-namespace PVZERO {
+namespace PVZ {
 
 #if defined(ESP8266)
 #define MY_TASTER_PIN D3
