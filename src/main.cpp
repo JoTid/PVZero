@@ -49,7 +49,7 @@ void setup() {
    // initialise EspWebConfig
    //
    EWC::I::get().server().setBrand("PVZero", FRIMWARE_VERSION);
-   EWC::I::get().led().enable(true, LED1_PIN, LOW);
+   EWC::I::get().led().enable(true, LED1_PIN, HIGH);
    //---------------------------------------------------------------------------------------------------
    // initialise PVZero
    //
