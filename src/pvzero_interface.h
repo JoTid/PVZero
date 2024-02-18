@@ -31,7 +31,6 @@ namespace EWC {
 namespace PVZ {
 class PVZeroClass;
 class Config;
-class DeviceState;
 class Shelly3emConnector;
 class LCD;
 
@@ -45,7 +44,6 @@ class InterfaceData {
     Shelly3emConnector& shelly3emConnector() { return *_shelly3emConnector; }
     EWC::Time& time() { return *_time; }
     Config& config() { return *_config; }
-    DeviceState& deviceState() { return *_deviceState; }
     EWC::ConfigServer& ewcServer() { return *_ewcServer; }
     LCD& lcd() { return *_lcd; }
 
@@ -53,7 +51,6 @@ class InterfaceData {
     PVZeroClass* _pvz;
     EWC::Time* _time;
     Config* _config;
-    DeviceState* _deviceState;
     Shelly3emConnector *_shelly3emConnector;
     EWC::ConfigServer* _ewcServer;
     LCD* _lcd;

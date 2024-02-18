@@ -61,14 +61,12 @@ void setup() {
    {
       Serial.println("STANDALONE");
       PZI::get().lcd().warning("Configuration required", "Connect to AP:", "- Name of AP -");
-      PZI::get().deviceState().setState(DeviceState::State::STANDALONE);
    }
    else
    {
       Serial.print("TIMEOUT_WIFI");
       Serial.println(WiFi.SSID());
       PZI::get().lcd().busy("Connecting to SSID:", "unknown");
-      PZI::get().deviceState().setState(DeviceState::State::INIT, TIMEOUT_WIFI);
    }
    Serial.println("initialized");
 }
@@ -88,7 +86,6 @@ void loop() {
       {
         I::get().logger() << "connected, " << PZI::get().time().str() << endl;
         onceAfterConnect = true;
-        PZI::get().deviceState().setState(DeviceState::State::INIT);
         PZI::get().lcd().ok();
       }
    } else {

@@ -43,7 +43,6 @@ PVZeroClass::PVZeroClass()
     PZI::get()._time = &_ewcTime;
     PZI::get()._config = &_config;
     PZI::get()._ewcServer = &_ewcServer;
-    PZI::get()._deviceState = &_deviceState;
     PZI::get()._shelly3emConnector = &_shelly3emConnector;
     PZI::get()._lcd = &_lcd;
     _timePrinted = false;
@@ -86,7 +85,6 @@ void PVZeroClass::setup()
 void PVZeroClass::loop()
 {
     unsigned long ts_now = millis();
-    _deviceState.loop();
     _taster.loop();
     _ewcUpdater.loop();
     // we perform the measurement only once per second
@@ -94,27 +92,6 @@ void PVZeroClass::loop()
         return;
     }
     _tsMeasLoopStart = ts_now;
-    switch(_deviceState.currentState()) {
-        case DeviceState::State::SETUP:
-            EWC::I::get().logger() << F("Enter SETUP") << endl;
-            break;
-        case DeviceState::State::STANDALONE:
-            EWC::I::get().logger() << F("Switch to standalone mode.") << endl;
-            _deviceState.setState(DeviceState::State::INIT);
-            break;
-        case DeviceState::State::INIT:
-            EWC::I::get().logger() << F("Enter INIT") << endl;
-            _deviceState.setState(DeviceState::State::RUNNING);
-            break;
-        case DeviceState::State::RUNNING:
-            break;
-        case DeviceState::State::SOFTSLEEP:
-            break;
-    }
-    if (! _deviceState.ready()) {
-        // device initialization...
-        return;
-    }
     if (PZI::get().ewcServer().isConnected()) {
         if (!_timePrinted)
         {
@@ -132,8 +109,8 @@ void PVZeroClass::loop()
         _shelly3emConnector.loop();
     } else {
         // TODO: check how to wake up
-        EWC::I::get().logger() << F("Switch to SOFTSLEEP") << endl;
-        _deviceState.setState(DeviceState::State::SOFTSLEEP);
+        EWC::I::get().logger() << F("Reconnect to ") << WiFi.SSID() << endl;
+        WiFi.reconnect();
     }
 }
 

@@ -30,7 +30,6 @@ limitations under the License.
 #include <extensions/ewcMail.h>
 #include <extensions/ewcMqtt.h>
 #include "config.h"
-#include "device_state.h"
 #include "shelly_3em_connector.h"
 // #include "sleeper.h"
 
@@ -64,7 +63,6 @@ protected:
     EWC::Updater _ewcUpdater;
     EWC::Mqtt _ewcMqtt;
     EWC::Mail _ewcMail;
-    DeviceState _deviceState;
     Shelly3emConnector _shelly3emConnector;
     Taster _taster;
     LCD _lcd;
@@ -72,8 +70,6 @@ protected:
     void _onPVZeroSave(WebServer* webserver);
     void _onPVZeroState(WebServer* webserver);
     void _onPVZeroCheck(WebServer* webserver);
-    // void _onBbsPump1(WebServer* webserver);
-    // void _onBbsPump2(WebServer* webserver);
     void _onTotalWatt(bool state, int totalWatt);
 };
 }; // namespace

@@ -6,7 +6,6 @@
 #include <ewcLogger.h>
 #include "shelly_3em_connector.h"
 #include "config.h"
-#include "device_state.h"
 #include "pvzero_class.h"
 
 using namespace EWC;
