@@ -185,7 +185,7 @@ void Shelly3emConnector::httpTask()
         {
             _callbackState(true, _consumptionPower);
         }
-        if (_countRequestsFailed > 0) {
+        if (_countRequestsFailed >= 3) {
             String body = String("Nach ") + _countRequestsFailed + " Versuchen wurde der Wert " + _consumptionPower + " W geholt.";
             PZI::get().mail().sendWarning("Shelly 3em wieder erreichbar", body.c_str());
             _countRequestsFailed = 0;
