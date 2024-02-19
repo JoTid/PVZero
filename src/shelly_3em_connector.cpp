@@ -23,6 +23,7 @@ limitations under the License.
 #elif defined(ESP32)
 #endif
 #include <extensions/ewcTime.h>
+#include <extensions/ewcMail.h>
 #include <ewcTickerLED.h>
 #include <ewcInterface.h>
 #include "shelly_3em_connector.h"
@@ -47,6 +48,7 @@ Shelly3emConnector::Shelly3emConnector(int potPin)
     _consumptionPower = -1;
     _feedInPower = 0;
     _isRequesting = false;
+    _countRequestsFailed = 0;
     btIsValidP = false;
 #ifdef ESP8266
         // initialize utc addresses in sutup method
@@ -149,11 +151,15 @@ void Shelly3emConnector::httpTask()
         EWC::I::get().logger() << F("Shelly3emConnector: fehler beim holen der aktuellen Verbrauchswerte vom Shelly") << endl;
         _infoState = "Fehler beim holen der aktuellen Verbrauchswerte vom Shelly " + String(PZI::get().config().shelly3emAddr) + "/status";
         _feedInPower = -1;
+        _countRequestsFailed += 1;
         btIsValidP = false;
         I::get().led().start(3000, 3000);
         if (_callbackState != NULL)
         {
             _callbackState(false, _feedInPower);
+        }
+        if (_countRequestsFailed >= 3) {
+            PZI::get().mail().sendWarning("Shelly 3em nicht erreichbar", _infoState.c_str());
         }
     }
     else
@@ -179,7 +185,12 @@ void Shelly3emConnector::httpTask()
         {
             _callbackState(true, _consumptionPower);
         }
-        I::get().led().stop();
+        if (_countRequestsFailed > 0) {
+            String body = String("Nach ") + _countRequestsFailed + " Versuchen wurde der Wert " + _consumptionPower + " W geholt.";
+            PZI::get().mail().sendWarning("Shelly 3em wieder erreichbar", body.c_str());
+            _countRequestsFailed = 0;
+        }
+            I::get().led().stop();
     }
     EWC::I::get().logger() << F("Shelly3emConnector: request finished... sleep ") << endl;
     _sleepUntil = PZI::get().time().str(PZI::get().config().checkInterval);

@@ -71,6 +71,7 @@ public:
     bool _isRequesting;
     long _consumptionPower;
     long _feedInPower;
+    long _countRequestsFailed;
     long btIsValidP;
 
     void httpTask();

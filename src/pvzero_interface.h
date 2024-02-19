@@ -25,6 +25,7 @@ limitations under the License.
 
 namespace EWC {
   class ConfigServer;
+  class Mail;
   class Time;
 };
 
@@ -45,6 +46,7 @@ class InterfaceData {
     EWC::Time& time() { return *_time; }
     Config& config() { return *_config; }
     EWC::ConfigServer& ewcServer() { return *_ewcServer; }
+    EWC::Mail &mail() { return *_ewcMail; }
     LCD& lcd() { return *_lcd; }
 
   private:
@@ -53,6 +55,7 @@ class InterfaceData {
     Config* _config;
     Shelly3emConnector *_shelly3emConnector;
     EWC::ConfigServer* _ewcServer;
+    EWC::Mail *_ewcMail;
     LCD* _lcd;
 };
 

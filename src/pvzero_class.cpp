@@ -44,6 +44,7 @@ PVZeroClass::PVZeroClass()
     PZI::get()._config = &_config;
     PZI::get()._ewcServer = &_ewcServer;
     PZI::get()._shelly3emConnector = &_shelly3emConnector;
+    PZI::get()._ewcMail = &_ewcMail;
     PZI::get()._lcd = &_lcd;
     _timePrinted = false;
 }
@@ -55,6 +56,7 @@ PVZeroClass::~PVZeroClass()
 void PVZeroClass::setup()
 {
     EWC::I::get().configFS().addConfig(_ewcUpdater);
+    EWC::I::get().configFS().addConfig(_ewcMail);
     EWC::I::get().configFS().addConfig(_ewcTime);
     EWC::I::get().configFS().addConfig(_config);
     // EWC::I::get().led().enable(true, LED_BUILTIN, LOW);
@@ -86,6 +88,7 @@ void PVZeroClass::loop()
 {
     unsigned long ts_now = millis();
     _taster.loop();
+    _ewcMail.loop();
     _ewcUpdater.loop();
     // we perform the measurement only once per second
     if (ts_now - _tsMeasLoopStart < 1000) {

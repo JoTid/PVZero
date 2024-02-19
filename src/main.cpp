@@ -48,6 +48,8 @@ void setup() {
    //---------------------------------------------------------------------------------------------------
    // initialise EspWebConfig
    //
+   EWC::I::get().config().paramDeviceName = String("pvz-") + EWC::I::get().config().getChipId();
+   EWC::I::get().config().paramAPName = String("pvz-") + EWC::I::get().config().getChipId();
    EWC::I::get().server().setBrand("PVZero", FRIMWARE_VERSION);
    EWC::I::get().led().enable(true, LED1_PIN, HIGH);
    //---------------------------------------------------------------------------------------------------
