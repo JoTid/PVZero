@@ -53,9 +53,10 @@ void test_ca_set_power_to_min_at_start(void)
   /**
    * @brief Set consumption power to 0 Wh after power up / start, the current output should be also at 0.
    * Test parameter while test:
-   *       consumption [Wh]      current [A]
-   * min       0                      0
-   * max      600                     9
+   *            current [A] = x     consumption [Wh] 
+   * min             0    => 0 * 36 =      0   
+   * max             9    => 9 * 36 =     324
+   * => gain = 9 / 324 = 0,0278; offset = 0 
    * 
    */
 
@@ -88,10 +89,10 @@ void test_ca_set_power_to_max_at_start(void)
   /**
    * @brief Set consumption power to 0 Wh after power up / start, the current output should be also at 0.
    * Test parameter while test:
-   *       consumption [Wh]      current [A]     
-   * min       0                     0
-   * max      600                    9
-   * => gain = 9 / 600 = 0,015; offset = 0 
+   *            current [A] = x     consumption [Wh] 
+   * min             0    => 0 * 36 =      0   
+   * max             9    => 9 * 36 =     324
+   * => gain = 9 / 324 = 0,0278; offset = 0 
    */ 
 
   //--------------------------------------------------------------------------------------------------- 
@@ -110,7 +111,7 @@ void test_ca_set_power_to_max_at_start(void)
   }
 
   //--------------------------------------------------------------------------------------------------- 
-  // check expected values:  => y=mx+b : DcInCurrent = 600 * 0,015 + 0 = 9 A
+  // check expected values:  => y=mx+b : DcInCurrent = 600 * 0,0278 + 0 = 9 A
   //                         => P=UI : 36 V * 9 A = 324 W
   TEST_ASSERT_EQUAL(9.0, clCaG.feedInDcCurrent());
   TEST_ASSERT_EQUAL(324.0, clCaG.feedInPower());
@@ -125,7 +126,7 @@ void test_ca_set_power_to_middle_after_max(void)
    *            current [A] = x     consumption [Wh] 
    * min             0    => 0 * 36 =      0   
    * max             9    => 9 * 36 =     324
-   * => gain = 9 / 600 = 0,015; offset = 0 
+   * => gain = 9 / 324 = 0,0278; offset = 0 
    */ 
 
   //--------------------------------------------------------------------------------------------------- 
@@ -159,7 +160,7 @@ void test_ca_set_power_to_zero_after_middle(void)
    *            current [A] = x     consumption [Wh] 
    * min             0    => 0 * 36 =      0   
    * max             9    => 9 * 36 =     324
-   * => gain = 9 / 600 = 0,015; offset = 0 
+   * => gain = 9 / 324 = 0,0278; offset = 0 
    */ 
 
   //--------------------------------------------------------------------------------------------------- 
@@ -178,13 +179,124 @@ void test_ca_set_power_to_zero_after_middle(void)
   }
 
   //--------------------------------------------------------------------------------------------------- 
-  // check expected values:  => y=mx+b, x=(0+324)=600 : DcInCurrent = 600 * 0,015 + 0 = 9 A
+  // check expected values:  => y=mx+b, x=(0+324)=324 : DcInCurrent = 324 * 0,015 + 0 = 9 A
   //                         => P=UI : 36 V * 9 A = 324 W
   TEST_ASSERT_EQUAL(9.0, clCaG.feedInDcCurrent());
   TEST_ASSERT_EQUAL(324.0, clCaG.feedInPower());
  
 }
 
+
+void test_ca_set_power_to_negative_after_zero(void)
+{
+  /**
+   * @brief Set consumption power to 0 Wh after power up / start, the current output should be also at 0.
+   * Test parameter while test:
+   *            current [A] = x     consumption [Wh] 
+   * min             0    => 0 * 36 =      0   
+   * max             9    => 9 * 36 =     324
+   * => gain = 9 / 324 = 0,0278; offset = 0 
+   */ 
+
+  //--------------------------------------------------------------------------------------------------- 
+  // trigger test method
+  // 
+  clCaG.setConsumptionPower(-160.0);
+
+  //--------------------------------------------------------------------------------------------------- 
+  // run process defined number before test
+  // 
+  int32_t slPCyclesT = 1;
+  while (slPCyclesT > 0)
+  {
+    clCaG.setConsumptionPower(-160.0);
+    clCaG.process();
+    slPCyclesT--;
+  }
+
+  //--------------------------------------------------------------------------------------------------- 
+  // check expected values:  => y=mx+b, x=(-160+324)=164 : DcInCurrent = 164 * 0,0278 + 0 = 4,56 A
+  //                         => P=UI : 36 V * 4,56 A = 164,16 W
+  TEST_ASSERT_EQUAL(4.0, clCaG.feedInDcCurrent());
+  TEST_ASSERT_EQUAL(164.16, clCaG.feedInPower());
+ 
+
+  //--------------------------------------------------------------------------------------------------- 
+  //--------------------------------------------------------------------------------------------------- 
+  // in case of zero the current should not be changed
+  // 
+  clCaG.setConsumptionPower(0.0);
+  //--------------------------------------------------------------------------------------------------- 
+  // run process defined number before test
+  // 
+  slPCyclesT = 200;
+  while (slPCyclesT > 0)
+  {
+    clCaG.process();
+    slPCyclesT--;
+  }
+  //--------------------------------------------------------------------------------------------------- 
+  // check expected values:  => y=mx+b, x=(0+164)=164 : DcInCurrent = 164 * 0,0278 + 0 = 4,56 A
+  //                         => P=UI : 36 V * 4,56 A = 164,16 W
+  TEST_ASSERT_EQUAL(4.0, clCaG.feedInDcCurrent());
+  TEST_ASSERT_EQUAL(164.16, clCaG.feedInPower());
+}
+
+
+void test_ca_set_power_to_negative_to_zero(void)
+{
+  /**
+   * @brief Set consumption power to 0 Wh after power up / start, the current output should be also at 0.
+   * Test parameter while test:
+   *            current [A] = x     consumption [Wh] 
+   * min             0    => 0 * 36 =      0   
+   * max             9    => 9 * 36 =     324
+   * => gain = 9 / 324 = 0,0278; offset = 0 
+   */ 
+
+  //--------------------------------------------------------------------------------------------------- 
+  // trigger test method
+  // 
+  clCaG.setConsumptionPower(-100.0);
+
+  //--------------------------------------------------------------------------------------------------- 
+  // run process defined number before test
+  // 
+  int32_t slPCyclesT = 1;
+  while (slPCyclesT > 0)
+  {
+    clCaG.process();
+    slPCyclesT--;
+  }
+
+  //--------------------------------------------------------------------------------------------------- 
+  // check expected values:  => y=mx+b, x=(-100+164)=64 : DcInCurrent = 64 * 0,0278 + 0 = 1,78 A
+  //                         => P=UI : 36 V * 1,78 A = 64,08 W
+  TEST_ASSERT_EQUAL(1.78, clCaG.feedInDcCurrent());
+  TEST_ASSERT_EQUAL(64.16, clCaG.feedInPower());
+
+  //--------------------------------------------------------------------------------------------------- 
+  //--------------------------------------------------------------------------------------------------- 
+  // trigger test method
+  // 
+  clCaG.setConsumptionPower(-100.0);
+
+  //--------------------------------------------------------------------------------------------------- 
+  // run process defined number before test
+  // 
+  slPCyclesT = 1;
+  while (slPCyclesT > 0)
+  {
+    clCaG.process();
+    slPCyclesT--;
+  }
+
+  //--------------------------------------------------------------------------------------------------- 
+  // check expected values:  => y=mx+b, x=(-100+64,08)=-36 : DcInCurrent = -36 * 0,0278 + 0 = -1 A
+  //                         => P=UI : 36 V * 1,78 A = 64,08 W
+  TEST_ASSERT_EQUAL(1.78, clCaG.feedInDcCurrent());
+  TEST_ASSERT_EQUAL(64.16, clCaG.feedInPower());
+}
 
 /*--------------------------------------------------------------------------------------------------------------------*\
 ** Test environment                                                                                                   **
@@ -220,12 +332,16 @@ void setup()
 void loop()
 {
   //--------------------------------------------------------------------------------------------------- 
-  // run tests step by step
+  // run tests step by step,
+  //
+  // The sequence of the following tests must be adhered to in order to pass them!
   //
   RUN_TEST(test_ca_set_power_to_min_at_start);
   RUN_TEST(test_ca_set_power_to_max_at_start);
   RUN_TEST(test_ca_set_power_to_middle_after_max);
   RUN_TEST(test_ca_set_power_to_zero_after_middle);
+  RUN_TEST(test_ca_set_power_to_negative_after_zero);
+  RUN_TEST(test_ca_set_power_to_negative_to_zero);
 
   UNITY_END(); // stop unit testing
   while (1) {}; // only if only one test is available

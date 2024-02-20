@@ -1,6 +1,6 @@
 //====================================================================================================================//
 // File:          pvz_ca.cpp                                                                                          //
-// Description:   Photovoltaics Zero - Control Algorithm                                                              //
+// Description:   PhotoVoltaics Zero - Control Algorithm                                                              //
 // Author:        Tiderko                                                                                             //
 //--------------------------------------------------------------------------------------------------------------------//
 //                                                                                                                    //
@@ -119,6 +119,11 @@ void PvzCa::process(void)
   //
   ftCalcT = ftConsumptionPowerP + ftFeedInPowerP;
 
+  Serial.print("PvzCa::process:CPower=");
+  Serial.println(ftConsumptionPowerP);
+  Serial.print("PvzCa::process:FIPower OLD=");
+  Serial.println(ftFeedInPowerP);
+
   //---------------------------------------------------------------------------------------------------
   // scale values y = m * x + b
   //
@@ -144,6 +149,9 @@ void PvzCa::process(void)
   //
   ftCalcT = ftFeedInDcVoltageP * ftFeedInDcCurrentP;
   ftFeedInPowerP = ftCalcT;
+
+  Serial.print("PvzCa::process:FIPower NEW=");
+  Serial.println(ftFeedInPowerP);
 
 }
 
