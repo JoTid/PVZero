@@ -31,16 +31,28 @@ void test_ca_init_parameter(void)
 {
   
   TEST_ASSERT_EQUAL(0.0, clCaG.consumptionPower());
-  TEST_ASSERT_EQUAL(0.0, clCaG.feedInPower());
-  TEST_ASSERT_EQUAL(0.0, clCaG.feedInDcCurrent());
-  TEST_ASSERT_EQUAL(36.0, clCaG.feedInDcVoltage());
+
+  TEST_ASSERT_EQUAL(0.0, clCaG.feedInTargetPower());
+  TEST_ASSERT_EQUAL(0.0, clCaG.feedInTargetDcCurrent());
+  TEST_ASSERT_EQUAL(0.0, clCaG.feedInTargetDcCurrentMin());
+  TEST_ASSERT_EQUAL(0.0, clCaG.feedInTargetDcCurrentMax());
+  TEST_ASSERT_EQUAL(0.0, clCaG.feedInTargetDcVoltage());
+
+  TEST_ASSERT_EQUAL(0.0, clCaG.feedInActualPower());
+  TEST_ASSERT_EQUAL(0.0, clCaG.feedInActualDcCurrent());
+  TEST_ASSERT_EQUAL(0.0, clCaG.feedInActualDcVoltage());  
+
   TEST_ASSERT_EQUAL(3, clCaG.filterOrder());
-}
 
-void test_ca_set_consumption_power(void)
-{
+  //--------------------------------------------------------------------------------------------------- 
+  // perform setup and check value have been set
+  //
+  clCaG.setFeedInTargetDcVoltage(36.0);
+  clCaG.setFeedInTargetDcCurrentLimits(0.0, 9.0);
 
-  TEST_ASSERT_EQUAL(1, 1);
+  TEST_ASSERT_EQUAL(0.0, clCaG.feedInTargetDcCurrentMin());
+  TEST_ASSERT_EQUAL(9.0, clCaG.feedInTargetDcCurrentMax());
+  TEST_ASSERT_EQUAL(36.0, clCaG.feedInTargetDcVoltage());
 }
 
 void test_ca_filter(void)
@@ -63,7 +75,7 @@ void test_ca_set_power_to_min_at_start(void)
   //--------------------------------------------------------------------------------------------------- 
   // trigger test method
   // 
-  clCaG.setConsumptionPower(0.0);
+  clCaG.updateConsumptionPower(0.0);
 
   //--------------------------------------------------------------------------------------------------- 
   // run process defined number before test
@@ -78,8 +90,8 @@ void test_ca_set_power_to_min_at_start(void)
   //--------------------------------------------------------------------------------------------------- 
   // check expected values
   // 
-  TEST_ASSERT_EQUAL(0.0, clCaG.feedInPower());
-  TEST_ASSERT_EQUAL(0.0, clCaG.feedInDcCurrent());
+  TEST_ASSERT_EQUAL(0.0, clCaG.feedInTargetPower());
+  TEST_ASSERT_EQUAL(0.0, clCaG.feedInTargetDcCurrent());
 }
 
 
@@ -98,7 +110,7 @@ void test_ca_set_power_to_max_at_start(void)
   //--------------------------------------------------------------------------------------------------- 
   // trigger test method
   // 
-  clCaG.setConsumptionPower(600.0);
+  clCaG.updateConsumptionPower(600.0);
 
   //--------------------------------------------------------------------------------------------------- 
   // run process defined number before test
@@ -113,8 +125,10 @@ void test_ca_set_power_to_max_at_start(void)
   //--------------------------------------------------------------------------------------------------- 
   // check expected values:  => y=mx+b : DcInCurrent = 600 * 0,0278 + 0 = 9 A
   //                         => P=UI : 36 V * 9 A = 324 W
-  TEST_ASSERT_EQUAL(9.0, clCaG.feedInDcCurrent());
-  TEST_ASSERT_EQUAL(324.0, clCaG.feedInPower());
+  TEST_ASSERT_EQUAL(9.0, clCaG.feedInTargetDcCurrent());
+  TEST_ASSERT_EQUAL(324.0, clCaG.feedInTargetPower());
+
+  // TEST_MESSAGE("hello") ;
  
 }
 
@@ -132,7 +146,8 @@ void test_ca_set_power_to_middle_after_max(void)
   //--------------------------------------------------------------------------------------------------- 
   // trigger test method
   // 
-  clCaG.setConsumptionPower(300.0);
+  clCaG.updateConsumptionPower(300.0);
+  clCaG.updateFeedInActualDcValues(36.0, 9.0);
 
   //--------------------------------------------------------------------------------------------------- 
   // run process defined number before test
@@ -147,8 +162,8 @@ void test_ca_set_power_to_middle_after_max(void)
   //--------------------------------------------------------------------------------------------------- 
   // check expected values:  => y=mx+b, x=(300+324)=600 : DcInCurrent = 600 * 0,015 + 0 = 9 A
   //                         => P=UI : 36 V * 9 A = 324 W
-  TEST_ASSERT_EQUAL(9.0, clCaG.feedInDcCurrent());
-  TEST_ASSERT_EQUAL(324.0, clCaG.feedInPower());
+  TEST_ASSERT_EQUAL(9.0, clCaG.feedInTargetDcCurrent());
+  TEST_ASSERT_EQUAL(324.0, clCaG.feedInTargetPower());
  
 }
 
@@ -166,7 +181,7 @@ void test_ca_set_power_to_zero_after_middle(void)
   //--------------------------------------------------------------------------------------------------- 
   // trigger test method
   // 
-  clCaG.setConsumptionPower(0.0);
+  clCaG.updateConsumptionPower(0.0);
 
   //--------------------------------------------------------------------------------------------------- 
   // run process defined number before test
@@ -181,8 +196,8 @@ void test_ca_set_power_to_zero_after_middle(void)
   //--------------------------------------------------------------------------------------------------- 
   // check expected values:  => y=mx+b, x=(0+324)=324 : DcInCurrent = 324 * 0,015 + 0 = 9 A
   //                         => P=UI : 36 V * 9 A = 324 W
-  TEST_ASSERT_EQUAL(9.0, clCaG.feedInDcCurrent());
-  TEST_ASSERT_EQUAL(324.0, clCaG.feedInPower());
+  TEST_ASSERT_EQUAL(9.0, clCaG.feedInTargetDcCurrent());
+  TEST_ASSERT_EQUAL(324.0, clCaG.feedInTargetPower());
  
 }
 
@@ -201,7 +216,7 @@ void test_ca_set_power_to_negative_after_zero(void)
   //--------------------------------------------------------------------------------------------------- 
   // trigger test method
   // 
-  clCaG.setConsumptionPower(-160.0);
+  clCaG.updateConsumptionPower(-160.0);
 
   //--------------------------------------------------------------------------------------------------- 
   // run process defined number before test
@@ -209,7 +224,7 @@ void test_ca_set_power_to_negative_after_zero(void)
   int32_t slPCyclesT = 1;
   while (slPCyclesT > 0)
   {
-    clCaG.setConsumptionPower(-160.0);
+    clCaG.updateConsumptionPower(-160.0);
     clCaG.process();
     slPCyclesT--;
   }
@@ -217,15 +232,17 @@ void test_ca_set_power_to_negative_after_zero(void)
   //--------------------------------------------------------------------------------------------------- 
   // check expected values:  => y=mx+b, x=(-160+324)=164 : DcInCurrent = 164 * 0,0278 + 0 = 4,56 A
   //                         => P=UI : 36 V * 4,56 A = 164,16 W
-  TEST_ASSERT_EQUAL(4.0, clCaG.feedInDcCurrent());
-  TEST_ASSERT_EQUAL(164.16, clCaG.feedInPower());
+  TEST_ASSERT_EQUAL(4.0, clCaG.feedInTargetDcCurrent());
+  TEST_ASSERT_EQUAL(164.16, clCaG.feedInTargetPower());
  
 
   //--------------------------------------------------------------------------------------------------- 
   //--------------------------------------------------------------------------------------------------- 
   // in case of zero the current should not be changed
   // 
-  clCaG.setConsumptionPower(0.0);
+  clCaG.updateConsumptionPower(0.0);
+  clCaG.updateFeedInActualDcValues(36.0, 4.56);
+
   //--------------------------------------------------------------------------------------------------- 
   // run process defined number before test
   // 
@@ -238,8 +255,8 @@ void test_ca_set_power_to_negative_after_zero(void)
   //--------------------------------------------------------------------------------------------------- 
   // check expected values:  => y=mx+b, x=(0+164)=164 : DcInCurrent = 164 * 0,0278 + 0 = 4,56 A
   //                         => P=UI : 36 V * 4,56 A = 164,16 W
-  TEST_ASSERT_EQUAL(4.0, clCaG.feedInDcCurrent());
-  TEST_ASSERT_EQUAL(164.16, clCaG.feedInPower());
+  TEST_ASSERT_EQUAL(4.0, clCaG.feedInTargetDcCurrent());
+  TEST_ASSERT_EQUAL(164.16, clCaG.feedInTargetPower());
 }
 
 
@@ -257,7 +274,7 @@ void test_ca_set_power_to_negative_to_zero(void)
   //--------------------------------------------------------------------------------------------------- 
   // trigger test method
   // 
-  clCaG.setConsumptionPower(-100.0);
+  clCaG.updateConsumptionPower(-100.0);
 
   //--------------------------------------------------------------------------------------------------- 
   // run process defined number before test
@@ -272,14 +289,14 @@ void test_ca_set_power_to_negative_to_zero(void)
   //--------------------------------------------------------------------------------------------------- 
   // check expected values:  => y=mx+b, x=(-100+164)=64 : DcInCurrent = 64 * 0,0278 + 0 = 1,78 A
   //                         => P=UI : 36 V * 1,78 A = 64,08 W
-  TEST_ASSERT_EQUAL(1.78, clCaG.feedInDcCurrent());
-  TEST_ASSERT_EQUAL(64.16, clCaG.feedInPower());
+  TEST_ASSERT_EQUAL(1.78, clCaG.feedInTargetDcCurrent());
+  TEST_ASSERT_EQUAL(64.16, clCaG.feedInTargetPower());
 
   //--------------------------------------------------------------------------------------------------- 
   //--------------------------------------------------------------------------------------------------- 
   // trigger test method
   // 
-  clCaG.setConsumptionPower(-100.0);
+  clCaG.updateConsumptionPower(-100.0);
 
   //--------------------------------------------------------------------------------------------------- 
   // run process defined number before test
@@ -294,8 +311,8 @@ void test_ca_set_power_to_negative_to_zero(void)
   //--------------------------------------------------------------------------------------------------- 
   // check expected values:  => y=mx+b, x=(-100+64,08)=-36 : DcInCurrent = -36 * 0,0278 + 0 = -1 A
   //                         => P=UI : 36 V * 1,78 A = 64,08 W
-  TEST_ASSERT_EQUAL(1.78, clCaG.feedInDcCurrent());
-  TEST_ASSERT_EQUAL(64.16, clCaG.feedInPower());
+  TEST_ASSERT_EQUAL(1.78, clCaG.feedInTargetDcCurrent());
+  TEST_ASSERT_EQUAL(64.16, clCaG.feedInTargetPower());
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*\
@@ -342,6 +359,9 @@ void loop()
   RUN_TEST(test_ca_set_power_to_zero_after_middle);
   RUN_TEST(test_ca_set_power_to_negative_after_zero);
   RUN_TEST(test_ca_set_power_to_negative_to_zero);
+
+  
+  
 
   UNITY_END(); // stop unit testing
   while (1) {}; // only if only one test is available

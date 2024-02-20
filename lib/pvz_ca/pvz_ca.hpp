@@ -26,12 +26,19 @@ class PvzCa
 {
 private:
   float ftConsumptionPowerP;
-  float ftFeedInPowerP;
-  float ftFeedInDcCurrentP;
-  float ftFeedInDcVoltageP;
+  
+  float ftFeedInTargetPowerP;
+  float ftFeedInTargetDcCurrentP;
+  float ftFeedInTargetDcVoltageP;
+  
+  float ftFeedInActualPowerP;
+  float ftFeedInActualDcCurrentP;
+  float ftFeedInActualDcVoltageP;
+
   float ftFilterOrderP;
-  float aftConsumptionPowerLimitP[2]; // index 0 contains min. value and index 1 contains max. value 
-  float aftFeedInDcCurrentLimitP[2];  // index 0 contains min. value and index 1 contains max. value 
+  
+  float aftConsumptionPowerLimitP[2];       // index 0 contains min. value and index 1 contains max. value 
+  float aftFeedInTargetDcCurrentLimitP[2];  // index 0 contains min. value and index 1 contains max. value 
   
   void CalculateGainOffset(void);
   float ftCurrentGainP;
@@ -64,55 +71,43 @@ public:
   int32_t setFilterOrder(uint8_t);
 
   /**
-   * @brief Set the Consumption Power Limits 
+   * @brief update actual Feed In values for Voltage and Current
    * 
-   * @param ftMinV minimal power value that should be considered, given in [Wh] 
-   * @param ftMaxV maximal power value that should be considered, given in [Wh]
-   * @return 0 in case of success or a negative value in case of an error
-   * 
-   * This methods provides limit values for consumption power that should be considered by the control algorithm.
-   * These values have an influence on the value set in \c #setConsumptionPower(). In this method, the current value is 
-   * limited by \c #ftMinB and \c #ftMaxV.
-   * 
-   * Make sure that ftMinV value is smaller than ftMaxV, in other case -1 is returned.
-   * 
-   * Default values are set in \c #init() to 0.0 Wh and 600.0 Wh
-   */
-  // int32_t setConsumptionPowerLimits(float ftMinV, float ftMaxV);
-
-  // /**
-  //  * @brief Set the Feed In Power Limits
-  //  * 
-  //  * @param ftMinV minimal power value, given in [Wh] 
-  //  * @param ftMaxV maximal power value, given in [Wh]
-  //  * @return 0 in case of success or a negative value in case of an error
-  //  */
-  // int32_t setFeedInPowerLimits(float, float);
-
-  /**
-   * @brief Set the Feed In Current Limits
-   * 
+   * @param[in] ftVoltageV actual pending feed-in DC voltage given in [V]
+   * @param[in] ftCurrentV actual pending feed-in DC current given in [A]
    * @return 0 in case of success or a negative value in case of an error
    */
-  int32_t setFeedInDcCurrentLimits(float ftMinV, float ftMaxV);
+  int32_t updateFeedInActualDcValues(float ftVoltageV, float ftCurrentV);
 
   /**
-   * @brief Set the Feed In Current Limits
+   * @brief Set the Feed-in DC Current Limit values
    * 
+   * @param[in] ftMinV minimal target feed-in DC current value given in [A]
+   * @param[in] ftMaxV maximal target feed-in DC current value given in [A]
    * @return 0 in case of success or a negative value in case of an error
    */
-  int32_t setFeedInDcVoltage(float);
+  int32_t setFeedInTargetDcCurrentLimits(float ftMinV, float ftMaxV);
 
   /**
-   * @brief Set the Consumption Power 
+   * @brief Set the Feed-in DC Voltage value
+   * 
+   * @param[in] ftVoltageV DC voltage value for feed-in given in [V]
+   * @return 0 in case of success or a negative value in case of an error
+   */
+  int32_t setFeedInTargetDcVoltage(float ftVoltageV);
+
+  /**
+   * @brief update the Consumption Power 
+   * 
+   * @param[in] ftPowerV actual consumption power value given in [Wh]
    * 
    * Accept all values and limit them corresponding to the limits provided by the 
-   * \c #setConsumptionPowerLimits() method. 
+   * \c #updateConsumptionPowerLimits() method. 
    * This method update only the value, the calculation is performed  by the \c process() method.
    * 
    * The currently set and modified value can be queried using the \c #consumptionPower() method.
    */
-  void setConsumptionPower(float);
+  void updateConsumptionPower(float ftPowerV);
 
 
   //--------------------------------------------------------------------------------------------------- 
@@ -122,16 +117,36 @@ public:
     return ftConsumptionPowerP;
   }
 
-  float feedInDcCurrent(void) {
-    return ftFeedInDcCurrentP;
+  float feedInTargetDcCurrent(void) {
+    return ftFeedInTargetDcCurrentP;
   }
 
-  float feedInDcVoltage(void) {
-    return ftFeedInDcVoltageP;
+  float feedInTargetDcCurrentMin(void) {
+    return aftFeedInTargetDcCurrentLimitP[0];
   }
 
-  float feedInPower(void) {
-    return ftFeedInPowerP;
+  float feedInTargetDcCurrentMax(void) {
+    return aftFeedInTargetDcCurrentLimitP[1];
+  }
+
+  float feedInTargetDcVoltage(void) {
+    return ftFeedInTargetDcVoltageP;
+  }
+
+  float feedInTargetPower(void) {
+    return ftFeedInTargetPowerP;
+  }
+
+  float feedInActualDcCurrent(void) {
+    return ftFeedInActualDcCurrentP;
+  }
+
+  float feedInActualDcVoltage(void) {
+    return ftFeedInActualDcVoltageP;
+  }
+
+  float feedInActualPower(void) {
+    return ftFeedInActualPowerP;
   }
 
   uint8_t filterOrder(void) {

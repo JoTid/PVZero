@@ -111,14 +111,14 @@ void PVZeroClass::processControlAlgorithm(void)
   // 
   if (_shelly3emConnector.isValid())
   {
-    clControlAlgorithmP.setConsumptionPower(_shelly3emConnector.consumptionPower());
+    clControlAlgorithmP.updateConsumptionPower(_shelly3emConnector.consumptionPower());
   } else 
   {
     //------------------------------------------------------------------------------------------- 
     // \todo decide what to do, if the no consumption power is not available
     //
     // Set the power to 0 so that the current is also limited to 0.
-    clControlAlgorithmP.setConsumptionPower(0.0);
+    clControlAlgorithmP.updateConsumptionPower(0.0);
   }
 
   // _lcd.updateConsumptionPower(_shelly3emConnector.consumptionPower()-700.0, _shelly3emConnector.isValid());
@@ -129,8 +129,6 @@ void PVZeroClass::processControlAlgorithm(void)
   // 
   clControlAlgorithmP.process();
 
-  // lcd update? 
-  // _lcd.updateFeedInPower(clControlAlgorithmP.feedInPower());
  
 }
 
@@ -196,18 +194,18 @@ void PVZeroClass::loop()
     if ((PZI::get().shelly3emConnector().isValid()))
     {
       atsLcdScreenG[0].aclLine[0] = String("Cons. power: " + String(PZI::get().shelly3emConnector().consumptionPower()) + "Wh");
-      atsLcdScreenG[0].aclLine[1] = String("Feed-in set: " + String(clControlAlgorithmP.feedInPower(), 0) + " Wh");
-      atsLcdScreenG[0].aclLine[2] = String("Feed-in is: " + String(clControlAlgorithmP.feedInPower(), 0) + " Wh");;
+      atsLcdScreenG[0].aclLine[1] = String("Feed-in set: " + String(clControlAlgorithmP.feedInTargetPower(), 0) + " Wh");
+      atsLcdScreenG[0].aclLine[2] = String("Feed-in is: " + String(clControlAlgorithmP.feedInTargetPower(), 0) + " Wh");;
 
       atsLcdScreenG[1].aclLine[0] = String("Feed-in target values:");
-      atsLcdScreenG[1].aclLine[1] = String(" " + String(clControlAlgorithmP.feedInPower(), 0) + " Wh = " +
-                                           String(clControlAlgorithmP.feedInDcVoltage(), 0) + "V +" + 
-                                           String(clControlAlgorithmP.feedInDcCurrent(), 0) + "A");
+      atsLcdScreenG[1].aclLine[1] = String(" " + String(clControlAlgorithmP.feedInTargetPower(), 0) + " Wh = " +
+                                           String(clControlAlgorithmP.feedInTargetDcVoltage(), 0) + "V +" + 
+                                           String(clControlAlgorithmP.feedInTargetDcCurrent(), 0) + "A");
 
       atsLcdScreenG[2].aclLine[0] = String("Feed-in meas. values:");
-      atsLcdScreenG[2].aclLine[1] = String(" " + String(clControlAlgorithmP.feedInPower(), 0) + " Wh = " +
-                                           String(clControlAlgorithmP.feedInDcVoltage(), 0) + "V +" + 
-                                           String(clControlAlgorithmP.feedInDcCurrent(), 0) + "A");
+      atsLcdScreenG[2].aclLine[1] = String(" " + String(clControlAlgorithmP.feedInTargetPower(), 0) + " Wh = " +
+                                           String(clControlAlgorithmP.feedInTargetDcVoltage(), 0) + "V +" + 
+                                           String(clControlAlgorithmP.feedInTargetDcCurrent(), 0) + "A");
 
       _lcd.setScreen(&atsLcdScreenG[0], 3);
       
