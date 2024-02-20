@@ -233,9 +233,6 @@ void PvzLcd::header(void)
 //--------------------------------------------------------------------------------------------------------------------//
 void PvzLcd::init(String clFwVersionV)
 {
-  btConsumptionPowerIsValidP = false;
-  ftConsumptionPowerP = 0.0;
-  ftFeedInPowerP = 0.0;
   clTimeP = "";
   clVersionP = clFwVersionV;
 
@@ -260,8 +257,6 @@ void PvzLcd::middle(void)
   static int32_t slScreenNumberS = 0;
   int32_t slStartT;
   int32_t slStopT;
-  // u8g2.setCursor(0, 55);
-  // u8g2.print("A");
 
   //---------------------------------------------------------------------------------------------------
   // show all screens in the middle alternatively
@@ -273,19 +268,12 @@ void PvzLcd::middle(void)
 
     if (slDelayTimeS > 0)
     {
-      Serial.print("Update middle ....");
       slDelayTimeS--;
 
       u8g2.setCursor(0, 16);
-      clStringT = "Cons power: ";
-      clStringT += String(ftConsumptionPowerP);
-      clStringT += " Wh";
       u8g2.print(pclScreenP[slScreenNumberS].aclLine[0]);
 
       u8g2.setCursor(0, 16 + 12);
-      clStringT = "Feed-In: ";
-      clStringT += String(ftFeedInPowerP);
-      clStringT += " Wh";
       u8g2.print(pclScreenP[slScreenNumberS].aclLine[1]);
 
       u8g2.setCursor(0, 16 + 12 + 12);

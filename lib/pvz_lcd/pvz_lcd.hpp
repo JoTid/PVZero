@@ -105,9 +105,6 @@ private:
 
   String aclWarnLinesP[3];
 
-  bool  btConsumptionPowerIsValidP;
-  float ftConsumptionPowerP;
-  float ftFeedInPowerP;
   String clTimeP;
   String clVersionP;
 
