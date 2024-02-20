@@ -29,11 +29,16 @@ namespace EWC {
   class Time;
 };
 
+//--------------------------------------------------------------------------------------------------------- 
+// global classes
+//
+class PvzLcd;
+
 namespace PVZ {
 class PVZeroClass;
 class Config;
 class Shelly3emConnector;
-class LCD;
+
 
 class InterfaceData {
   friend PVZeroClass;
@@ -47,7 +52,7 @@ class InterfaceData {
     Config& config() { return *_config; }
     EWC::ConfigServer& ewcServer() { return *_ewcServer; }
     EWC::Mail &mail() { return *_ewcMail; }
-    LCD& lcd() { return *_lcd; }
+    PvzLcd &lcd() { return *_lcd; }
 
   private:
     PVZeroClass* _pvz;
@@ -56,7 +61,7 @@ class InterfaceData {
     Shelly3emConnector *_shelly3emConnector;
     EWC::ConfigServer* _ewcServer;
     EWC::Mail *_ewcMail;
-    LCD* _lcd;
+    PvzLcd* _lcd;
 };
 
 class PZI {

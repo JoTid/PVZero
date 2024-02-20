@@ -2,10 +2,6 @@
 #include <ewcInterface.h>
 #include "pvzero_class.h"
 
-#include <U8g2lib.h>
-#include <Wire.h>
-#include "lcd.hpp"
-
 using namespace EWC;
 using namespace PVZ;
 
@@ -33,18 +29,13 @@ void setup() {
    Serial.begin(115200); // Setup serial object and define transmission speed
    Serial.println("Starting setup...");
    
-   //--------------------------------------------------------------------------------------------------- 
-   // initialise the LCD and trigger first display
-   //
-   PZI::get().lcd().init();
-   PZI::get().lcd().process();
-
    //---------------------------------------------------------------------------------------------------
-   // initialise the LCD
+   // 
    //
    Serial.println();
    Serial.print("ESP heap: ");
    Serial.println(ESP.getFreeHeap());
+
    //---------------------------------------------------------------------------------------------------
    // initialise EspWebConfig
    //
@@ -52,6 +43,7 @@ void setup() {
    EWC::I::get().config().paramAPName = String("pvz-") + EWC::I::get().config().getChipId();
    EWC::I::get().server().setBrand("PVZero", FRIMWARE_VERSION);
    EWC::I::get().led().enable(true, LED1_PIN, HIGH);
+
    //---------------------------------------------------------------------------------------------------
    // initialise PVZero
    //
@@ -79,8 +71,6 @@ void setup() {
 //                                                                                                                    //
 //--------------------------------------------------------------------------------------------------------------------// 
 void loop() {
-   static uint32_t ulLedTimeS = millis();
-
    EWC::I::get().server().loop();
    if (WiFi.status() == WL_CONNECTED)
    {
@@ -88,7 +78,6 @@ void loop() {
       {
         I::get().logger() << "connected, " << PZI::get().time().str() << endl;
         onceAfterConnect = true;
-        PZI::get().lcd().ok();
       }
    } else {
       // TODO: test if we should reinit after reconnect?
@@ -96,9 +85,4 @@ void loop() {
    }
 
    pvz.loop();
-
-   //--------------------------------------------------------------------------------------------------- 
-   // Trigger the application LCD
-   //
-   PZI::get().lcd().process();
 }
