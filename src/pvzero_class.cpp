@@ -26,6 +26,7 @@ limitations under the License.
 #include "pvzero_class.h"
 #include "pvzero_interface.h"
 
+
 using namespace EWC;
 using namespace PVZ;
 
@@ -34,6 +35,8 @@ using namespace PVZ;
 #else
 #define MY_SHELLY_PIN 6
 #endif
+
+PvzLcd::Screen_ts atsLcdScreenG[5]; // make screen of LCD available for whole application 
 
 PVZeroClass::PVZeroClass()
 :   
@@ -55,6 +58,12 @@ PVZeroClass::~PVZeroClass()
 
 void PVZeroClass::setup()
 {
+     //--------------------------------------------------------------------------------------------------- 
+   // initialise the LCD and trigger first display
+   //
+   _lcd.init(FRIMWARE_VERSION);
+   _lcd.process();
+
     EWC::I::get().configFS().addConfig(_ewcUpdater);
     EWC::I::get().configFS().addConfig(_ewcMail);
     EWC::I::get().configFS().addConfig(_ewcTime);
@@ -82,39 +91,147 @@ void PVZeroClass::setup()
     _tsMeasLoopStart = millis();
     _shelly3emConnector.setCallbackState(std::bind(&PVZeroClass::_onTotalWatt, this, std::placeholders::_1, std::placeholders::_2));
     EWC::I::get().logger() << F("Setup ok") << endl;
+
+
+  //--------------------------------------------------------------------------------------------------- 
+  // setup the control algorithm
+  // 
+  clControlAlgorithmP.init();
+
 }
+
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------// 
+void PVZeroClass::processControlAlgorithm(void)
+{
+  //--------------------------------------------------------------------------------------------------- 
+  // collect and provide data to the control algorithm
+  // 
+  if (_shelly3emConnector.isValid())
+  {
+    clControlAlgorithmP.setConsumptionPower(_shelly3emConnector.consumptionPower());
+  } else 
+  {
+    //------------------------------------------------------------------------------------------- 
+    // \todo decide what to do, if the no consumption power is not available
+    //
+    // Set the power to 0 so that the current is also limited to 0.
+    clControlAlgorithmP.setConsumptionPower(0.0);
+  }
+
+  // _lcd.updateConsumptionPower(_shelly3emConnector.consumptionPower()-700.0, _shelly3emConnector.isValid());
+  
+
+  //--------------------------------------------------------------------------------------------------- 
+  // finally trigger the processing of data
+  // 
+  clControlAlgorithmP.process();
+
+  // lcd update? 
+  // _lcd.updateFeedInPower(clControlAlgorithmP.feedInPower());
+ 
+}
+
 
 void PVZeroClass::loop()
 {
-    unsigned long ts_now = millis();
-    _taster.loop();
-    _ewcMail.loop();
-    _ewcUpdater.loop();
-    // we perform the measurement only once per second
-    if (ts_now - _tsMeasLoopStart < 1000) {
-        return;
-    }
+  String clStringT;
+  PvzLcd::WifiConfig_ts tsWifiT;
+
+  unsigned long ts_now = millis();
+  _taster.loop();
+  _ewcMail.loop();
+  _ewcUpdater.loop();
+
+  //--------------------------------------------------------------------------------------------------- 
+  // we perform the measurement only once per second
+  //
+  if (ts_now - _tsMeasLoopStart > 1000) {
     _tsMeasLoopStart = ts_now;
-    if (PZI::get().ewcServer().isConnected()) {
-        if (!_timePrinted)
+    if (PZI::get().ewcServer().isConnected())
+    {
+      if (!_timePrinted)
+      {
+        // TODO update ntp time not only at start
+        I::get().logger() << "Check for NTP..." << endl;
+        if (_ewcTime.timeAvailable())
         {
-            // TODO update ntp time not only at start
-            I::get().logger() << "Check for NTP..." << endl;
-            if (_ewcTime.timeAvailable())
-            {
-                _timePrinted = true;
-                // print current time
-                I::get().logger() << "Current time:" << _ewcTime.str() << endl;
-                // or current time in seconds
-                I::get().logger() << "  as seconds:" << _ewcTime.currentTime() << endl;
-            }
+          _timePrinted = true;
+          // print current time
+          I::get().logger() << "Current time:" << _ewcTime.str() << endl;
+          // or current time in seconds
+          I::get().logger() << "  as seconds:" << _ewcTime.currentTime() << endl;
+
+          _lcd.updateTime(_ewcTime.str());
         }
-        _shelly3emConnector.loop();
-    } else {
-        // TODO: check how to wake up
-        EWC::I::get().logger() << F("Reconnect to ") << WiFi.SSID() << endl;
-        WiFi.reconnect();
+      }
+      _shelly3emConnector.loop();
     }
+    else
+    {
+      // TODO: check how to wake up
+      EWC::I::get().logger() << F("Reconnect to ") << WiFi.SSID() << endl;
+      WiFi.reconnect();
+    }
+  }
+
+  //--------------------------------------------------------------------------------------------------- 
+  // process algorithm
+  // 
+  processControlAlgorithm();
+
+  //--------------------------------------------------------------------------------------------------- 
+  // Prepare informations for the screen
+  // 
+  if (WiFi.isConnected() == true)
+  {
+    tsWifiT.clIp = WiFi.localIP();
+    tsWifiT.clSsid = WiFi.SSID();  
+
+    _lcd.updateWifiInfo(&tsWifiT);
+    _lcd.updateWifiRssi(WiFi.RSSI());
+
+    if ((PZI::get().shelly3emConnector().isValid()))
+    {
+      atsLcdScreenG[0].aclLine[0] = String("Cons. power: " + String(PZI::get().shelly3emConnector().consumptionPower()) + "Wh");
+      atsLcdScreenG[0].aclLine[1] = String("Feed-in set: " + String(clControlAlgorithmP.feedInPower(), 0) + " Wh");
+      atsLcdScreenG[0].aclLine[2] = String("Feed-in is: " + String(clControlAlgorithmP.feedInPower(), 0) + " Wh");;
+
+      atsLcdScreenG[1].aclLine[0] = String("Feed-in target values:");
+      atsLcdScreenG[1].aclLine[1] = String(" " + String(clControlAlgorithmP.feedInPower(), 0) + " Wh = " +
+                                           String(clControlAlgorithmP.feedInDcVoltage(), 0) + "V +" + 
+                                           String(clControlAlgorithmP.feedInDcCurrent(), 0) + "A");
+
+      atsLcdScreenG[2].aclLine[0] = String("Feed-in meas. values:");
+      atsLcdScreenG[2].aclLine[1] = String(" " + String(clControlAlgorithmP.feedInPower(), 0) + " Wh = " +
+                                           String(clControlAlgorithmP.feedInDcVoltage(), 0) + "V +" + 
+                                           String(clControlAlgorithmP.feedInDcCurrent(), 0) + "A");
+
+      _lcd.setScreen(&atsLcdScreenG[0], 3);
+      
+      _lcd.ok();
+    }
+      //---------------------------------------------------------------------------
+      // print warning with connection failure to the power meter
+      //
+      else
+      {
+        _lcd.warning("Request ERROR at 3EM", "Check URL:",PZI::get().config().shelly3emAddr);
+      }
+  }
+  else
+  {
+     _lcd.updateTime("");
+     _lcd.updateWifiRssi(0);
+  }
+
+  //--------------------------------------------------------------------------------------------------- 
+  // Trigger the application LCD
+  //
+  _lcd.process();
+
 }
 
 void PVZeroClass::_onPVZeroConfig(WebServer* webserver)

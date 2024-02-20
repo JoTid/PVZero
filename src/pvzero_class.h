@@ -31,14 +31,15 @@ limitations under the License.
 #include <extensions/ewcMqtt.h>
 #include "config.h"
 #include "shelly_3em_connector.h"
-// #include "sleeper.h"
+#include "pvz_ca.hpp"
+#include "pvz_lcd.hpp"
+#include "DPM8600.h"
 
 #include "taster.h"
-#include "lcd.hpp"
 
 namespace PVZ {
 
-#define FRIMWARE_VERSION "1.0.0"
+#define FRIMWARE_VERSION "0.80.00"
 
 class PVZeroClass {
 
@@ -65,12 +66,14 @@ protected:
     EWC::Mail _ewcMail;
     Shelly3emConnector _shelly3emConnector;
     Taster _taster;
-    LCD _lcd;
+    PvzCa clControlAlgorithmP;
+    PvzLcd _lcd;   
     void _onPVZeroConfig(WebServer* webserver);
     void _onPVZeroSave(WebServer* webserver);
     void _onPVZeroState(WebServer* webserver);
     void _onPVZeroCheck(WebServer* webserver);
     void _onTotalWatt(bool state, int totalWatt);
+    void processControlAlgorithm(void);
 };
 }; // namespace
 
