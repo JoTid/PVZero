@@ -146,7 +146,7 @@ void PVZeroClass::loop()
   //--------------------------------------------------------------------------------------------------- 
   // we perform the measurement only once per second
   //
-  if (ts_now - _tsMeasLoopStart > 1000) {
+  if ((ts_now - _tsMeasLoopStart) > 1000) {
     _tsMeasLoopStart = ts_now;
     if (PZI::get().ewcServer().isConnected())
     {
@@ -221,8 +221,30 @@ void PVZeroClass::loop()
   }
   else
   {
-     _lcd.updateTime("");
-     _lcd.updateWifiRssi(0);
+    _lcd.updateTime("");
+    _lcd.updateWifiRssi(0);
+
+    if (I::get().config().paramWifiDisabled)
+    {
+      _lcd.busy("Connect to AP:", "Name of AP");
+    } 
+    else
+    {
+      switch (WiFi.status())
+      {
+        case WL_NO_SHIELD: clStringT = "NO_SHIELD"; break;
+        case WL_IDLE_STATUS: clStringT = "IDLE_STATUS"; break;
+        case WL_NO_SSID_AVAIL: clStringT = "NO_SSID_AVAIL"; break;
+        case WL_SCAN_COMPLETED: clStringT = "SCAN_COMPLETED"; break;
+        case WL_CONNECTED: clStringT = "CONNECTED"; break;
+        case WL_CONNECT_FAILED: clStringT = "CONNECT_FAILED"; break;
+        case WL_CONNECTION_LOST: clStringT = "CONNECTION_LOST"; break;
+        case WL_DISCONNECTED: clStringT = "DISCONNECTED"; break;
+        default : clStringT = "WL: " + String(WiFi.status()); break;
+      }
+
+      _lcd.warning("WiFi connection lost:", String("WiFi status: " + String(WiFi.status())), clStringT);
+    }
   }
 
   //--------------------------------------------------------------------------------------------------- 
