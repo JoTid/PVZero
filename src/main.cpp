@@ -54,13 +54,10 @@ void setup() {
    if (I::get().config().paramWifiDisabled)
    {
       Serial.println("STANDALONE");
-      PZI::get().lcd().warning("Configuration required", "Connect to AP:", "- Name of AP -");
    }
    else
    {
-      Serial.print("TIMEOUT_WIFI");
-      Serial.println(WiFi.SSID());
-      PZI::get().lcd().busy("Connecting to SSID:", "unknown");
+      Serial.println("TIMEOUT_WIFI");
    }
    Serial.println("initialized");
 }
