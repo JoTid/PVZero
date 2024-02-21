@@ -16,7 +16,7 @@
 **                                                                                                                    **
 \*--------------------------------------------------------------------------------------------------------------------*/ 
 #include <Arduino.h>
-
+#include <mov_av_filter.hpp>
 
 /*--------------------------------------------------------------------------------------------------------------------*\
 ** Declaration                                                                                                        **
@@ -35,7 +35,7 @@ private:
   float ftFeedInActualDcCurrentP;
   float ftFeedInActualDcVoltageP;
 
-  float ftFilterOrderP;
+  uint8_t ubFilterOrderP;
   
   float aftConsumptionPowerLimitP[2];       // index 0 contains min. value and index 1 contains max. value 
   float aftFeedInTargetDcCurrentLimitP[2];  // index 0 contains min. value and index 1 contains max. value 
@@ -43,6 +43,8 @@ private:
   void CalculateGainOffset(void);
   float ftCurrentGainP;
   float ftCurrentOffsetP;
+
+  MovAvFilter clConsPowerFilterP;
 
 public:
   PvzCa(void);
@@ -100,6 +102,7 @@ public:
    * @brief update the Consumption Power 
    * 
    * @param[in] ftPowerV actual consumption power value given in [Wh]
+   * @return filtered value
    * 
    * Accept all values and limit them corresponding to the limits provided by the 
    * \c #updateConsumptionPowerLimits() method. 
@@ -107,7 +110,7 @@ public:
    * 
    * The currently set and modified value can be queried using the \c #consumptionPower() method.
    */
-  void updateConsumptionPower(float ftPowerV);
+  float updateConsumptionPower(float ftPowerV);
 
 
   //--------------------------------------------------------------------------------------------------- 
@@ -150,7 +153,7 @@ public:
   }
 
   uint8_t filterOrder(void) {
-    return (uint8_t)ftFilterOrderP;
+    return ubFilterOrderP;
   }
 
 };

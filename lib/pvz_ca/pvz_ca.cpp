@@ -114,7 +114,8 @@ void PvzCa::init(void)
   ftFeedInTargetDcCurrentP = 0.0;
   ftFeedInTargetDcVoltageP = 0.0;
 
-  ftFilterOrderP = 3.0;
+  ubFilterOrderP = 1;
+  clConsPowerFilterP.init(ubFilterOrderP);
 
   aftFeedInTargetDcCurrentLimitP[0] = 0.0;
   aftFeedInTargetDcCurrentLimitP[1] = 0.0;
@@ -170,9 +171,10 @@ void PvzCa::process(void)
 //                                                                                                                    //
 //                                                                                                                    //
 //--------------------------------------------------------------------------------------------------------------------// 
-void PvzCa::updateConsumptionPower(float ftPowerV)
+float PvzCa::updateConsumptionPower(float ftPowerV)
 {
-  ftConsumptionPowerP = ftPowerV;
+  ftConsumptionPowerP = clConsPowerFilterP.process(ftPowerV);
+  return ftConsumptionPowerP;
 }
 
 
@@ -246,7 +248,8 @@ int32_t PvzCa::setFilterOrder(uint8_t ubFilterOrderV)
 
   if ((ubFilterOrderV > 0) && (ubFilterOrderV <= 40))
   {
-    ftFilterOrderP = (float) ubFilterOrderV;
+    ubFilterOrderP = ubFilterOrderV;
+    clConsPowerFilterP.init(ubFilterOrderP);
     slReturnT = 0;
   }
 
