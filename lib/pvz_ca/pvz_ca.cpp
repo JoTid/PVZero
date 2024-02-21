@@ -139,11 +139,6 @@ void PvzCa::process(void)
   //
   ftCalcT = ftConsumptionPowerP + ftFeedInActualPowerP;
 
-  Serial.print("PvzCa::process:CPower=");
-  Serial.println(ftConsumptionPowerP);
-  Serial.print("PvzCa::process:FIAPower=");
-  Serial.println(ftFeedInActualPowerP);
-
   //---------------------------------------------------------------------------------------------------
   // scale values y = m * x + b
   //
@@ -168,10 +163,6 @@ void PvzCa::process(void)
   ftFeedInTargetDcCurrentP = ftCalcT;
   ftCalcT = ftFeedInTargetDcVoltageP * ftFeedInTargetDcCurrentP;
   ftFeedInTargetPowerP = ftCalcT;
-
-
-  Serial.print("PvzCa::process:FIPower NEW=");
-  Serial.println(ftFeedInTargetPowerP);
 }
 
 
