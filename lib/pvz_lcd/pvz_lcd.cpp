@@ -279,13 +279,18 @@ void PvzLcd::middle(void)
       u8g2.setCursor(0, 16 + 12 + 12);
       u8g2.print(pclScreenP[slScreenNumberS].aclLine[2]);
 
-      // display screen number as line 
-      // calculate start and stop of line depending on screen number
-      // length of a line : 128 / slScreenCountP
-      // start of a line : slScreenNumber
-      slStartT = (128 / slScreenCountP) * slScreenNumberS;
-      slStopT = slStartT + (128 / slScreenCountP);
-      u8g2.drawLine(slStartT, 52, slStopT, 52);
+      //----------------------------------------------------------------------------------- 
+      // display screen number as line only if there are more than 1 screen
+      //
+      if (slScreenCountP > 1)
+      {
+        // calculate start and stop of line depending on screen number
+        // length of a line : 128 / slScreenCountP
+        // start of a line : slScreenNumber
+        slStartT = (128 / slScreenCountP) * slScreenNumberS;
+        slStopT = slStartT + (128 / slScreenCountP);
+        u8g2.drawLine(slStartT, 52, slStopT, 52);
+      }
       u8g2.drawLine(0, 53, 128, 53);
     }
 
