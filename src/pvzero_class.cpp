@@ -49,8 +49,7 @@ PVZeroClass::PVZeroClass()
     PZI::get()._shelly3emConnector = &_shelly3emConnector;
     PZI::get()._ewcMail = &_ewcMail;
     PZI::get()._lcd = &_lcd;
-    _timePrinted = false;
-}
+ }
 
 PVZeroClass::~PVZeroClass()
 {
@@ -144,33 +143,50 @@ void PVZeroClass::loop()
   _ewcUpdater.loop();
 
   //--------------------------------------------------------------------------------------------------- 
-  // we perform the measurement only once per second
+  // Trigger 3EM loop and NTP time each second
   //
   if ((ts_now - _tsMeasLoopStart) > 1000) {
     _tsMeasLoopStart = ts_now;
+
+    //------------------------------------------------------------------------------------------- 
+    // proceed only if WiFi connection is established
+    //
     if (PZI::get().ewcServer().isConnected())
     {
-      if (!_timePrinted)
+      //----------------------------------------------------------------------------------- 
+      // update time if available
+      //
+      if (_ewcTime.timeAvailable())
       {
-        // TODO update ntp time not only at start
-        I::get().logger() << "Check for NTP..." << endl;
-        if (_ewcTime.timeAvailable())
-        {
-          _timePrinted = true;
-          // print current time
-          I::get().logger() << "Current time:" << _ewcTime.str() << endl;
-          // or current time in seconds
-          I::get().logger() << "  as seconds:" << _ewcTime.currentTime() << endl;
+        //--------------------------------------------------------------------------- 
+        // log current time und update it on LCD
+        //
+        I::get().logger() << String(millis()) << ": NTP time " << _ewcTime.str() << endl;
 
-          _lcd.updateTime(_ewcTime.str());
-        }
+        _lcd.updateTime(_ewcTime.str());
+
+      } 
+      //--------------------------------------------------------------------------- 
+      // time is not available, clear it on LCD
+      // 
+      else {
+        _lcd.updateTime("");
       }
+
+      //----------------------------------------------------------------------------------- 
+      // trigger Shell 3EM loop 
+      //
       _shelly3emConnector.loop();
     }
-    else
-    {
-      // TODO: check how to wake up
-      EWC::I::get().logger() << F("Reconnect to ") << WiFi.SSID() << endl;
+
+    //------------------------------------------------------------------------------------------- 
+    // WiFi is disconnected try to reconnect 
+    //
+    else {
+      //----------------------------------------------------------------------------------- 
+      // TODO: Reconnect does not work reliably, needs to be optimized
+      // 
+      EWC::I::get().logger() << String(millis()) << F(": Reconnect to ") << WiFi.SSID() << endl;
       WiFi.reconnect();
     }
   }
@@ -181,7 +197,7 @@ void PVZeroClass::loop()
   processControlAlgorithm();
 
   //--------------------------------------------------------------------------------------------------- 
-  // Prepare informations for the screen
+  // Prepare informations for the LCD screens, when WiFi is connected
   // 
   if (WiFi.isConnected() == true)
   {
@@ -208,7 +224,6 @@ void PVZeroClass::loop()
                                            String(clControlAlgorithmP.feedInTargetDcCurrent(), 0) + "A");
 
       _lcd.setScreen(&atsLcdScreenG[0], 3);
-      
       _lcd.ok();
     }
       //---------------------------------------------------------------------------
@@ -219,6 +234,10 @@ void PVZeroClass::loop()
         _lcd.warning("Request ERROR at 3EM", "Check URL:",PZI::get().config().shelly3emAddr);
       }
   }
+
+  //--------------------------------------------------------------------------------------------------- 
+  // Show failure info, when WiFi is not connected
+  // 
   else
   {
     _lcd.updateTime("");
@@ -248,7 +267,7 @@ void PVZeroClass::loop()
   }
 
   //--------------------------------------------------------------------------------------------------- 
-  // Trigger the application LCD
+  // Trigger the LCD application
   //
   _lcd.process();
 

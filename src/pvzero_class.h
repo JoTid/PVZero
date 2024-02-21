@@ -56,7 +56,6 @@ protected:
     unsigned long _tsStartWaitForConnection = 0;
     unsigned long _tsMeasLoopStart = 0;
     unsigned long _maxPumpTime = 0;
-    bool _timePrinted;
     String _sleepInfoStr;
     Config _config;
     EWC::ConfigServer _ewcServer;
