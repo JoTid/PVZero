@@ -121,13 +121,13 @@ void PvzLcd::footer(void)
   //---------------------------------------------------------------------------------------------------
   // print the left side of line
   //
-  u8g2.setCursor(0, 55);
+  u8g2.setCursor(0, 56);
   u8g2.print(clStringLeftT);
 
   //---------------------------------------------------------------------------------------------------
   // print the right side of line
   //
-  u8g2.setCursor(128 - u8g2.getStrWidth(clStringRightT.c_str()), 55);
+  u8g2.setCursor(128 - u8g2.getStrWidth(clStringRightT.c_str()), 56);
   u8g2.print(clStringRightT);
 }
 
@@ -286,7 +286,7 @@ void PvzLcd::middle(void)
       slStartT = (128 / slScreenCountP) * slScreenNumberS;
       slStopT = slStartT + (128 / slScreenCountP);
       u8g2.drawLine(slStartT, 52, slStopT, 52);
-
+      u8g2.drawLine(0, 53, 128, 53);
     }
 
     // switch to next screen that will be display at next cycle
@@ -379,11 +379,11 @@ void PvzLcd::process(void)
     {
       warnScreen();
       u8g2.drawLine(0, 52, 128, 52);
-      u8g2.setCursor(4, 16);
+      u8g2.setCursor(0, 16);
       u8g2.print(aclWarnLinesP[0]);
-      u8g2.setCursor(4, 16 + 12);
+      u8g2.setCursor(0, 16 + 12);
       u8g2.print(aclWarnLinesP[1]);
-      u8g2.setCursor(4, 16 + 12 + 12);
+      u8g2.setCursor(0, 16 + 12 + 12);
       u8g2.print(aclWarnLinesP[2]);
     } 
 
@@ -416,8 +416,6 @@ void PvzLcd::setScreen(Screen_ts *pclScreenV, int32_t slCountV)
 {
   if (pclScreenV != NULL)
   {
-    Serial.print("Set new Screen ....");
-    Serial.println(slCountV);
     pclScreenP = pclScreenV;
     slScreenCountP = slCountV;
   }
