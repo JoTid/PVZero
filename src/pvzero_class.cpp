@@ -178,17 +178,6 @@ void PVZeroClass::loop()
       //
       _shelly3emConnector.loop();
     }
-
-    //------------------------------------------------------------------------------------------- 
-    // WiFi is disconnected try to reconnect 
-    //
-    else {
-      //----------------------------------------------------------------------------------- 
-      // TODO: Reconnect does not work reliably, needs to be optimized
-      // 
-      EWC::I::get().logger() << String(millis()) << F(": Reconnect to ") << WiFi.SSID() << endl;
-      WiFi.reconnect();
-    }
   }
 
   //--------------------------------------------------------------------------------------------------- 
