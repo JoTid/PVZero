@@ -3,11 +3,15 @@
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
   "editor.formatOnSaveMode": "file",
-  "editor.tabSize": 3,
+  "editor.tabSize": 2,
   "editor.detectIndentation": false,
   "editor.insertSpaces": true,
   "[cpp]": {
     "editor.defaultFormatter": "ms-vscode.cpptools"
   },
-  "extensions.ignoreRecommendations": false
+  "extensions.ignoreRecommendations": false,
+  "workbench.colorCustomizations": {
+    "activityBar.activeBackground": "#064069",
+    "statusBar.background": "#064069"
+  }
 }
