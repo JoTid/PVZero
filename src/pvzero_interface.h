@@ -23,54 +23,57 @@ limitations under the License.
 
 #include <Arduino.h>
 
-namespace EWC {
+namespace EWC
+{
   class ConfigServer;
   class Mail;
   class Time;
 };
 
-//--------------------------------------------------------------------------------------------------------- 
+//---------------------------------------------------------------------------------------------------------
 // global classes
 //
 class PvzLcd;
 
-namespace PVZ {
-class PVZeroClass;
-class Config;
-class Shelly3emConnector;
+namespace PVZ
+{
+  class PVZeroClass;
+  class Config;
+  class Shelly3emConnector;
 
-
-class InterfaceData {
-  friend PVZeroClass;
+  class InterfaceData
+  {
+    friend PVZeroClass;
 
   public:
     InterfaceData();
 
-    PVZeroClass& pvz() { return *_pvz; }
-    Shelly3emConnector& shelly3emConnector() { return *_shelly3emConnector; }
-    EWC::Time& time() { return *_time; }
-    Config& config() { return *_config; }
-    EWC::ConfigServer& ewcServer() { return *_ewcServer; }
+    PVZeroClass &pvz() { return *_pvz; }
+    Shelly3emConnector &shelly3emConnector() { return *_shelly3emConnector; }
+    EWC::Time &time() { return *_time; }
+    Config &config() { return *_config; }
+    EWC::ConfigServer &ewcServer() { return *_ewcServer; }
     EWC::Mail &mail() { return *_ewcMail; }
     PvzLcd &lcd() { return *_lcd; }
 
   private:
-    PVZeroClass* _pvz;
-    EWC::Time* _time;
-    Config* _config;
+    PVZeroClass *_pvz;
+    EWC::Time *_time;
+    Config *_config;
     Shelly3emConnector *_shelly3emConnector;
-    EWC::ConfigServer* _ewcServer;
+    EWC::ConfigServer *_ewcServer;
     EWC::Mail *_ewcMail;
-    PvzLcd* _lcd;
-};
+    PvzLcd *_lcd;
+  };
 
-class PZI {
+  class PZI
+  {
   public:
-    static PVZ::InterfaceData& get();
+    static PVZ::InterfaceData &get();
 
   private:
     static PVZ::InterfaceData _interface;
-};
+  };
 
 }
 

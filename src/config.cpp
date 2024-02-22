@@ -24,7 +24,6 @@ limitations under the License.
 #include "config.h"
 #include "taster.h"
 
-
 using namespace PVZ;
 
 Config::Config() : EWC::ConfigInterface("pvzero")
@@ -35,62 +34,67 @@ Config::~Config()
 {
 }
 
-void Config::setup(JsonDocument& config, bool resetConfig)
+void Config::setup(JsonDocument &config, bool resetConfig)
 {
-    _initParameter();
-    fromJson(config);
+  _initParameter();
+  fromJson(config);
 }
 
-void Config::fillJson(JsonDocument& config)
+void Config::fillJson(JsonDocument &config)
 {
-    config["pvzero"]["name"] = _name;
-    config["pvzero"]["version"] = EWC::I::get().server().version();
-    config["pvzero"]["check_interval"] = checkInterval;
-    config["pvzero"]["taster_func"] = tasterFunc;
-    config["pvzero"]["shelly3emAddr"] = shelly3emAddr;
-    config["pvzero"]["voltage"] = voltage;
-    config["pvzero"]["max_amperage"] = maxAmperage;
-    config["pvzero"]["lcd_enabled"] = lcdEnabled;
+  config["pvzero"]["name"] = _name;
+  config["pvzero"]["version"] = EWC::I::get().server().version();
+  config["pvzero"]["check_interval"] = checkInterval;
+  config["pvzero"]["taster_func"] = tasterFunc;
+  config["pvzero"]["shelly3emAddr"] = shelly3emAddr;
+  config["pvzero"]["voltage"] = voltage;
+  config["pvzero"]["max_amperage"] = maxAmperage;
+  config["pvzero"]["lcd_enabled"] = lcdEnabled;
 }
 
-void Config::fromJson(JsonDocument& config)
+void Config::fromJson(JsonDocument &config)
 {
-    JsonVariant jv = config["pvzero"]["check_interval"];
-    if (!jv.isNull()) {
-        checkInterval = jv.as<int>();
-    }
-    jv = config["pvzero"]["taster_func"];
-    if (!jv.isNull()) {
-        tasterFunc = jv.as<unsigned char>();
-    }
-    jv = config["pvzero"]["shelly3emAddr"];
-    if (!jv.isNull()) {
-        shelly3emAddr = jv.as<String>();
-    }
-    jv = config["pvzero"]["voltage"];
-    if (!jv.isNull()) {
-        voltage = jv.as<int>();
-    }
-    jv = config["pvzero"]["max_amperage"];
-    if (!jv.isNull()) {
-        maxAmperage = jv.as<int>();
-    }
-    jv = config["pvzero"]["lcd_enabled"];
-    if (!jv.isNull())
-    {
-        lcdEnabled = jv.as<bool>();
-    }
+  JsonVariant jv = config["pvzero"]["check_interval"];
+  if (!jv.isNull())
+  {
+    checkInterval = jv.as<int>();
+  }
+  jv = config["pvzero"]["taster_func"];
+  if (!jv.isNull())
+  {
+    tasterFunc = jv.as<unsigned char>();
+  }
+  jv = config["pvzero"]["shelly3emAddr"];
+  if (!jv.isNull())
+  {
+    shelly3emAddr = jv.as<String>();
+  }
+  jv = config["pvzero"]["voltage"];
+  if (!jv.isNull())
+  {
+    voltage = jv.as<int>();
+  }
+  jv = config["pvzero"]["max_amperage"];
+  if (!jv.isNull())
+  {
+    maxAmperage = jv.as<int>();
+  }
+  jv = config["pvzero"]["lcd_enabled"];
+  if (!jv.isNull())
+  {
+    lcdEnabled = jv.as<bool>();
+  }
 }
 
 void Config::_initParameter()
 {
-    _name = "pvzero-" + EWC::I::get().config().getChipId();
-    checkInterval = 1;
-    //deep_sleep("deep-sleep", "Deep sleep"),
-    shelly3emAddr = "";
-    // taster
-    tasterFunc = TASTER_CHECK_NOW;
-    voltage = 38;
-    maxAmperage = 10;
-    lcdEnabled = false;
+  _name = "pvzero-" + EWC::I::get().config().getChipId();
+  checkInterval = 1;
+  // deep_sleep("deep-sleep", "Deep sleep"),
+  shelly3emAddr = "";
+  // taster
+  tasterFunc = TASTER_CHECK_NOW;
+  voltage = 38;
+  maxAmperage = 10;
+  lcdEnabled = false;
 }

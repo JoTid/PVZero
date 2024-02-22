@@ -13,5 +13,6 @@
   "workbench.colorCustomizations": {
     "activityBar.activeBackground": "#064069",
     "statusBar.background": "#064069"
-  }
+  },
+  "cSpell.words": ["FPSTR", "Mqtt", "PROGMEM", "PVZERO", "RSSI"]
 }

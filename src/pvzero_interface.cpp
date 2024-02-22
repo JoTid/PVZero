@@ -22,12 +22,13 @@ limitations under the License.
 
 using namespace PVZ;
 
-InterfaceData PZI::_interface;  // need to define the static variable
+InterfaceData PZI::_interface; // need to define the static variable
 
 InterfaceData::InterfaceData()
 {
 }
 
-InterfaceData& PZI::get() {
+InterfaceData &PZI::get()
+{
   return _interface;
 }

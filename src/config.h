@@ -27,15 +27,17 @@ limitations under the License.
 #include "pvzero_interface.h"
 #include "defaults.h"
 
-namespace PVZ {
+namespace PVZ
+{
 
-class Config : public EWC::ConfigInterface {
-public:
+  class Config : public EWC::ConfigInterface
+  {
+  public:
     Config();
     ~Config();
-    void setup(JsonDocument& config, bool resetConfig=false);
-    void fillJson(JsonDocument& config);
-    void fromJson(JsonDocument& config);
+    void setup(JsonDocument &config, bool resetConfig = false);
+    void fillJson(JsonDocument &config);
+    void fromJson(JsonDocument &config);
     /** === parameter  === **/
     int checkInterval;
     String shelly3emAddr;
@@ -47,9 +49,9 @@ public:
     // taster configuration parameter
     uint8_t tasterFunc;
 
-protected:
+  protected:
     void _initParameter();
-};
+  };
 }; // namespace
 
 #endif

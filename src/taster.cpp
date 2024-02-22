@@ -20,22 +20,21 @@ limitations under the License.
 **************************************************************/
 #include "taster.h"
 #ifdef ESP8266
-    #include <ewcRTC.h>
+#include <ewcRTC.h>
 #endif
 #include <ewcLogger.h>
 #include "shelly_3em_connector.h"
 #include "config.h"
 
-
 using namespace EWC;
 using namespace PVZ;
 
-Taster::Taster(int pin) 
+Taster::Taster(int pin)
 {
-    _pin = pin;
-    _tsPressed = 0;
-    _pressDetected = false;
-    _function = TASTER_NONE;
+  _pin = pin;
+  _tsPressed = 0;
+  _pressDetected = false;
+  _function = TASTER_NONE;
 }
 
 Taster::~Taster()
@@ -44,37 +43,46 @@ Taster::~Taster()
 
 void Taster::setup(bool resetConfig)
 {
-    // pinMode(_pin, INPUT);
+  // pinMode(_pin, INPUT);
 }
 
 void Taster::loop()
 {
-    if (PZI::get().config().tasterFunc != TASTER_NONE) {
-        int value = digitalRead(_pin);
-        if (value > 0) {
-            // button pressed
-            if (_tsPressed == 0) {
-                // set timestamp for debounce
-                _tsPressed = millis();
-            } else if (millis() -_tsPressed > 50) {
-                _pressDetected = true;
-            }
-        } else {
-            // button released, reset timestamp
-            _tsPressed = 0;
-            if (_pressDetected) {
-                // execute action
-                switch (PZI::get().config().tasterFunc) {
-                case TASTER_CHECK_NOW:
-                    I::get().logger() << "[Taster] trigger check now" << endl;
-                    // PZI::get().shelly3emConnector().sleeper().wakeup();
-                    break;
-                default:
-                    I::get().logger() << "[Taster] undefined action: " << PZI::get().config().tasterFunc << endl;
-                    break;
-                }
-                _pressDetected = false;
-            }
-        }
+  if (PZI::get().config().tasterFunc != TASTER_NONE)
+  {
+    int value = digitalRead(_pin);
+    if (value > 0)
+    {
+      // button pressed
+      if (_tsPressed == 0)
+      {
+        // set timestamp for debounce
+        _tsPressed = millis();
+      }
+      else if (millis() - _tsPressed > 50)
+      {
+        _pressDetected = true;
+      }
     }
+    else
+    {
+      // button released, reset timestamp
+      _tsPressed = 0;
+      if (_pressDetected)
+      {
+        // execute action
+        switch (PZI::get().config().tasterFunc)
+        {
+        case TASTER_CHECK_NOW:
+          I::get().logger() << "[Taster] trigger check now" << endl;
+          // PZI::get().shelly3emConnector().sleeper().wakeup();
+          break;
+        default:
+          I::get().logger() << "[Taster] undefined action: " << PZI::get().config().tasterFunc << endl;
+          break;
+        }
+        _pressDetected = false;
+      }
+    }
+  }
 }

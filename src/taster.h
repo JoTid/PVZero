@@ -23,7 +23,8 @@ limitations under the License.
 
 #include <Arduino.h>
 
-namespace PVZ {
+namespace PVZ
+{
 
 #if defined(ESP8266)
 #define MY_TASTER_PIN D3
@@ -31,24 +32,26 @@ namespace PVZ {
 #define MY_TASTER_PIN 1
 #endif
 
-enum TasterFunctions {
+  enum TasterFunctions
+  {
     TASTER_NONE = 0,
     TASTER_CHECK_NOW = 1,
-};
+  };
 
-class Taster {
-public:
-    Taster(int pin=MY_TASTER_PIN);
+  class Taster
+  {
+  public:
+    Taster(int pin = MY_TASTER_PIN);
     ~Taster();
-    void setup(bool resetConfig=false);
+    void setup(bool resetConfig = false);
     void loop();
-    
-protected:
+
+  protected:
     int _pin;
     unsigned long _tsPressed;
     bool _pressDetected;
     uint8_t _function;
-};
+  };
 }; // namespace
 
 #endif

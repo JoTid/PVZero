@@ -23,17 +23,18 @@ limitations under the License.
 
 #include <Arduino.h>
 
+namespace PVZ
+{
 
-namespace PVZ {
+  // eine Stunde, da deepSleep max. 71 Minuten kann
+  const unsigned long MAX_DEEP_SLEEP_SEC = 3600;
 
-    // eine Stunde, da deepSleep max. 71 Minuten kann
-    const unsigned long MAX_DEEP_SLEEP_SEC = 3600;
-
-class Sleeper {
-public:
+  class Sleeper
+  {
+  public:
     Sleeper();
     ~Sleeper();
-    void setup(bool resetConfig=false);
+    void setup(bool resetConfig = false);
 
     /** Returns true if enabled by configuration or wifi is disabled. **/
     bool deepSleepEnabled();
@@ -45,13 +46,13 @@ public:
     time_t sleepDurationMs();
     void wakeup();
 
-protected:
+  protected:
 #ifdef ESP8266
     uint8_t _sleepTimeUtcAddress;
 #endif
     unsigned int _sleepTime;
     unsigned long _msSleepStart;
-};
+  };
 }; // namespace
 
 #endif

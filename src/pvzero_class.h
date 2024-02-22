@@ -9,7 +9,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-3.0
+  http://www.apache.org/licenses/LICENSE-3.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,21 +37,23 @@ limitations under the License.
 
 #include "taster.h"
 
-namespace PVZ {
+namespace PVZ
+{
 
 #define FRIMWARE_VERSION "0.80.00"
 
-class PVZeroClass {
+  class PVZeroClass
+  {
 
-public:
+  public:
     PVZeroClass();
     ~PVZeroClass();
     void setup();
     void loop();
 
-    Config& config() { return _config; }
+    Config &config() { return _config; }
 
-protected:
+  protected:
     unsigned long _tsStarted = 0;
     unsigned long _tsStartWaitForConnection = 0;
     unsigned long _tsMeasLoopStart = 0;
@@ -66,14 +68,14 @@ protected:
     Shelly3emConnector _shelly3emConnector;
     Taster _taster;
     PvzCa clControlAlgorithmP;
-    PvzLcd _lcd;   
-    void _onPVZeroConfig(WebServer* webserver);
-    void _onPVZeroSave(WebServer* webserver);
-    void _onPVZeroState(WebServer* webserver);
-    void _onPVZeroCheck(WebServer* webserver);
+    PvzLcd _lcd;
+    void _onPVZeroConfig(WebServer *webServer);
+    void _onPVZeroSave(WebServer *webServer);
+    void _onPVZeroState(WebServer *webServer);
+    void _onPVZeroCheck(WebServer *webServer);
     void _onTotalWatt(bool state, int totalWatt);
     void processControlAlgorithm(void);
-};
+  };
 }; // namespace
 
 #endif

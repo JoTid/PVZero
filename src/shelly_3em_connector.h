@@ -30,22 +30,25 @@ limitations under the License.
 #include <Arduino.h>
 #include "sleeper.h"
 
-namespace PVZ {
-    typedef std::function<void(bool, int)> SellyStateCallback;
+namespace PVZ
+{
+  typedef std::function<void(bool, int)> SellyStateCallback;
 
-class Shelly3emConnector {
-public:
-    enum State {
-        UNKNOWN,
-        SLEEP,
-        ON_CHECK,
-        DO_NOT_DISTURB
+  class Shelly3emConnector
+  {
+  public:
+    enum State
+    {
+      UNKNOWN,
+      SLEEP,
+      ON_CHECK,
+      DO_NOT_DISTURB
     };
     // Sleeper& sleeper() { return *_sleeper; }
-    bool mailStateChanged;  // use for state detection for e-mail send
-    Shelly3emConnector(int potPin=A0);
+    bool mailStateChanged; // use for state detection for e-mail send
+    Shelly3emConnector(int potPin = A0);
     ~Shelly3emConnector();
-    void setup(bool resetConfig=false);
+    void setup(bool resetConfig = false);
     void loop();
     void setCallbackState(SellyStateCallback callback) { _callbackState = callback; }
     String state2string(Shelly3emConnector::State state);
@@ -53,7 +56,7 @@ public:
     String infoSleepUntil() { return _sleepUntil; }
     int consumptionPower() { return _consumptionPower; }
     int feedInPower() { return _feedInPower; }
-    bool isValid() {return btIsValidP; }
+    bool isValid() { return btIsValidP; }
 
   protected:
     int _potPin;
@@ -76,7 +79,7 @@ public:
 
     void httpTask();
     static void startTaskImpl(void *);
-};
+  };
 }; // namespace
 
 #endif

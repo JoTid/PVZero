@@ -23,14 +23,15 @@ limitations under the License.
 
 #include <Arduino.h>
 
-namespace PVZ {
+namespace PVZ
+{
 
-const char HOME_URI[] = "/";
+  const char HOME_URI[] = "/";
 
-const unsigned long SECONDms = 1000;
-const unsigned long MINUTEms = SECONDms * 60;
-const unsigned long HOURms = MINUTEms * 60;
-const unsigned long HALF_HOURms = MINUTEms * 30;
+  const unsigned long SECONDms = 1000;
+  const unsigned long MINUTEms = SECONDms * 60;
+  const unsigned long HOURms = MINUTEms * 60;
+  const unsigned long HALF_HOURms = MINUTEms * 30;
 
 }; // namespace
 
