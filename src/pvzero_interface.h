@@ -27,7 +27,6 @@ namespace EWC
 {
   class ConfigServer;
   class Mail;
-  class Time;
 };
 
 //---------------------------------------------------------------------------------------------------------
@@ -50,7 +49,6 @@ namespace PVZ
 
     PVZeroClass &pvz() { return *_pvz; }
     Shelly3emConnector &shelly3emConnector() { return *_shelly3emConnector; }
-    EWC::Time &time() { return *_time; }
     Config &config() { return *_config; }
     EWC::ConfigServer &ewcServer() { return *_ewcServer; }
     EWC::Mail &mail() { return *_ewcMail; }
@@ -58,7 +56,6 @@ namespace PVZ
 
   private:
     PVZeroClass *_pvz;
-    EWC::Time *_time;
     Config *_config;
     Shelly3emConnector *_shelly3emConnector;
     EWC::ConfigServer *_ewcServer;

@@ -40,7 +40,8 @@ void setup()
   //
   EWC::I::get().config().paramDeviceName = String("pvz-") + EWC::I::get().config().getChipId();
   EWC::I::get().config().paramAPName = String("pvz-") + EWC::I::get().config().getChipId();
-  EWC::I::get().server().setBrand("PVZero", FRIMWARE_VERSION);
+  EWC::I::get().config().paramHostname = String("pvz-") + EWC::I::get().config().getChipId();
+  EWC::I::get().server().setBrand("PVZero", FIRMWARE_VERSION);
   EWC::I::get().led().enable(true, LED1_PIN, HIGH);
 
   //---------------------------------------------------------------------------------------------------
@@ -72,7 +73,7 @@ void loop()
   {
     if (!onceAfterConnect)
     {
-      I::get().logger() << "connected, " << PZI::get().time().str() << endl;
+      I::get().logger() << "connected, " << I::get().time().str() << endl;
       onceAfterConnect = true;
     }
   }

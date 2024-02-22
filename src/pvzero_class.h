@@ -25,7 +25,6 @@ limitations under the License.
 #include <Arduino.h>
 #include <ewcConfigServer.h>
 #include <ewcLogger.h>
-#include <extensions/ewcTime.h>
 #include <extensions/ewcUpdater.h>
 #include <extensions/ewcMail.h>
 #include <extensions/ewcMqtt.h>
@@ -40,7 +39,7 @@ limitations under the License.
 namespace PVZ
 {
 
-#define FRIMWARE_VERSION "0.80.00"
+#define FIRMWARE_VERSION "0.80.00"
 
   class PVZeroClass
   {
@@ -61,7 +60,6 @@ namespace PVZ
     String _sleepInfoStr;
     Config _config;
     EWC::ConfigServer _ewcServer;
-    EWC::Time _ewcTime;
     EWC::Updater _ewcUpdater;
     EWC::Mqtt _ewcMqtt;
     EWC::Mail _ewcMail;

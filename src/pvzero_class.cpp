@@ -41,7 +41,6 @@ PVZeroClass::PVZeroClass()
     : _shelly3emConnector(MY_SHELLY_PIN) // pinPot=D6
 {
   PZI::get()._pvz = this;
-  PZI::get()._time = &_ewcTime;
   PZI::get()._config = &_config;
   PZI::get()._ewcServer = &_ewcServer;
   PZI::get()._lcd = &_lcd;
@@ -58,13 +57,12 @@ void PVZeroClass::setup()
   //---------------------------------------------------------------------------------------------------
   // initialise the LCD and trigger first display
   //
-  _lcd.init(FRIMWARE_VERSION);
+  _lcd.init(FIRMWARE_VERSION);
   _lcd.process();
 
   EWC::I::get().configFS().addConfig(_ewcUpdater);
   EWC::I::get().configFS().addConfig(_ewcMail);
   EWC::I::get().configFS().addConfig(_ewcMqtt);
-  EWC::I::get().configFS().addConfig(_ewcTime);
   EWC::I::get().configFS().addConfig(_config);
   // EWC::I::get().led().enable(true, LED_BUILTIN, LOW);
   EWC::I::get().server().enableConfigUri();
@@ -154,14 +152,12 @@ void PVZeroClass::loop()
       //-----------------------------------------------------------------------------------
       // update time if available
       //
-      if (_ewcTime.timeAvailable())
+      if (I::get().time().timeAvailable())
       {
         //---------------------------------------------------------------------------
-        // log current time und update it on LCD
+        // update current time on LCD
         //
-        I::get().logger() << String(millis()) << ": NTP time " << _ewcTime.str() << endl;
-
-        _lcd.updateTime(_ewcTime.str());
+        _lcd.updateTime(I::get().time().str());
       }
       //---------------------------------------------------------------------------
       // time is not available, clear it on LCD

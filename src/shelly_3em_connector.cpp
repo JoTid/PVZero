@@ -100,7 +100,7 @@ void Shelly3emConnector::loop()
   //     return;  // we are sleeping now
   // }
   _infoState = String("");
-  if (PZI::get().time().isDisturb())
+  if (I::get().time().isDisturb())
   {
     _currentState = DO_NOT_DISTURB;
     _infoState += "bitte nicht stoeren phase";
@@ -202,7 +202,7 @@ void Shelly3emConnector::httpTask()
     I::get().led().stop();
   }
   EWC::I::get().logger() << F("Shelly3emConnector: request finished... sleep ") << endl;
-  _sleepUntil = PZI::get().time().str(PZI::get().config().checkInterval);
+  _sleepUntil = I::get().time().str(PZI::get().config().checkInterval);
   // sleeper().sleep(PZI::get().config().checkInterval * 1000);
   // EWC::I::get().logger() << F("sleep for ") << PZI::get().config().checkInterval << "sec" << endl;
   _sleeper.sleep(PZI::get().config().checkInterval * 1000);
