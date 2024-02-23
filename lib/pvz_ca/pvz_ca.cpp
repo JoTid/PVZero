@@ -11,8 +11,8 @@
 ** Include Files                                                                                                      **
 **                                                                                                                    **
 \*--------------------------------------------------------------------------------------------------------------------*/
+#include "Arduino.h"
 #include "pvz_ca.hpp"
-
 
 /*--------------------------------------------------------------------------------------------------------------------*\
 ** Definitions and variables of module                                                                                **
@@ -126,6 +126,38 @@ void PvzCa::init(void)
   CalculateGainOffset();
 }
 
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------// 
+float PvzCa::discreteApproximation(float ftActualV, float ftTargetV)
+{
+  float ftReturnT;
+
+  //--------------------------------------------------------------------------------------------------- 
+  // Jump function: Takes place during a downward correction so that a current flow is interrupted as 
+  // quickly as possible. A change from 9 A to 1 A, for example, takes place in one step.
+  //
+  if (ftActualV > ftTargetV)
+  {
+    ftReturnT = ftTargetV;
+  }
+
+  //--------------------------------------------------------------------------------------------------- 
+  // Stair function: The target value is approached in defined steps so that no components are damaged 
+  // by current jumps.
+  //
+  else
+  {
+    ftReturnT = ftActualV + 0.5; // step up by 0,5 A 
+    if (ftReturnT > ftTargetV)
+    {
+      ftReturnT = ftTargetV; 
+    }
+  }
+
+  return ftReturnT;
+}
 
 //--------------------------------------------------------------------------------------------------------------------//
 //                                                                                                                    //
@@ -133,39 +165,67 @@ void PvzCa::init(void)
 //--------------------------------------------------------------------------------------------------------------------//
 void PvzCa::process(void)
 { 
+  static unsigned long ulOldTimeS;
+  static uint32_t ulRefreshTimeT;
+
   float ftCalcT;
 
   //---------------------------------------------------------------------------------------------------
-  // consider pending feed-in power
+  // count the millisecond ticks and avoid overflow
   //
-  ftCalcT = ftConsumptionPowerP + ftFeedInActualPowerP;
-
-  //---------------------------------------------------------------------------------------------------
-  // scale values y = m * x + b
-  //
-  ftCalcT  = (ftCalcT * ftCurrentGainP);
-  ftCalcT += ftCurrentOffsetP;
-
-  //---------------------------------------------------------------------------------------------------
-  // limit feed-in DC Current value 
-  //
-  if (ftCalcT < aftFeedInTargetDcCurrentLimitP[0])
+  unsigned long ulNewTimeT = millis();
+  if (ulNewTimeT != ulOldTimeS)
   {
-    ftCalcT = aftFeedInTargetDcCurrentLimitP[0];
-  } 
-  else if (ftCalcT > aftFeedInTargetDcCurrentLimitP[1])
-  {
-    ftCalcT = aftFeedInTargetDcCurrentLimitP[1];
+    if (ulNewTimeT > ulOldTimeS)
+    {
+      ulRefreshTimeT += (uint32_t)(ulNewTimeT - ulOldTimeS);
+    }
+    else
+    {
+      ulRefreshTimeT += (uint32_t)(ulOldTimeS - ulNewTimeT);
+    }
+    ulOldTimeS = ulNewTimeT;
   }
 
   //---------------------------------------------------------------------------------------------------
-  // store feed-in target current and calculate feed in power P = U * I
+  // refresh the LCD only within define time
   //
-  ftFeedInTargetDcCurrentP = ftCalcT;
-  ftCalcT = ftFeedInTargetDcVoltageP * ftFeedInTargetDcCurrentP;
-  ftFeedInTargetPowerP = ftCalcT;
-}
+  if (ulRefreshTimeT > CA_REFRESH_TIME)
+  {
+    ulRefreshTimeT = 0;
 
+    //---------------------------------------------------------------------------------------------------
+    // consider pending feed-in power
+    //
+    ftCalcT = ftConsumptionPowerP + ftFeedInActualPowerP;
+
+    //---------------------------------------------------------------------------------------------------
+    // scale values y = m * x + b
+    //
+    ftCalcT  = (ftCalcT * ftCurrentGainP);
+    ftCalcT += ftCurrentOffsetP;
+
+    //---------------------------------------------------------------------------------------------------
+    // limit feed-in DC Current value 
+    //
+    if (ftCalcT < aftFeedInTargetDcCurrentLimitP[0])
+    {
+      ftCalcT = aftFeedInTargetDcCurrentLimitP[0];
+    } 
+    else if (ftCalcT > aftFeedInTargetDcCurrentLimitP[1])
+    {
+      ftCalcT = aftFeedInTargetDcCurrentLimitP[1];
+    }
+
+    //---------------------------------------------------------------------------------------------------
+    // store feed-in target current and calculate feed in power P = U * I
+    //
+    ftFeedInTargetDcCurrentP = discreteApproximation(ftFeedInActualDcCurrentP, ftCalcT);
+
+    ftCalcT = ftFeedInTargetDcVoltageP * ftFeedInTargetDcCurrentP;
+    ftFeedInTargetPowerP = ftCalcT;
+  }
+}
 
 //--------------------------------------------------------------------------------------------------------------------//
 //                                                                                                                    //
@@ -174,6 +234,9 @@ void PvzCa::process(void)
 float PvzCa::updateConsumptionPower(float ftPowerV)
 {
   ftConsumptionPowerP = clConsPowerFilterP.process(ftPowerV);
+
+  btConsumptionPowerPendingP = true;
+
   return ftConsumptionPowerP;
 }
 
@@ -190,6 +253,8 @@ int32_t PvzCa::updateFeedInActualDcValues(float ftVoltageV, float ftCurrentV)
   ftFeedInActualDcVoltageP = ftVoltageV;
   ftFeedInActualDcCurrentP = ftCurrentV;
   ftFeedInActualPowerP = ftFeedInActualDcVoltageP * ftFeedInActualDcCurrentP;
+ 
+  btActualValuesPendingP = true;
 
   return 0;
 }

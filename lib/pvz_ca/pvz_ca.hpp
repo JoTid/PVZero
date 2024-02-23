@@ -15,7 +15,9 @@
 ** Include files                                                                                                      **
 **                                                                                                                    **
 \*--------------------------------------------------------------------------------------------------------------------*/ 
-#include <Arduino.h>
+// #include <Arduino.h>
+#include <stdio.h>
+#include <cstdint>
 #include <mov_av_filter.hpp>
 
 /*--------------------------------------------------------------------------------------------------------------------*\
@@ -25,6 +27,11 @@
 class PvzCa
 {
 private:
+  #define CA_REFRESH_TIME 500
+
+  bool btConsumptionPowerPendingP;
+  bool btActualValuesPendingP;
+
   float ftConsumptionPowerP;
   
   float ftFeedInTargetPowerP;
@@ -112,6 +119,7 @@ public:
    */
   float updateConsumptionPower(float ftPowerV);
 
+  float discreteApproximation(float ftActualV, float ftTargetV);
 
   //--------------------------------------------------------------------------------------------------- 
   // getter methods

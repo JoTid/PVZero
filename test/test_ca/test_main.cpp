@@ -102,13 +102,12 @@ void test_ca_set_power_to_min_at_start(void)
   // trigger test method
   // 
   clCaG.updateFeedInActualDcValues(0.0, 0.0);
-  clCaG.updateConsumptionPower(0.0);
-  
+  TEST_ASSERT_EQUAL(clCaG.updateConsumptionPower(0.0), 0);
 
   //--------------------------------------------------------------------------------------------------- 
   // run process defined number before test
   // 
-  int32_t slPCyclesT = 5;
+  int32_t slPCyclesT = 1;
   while (slPCyclesT > 0)
   {
     clCaG.process();
@@ -140,27 +139,41 @@ void test_ca_set_power_to_max_at_start(void)
   // trigger test method
   // 
   clCaG.updateFeedInActualDcValues(0.0, 0.0);
-  clCaG.updateConsumptionPower(600.0);
+  TEST_ASSERT_EQUAL(clCaG.updateConsumptionPower(600.0), 600);
 
   //--------------------------------------------------------------------------------------------------- 
-  // run process defined number before test
+  // run process defined time: a change from 0A to 9A is done in 0,5A/0,5sec steps, so we need 9 sec
   // 
-  int32_t slPCyclesT = 20;
-  while (slPCyclesT > 0)
+  int32_t slPCyclesT = millis() + 5700;
+  while (slPCyclesT >  millis())
   {
     clCaG.process();
-    slPCyclesT--;
+
+    // simulate the actual value so the "discrete approximation" is considered here
+    clCaG.updateFeedInActualDcValues(36.0, clCaG.feedInTargetDcCurrent());
   }
+  TEST_MESSAGE("STOP -------------------"); // run as "Verbose Test" to see that
+  String clStringT = String(" actual: " + String(clCaG.feedInActualDcCurrent()) + " target: " + String(clCaG.feedInTargetDcCurrent()));
+  TEST_MESSAGE(clStringT.c_str()); // run as "Verbose Test" to see that
 
   //--------------------------------------------------------------------------------------------------- 
   // check expected values:  => y=mx+b : DcInCurrent = 600 * 0,0278 + 0 = 9 A
   //                         => P=UI : 36 V * 9 A = 324 W
-  TEST_ASSERT_EQUAL(9.0, clCaG.feedInTargetDcCurrent());
+  TEST_ASSERT_EQUAL(5.5, clCaG.feedInTargetDcCurrent());
   TEST_ASSERT_EQUAL(36.0, clCaG.feedInTargetDcVoltage());
-  TEST_ASSERT_EQUAL(324.0, clCaG.feedInTargetPower());
+  TEST_ASSERT_EQUAL(5.5 * 36.0, clCaG.feedInTargetPower());
 
-  // TEST_MESSAGE("hello") ;
- 
+  slPCyclesT = millis() + 4000;
+  while (slPCyclesT >  millis())
+  {
+    clCaG.process();
+
+    // simulate the actual value so the "discrete approximation" is considered here
+    clCaG.updateFeedInActualDcValues(36.0, clCaG.feedInTargetDcCurrent());
+  }
+  TEST_ASSERT_EQUAL(9, clCaG.feedInTargetDcCurrent());
+  TEST_ASSERT_EQUAL(36.0, clCaG.feedInTargetDcVoltage());
+  TEST_ASSERT_EQUAL(9 * 36.0, clCaG.feedInTargetPower());
 }
 
 void test_ca_set_power_to_middle_after_max(void)
@@ -259,12 +272,10 @@ void test_ca_set_power_to_negative_after_zero(void)
   //--------------------------------------------------------------------------------------------------- 
   // run process defined number before test
   // 
-  int32_t slPCyclesT = 1;
-  while (slPCyclesT > 0)
+  int32_t slPCyclesT = millis() + 1000;
+  while (slPCyclesT >  millis())
   {
-    clCaG.updateConsumptionPower(-160.0);
     clCaG.process();
-    slPCyclesT--;
   }
 
   //--------------------------------------------------------------------------------------------------- 
@@ -321,11 +332,10 @@ void test_ca_set_power_to_negative_to_zero(void)
   //--------------------------------------------------------------------------------------------------- 
   // run process defined number before test
   // 
-  int32_t slPCyclesT = 100;
-  while (slPCyclesT > 0)
+  int32_t slPCyclesT = millis() + 1000;
+  while (slPCyclesT >  millis())
   {
     clCaG.process();
-    slPCyclesT--;
   }
 
   //--------------------------------------------------------------------------------------------------- 
@@ -346,11 +356,10 @@ void test_ca_set_power_to_negative_to_zero(void)
   //--------------------------------------------------------------------------------------------------- 
   // run process defined number before test
   // 
-  slPCyclesT = 100;
-  while (slPCyclesT > 0)
+  slPCyclesT = millis() + 1000;
+  while (slPCyclesT >  millis())
   {
     clCaG.process();
-    slPCyclesT--;
   }
 
   //--------------------------------------------------------------------------------------------------- 
@@ -406,10 +415,7 @@ void loop()
   RUN_TEST(test_ca_set_power_to_zero_after_middle);
   RUN_TEST(test_ca_set_power_to_negative_after_zero);
   RUN_TEST(test_ca_set_power_to_negative_to_zero);
-
   
-  
-
   UNITY_END(); // stop unit testing
   while (1) {}; // only if only one test is available
   // }
