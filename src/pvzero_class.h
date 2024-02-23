@@ -32,7 +32,7 @@ limitations under the License.
 #include "shelly_3em_connector.h"
 #include "pvz_ca.hpp"
 #include "pvz_lcd.hpp"
-#include "DPM8600.h"
+#include "pvz_psu.hpp"
 
 #include "taster.h"
 
@@ -65,8 +65,9 @@ namespace PVZ
     EWC::Mail _ewcMail;
     Shelly3emConnector _shelly3emConnector;
     Taster _taster;
-    PvzCa clControlAlgorithmP;
+    PvzCa clCaP;
     PvzLcd _lcd;
+    PvzPsu aclPsuP[2]; // support up to 2 PSUs
     void _onPVZeroConfig(WebServer *webServer);
     void _onPVZeroSave(WebServer *webServer);
     void _onPVZeroState(WebServer *webServer);
