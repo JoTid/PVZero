@@ -21,6 +21,7 @@ limitations under the License.
 #include <Arduino.h>
 #include <ewcInterface.h>
 #include <ewcConfigServer.h>
+#include <ewcLogger.h>
 #include "config.h"
 #include "taster.h"
 
@@ -42,13 +43,13 @@ void Config::setup(JsonDocument &config, bool resetConfig)
 
 void Config::fillJson(JsonDocument &config)
 {
-  config["pvzero"]["name"] = _name;
+  config["pvzero"]["name"] = EWC::I::get().config().paramDeviceName;
   config["pvzero"]["version"] = EWC::I::get().server().version();
   config["pvzero"]["check_interval"] = checkInterval;
   config["pvzero"]["taster_func"] = tasterFunc;
   config["pvzero"]["shelly3emAddr"] = shelly3emAddr;
-  config["pvzero"]["voltage"] = voltage;
-  config["pvzero"]["max_amperage"] = maxAmperage;
+  config["pvzero"]["max_voltage"] = String(maxVoltage, 2);
+  config["pvzero"]["max_amperage"] = String(maxAmperage, 2);
   config["pvzero"]["lcd_enabled"] = lcdEnabled;
 }
 
@@ -69,15 +70,15 @@ void Config::fromJson(JsonDocument &config)
   {
     shelly3emAddr = jv.as<String>();
   }
-  jv = config["pvzero"]["voltage"];
+  jv = config["pvzero"]["max_voltage"];
   if (!jv.isNull())
   {
-    voltage = jv.as<int>();
+    maxVoltage = jv.as<float>();
   }
   jv = config["pvzero"]["max_amperage"];
   if (!jv.isNull())
   {
-    maxAmperage = jv.as<int>();
+    maxAmperage = jv.as<float>();
   }
   jv = config["pvzero"]["lcd_enabled"];
   if (!jv.isNull())
@@ -88,13 +89,12 @@ void Config::fromJson(JsonDocument &config)
 
 void Config::_initParameter()
 {
-  _name = "pvzero-" + EWC::I::get().config().getChipId();
   checkInterval = 1;
   // deep_sleep("deep-sleep", "Deep sleep"),
   shelly3emAddr = "";
   // taster
   tasterFunc = TASTER_CHECK_NOW;
-  voltage = 38;
-  maxAmperage = 10;
+  maxVoltage = 36;
+  maxAmperage = 7;
   lcdEnabled = false;
 }

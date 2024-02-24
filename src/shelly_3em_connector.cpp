@@ -176,7 +176,7 @@ void Shelly3emConnector::httpTask()
     deserializeJson(doc, jsonStr);
     _consumptionPower = (int)doc["total_power"];
     EWC::I::get().logger() << F("Shelly3emConnector: aktueller Verbrauch: ") << _consumptionPower << " W" << endl;
-    // _feedInPower += _consumptionPower / PZI::get().config().voltage;
+    // _feedInPower += _consumptionPower / PZI::get().config().maxVoltage;
     // if (_feedInPower < 0) {
     //     _feedInPower = 0;
     //     _infoState = "Akku wird nicht entladen!";

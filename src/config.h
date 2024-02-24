@@ -41,8 +41,8 @@ namespace PVZ
     /** === parameter  === **/
     int checkInterval;
     String shelly3emAddr;
-    int voltage;
-    int maxAmperage;
+    float maxVoltage;
+    float maxAmperage;
 
     // LCD enabled
     bool lcdEnabled;

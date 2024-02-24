@@ -1,6 +1,6 @@
 {
     "name": "S1",
-    "version": "1.0.0",
+    "version": "0.0.0",
     "consumption_power": -999,
     "feed_in_power": 0,
     "check_interval": -1,

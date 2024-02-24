@@ -32,13 +32,13 @@
                 <label id="info_shelly3emAddr">/status wird angehängt.</label>
             </div>
             <div>
-              <label id="lbl_voltage" for="voltage">Spannung</label>
-              <input id="voltage" type="text" name="voltage" placeholder="38">
-              <label id="info_voltage">Ausgangsspannung des Step-Up Konverters. Über die Spannung und dem aktuellen Verbrauch wird die Stropmstärke geregelt.</label>
+              <label id="lbl_voltage" for="max_voltage">Maximale Spannung</label>
+              <input id="max_voltage" type="number" step="0.01" name="max_voltage" placeholder="36">
+              <label id="info_voltage">Maximale Ausgangsspannung, die über den Step-Up Konverter geregelt werden soll.</label>
             </div>
             <div>
               <label id="lbl_max_amperage" for="max_amperage">Maximale Stromstärke</label>
-              <input id="max_amperage" type="text" name="max_amperage" placeholder="10">
+              <input id="max_amperage" type="number" step="0.01" name="max_amperage" placeholder="7">
               <label id="info_max_amperage">Maximale Stromstärke, die über den Step-Up Konverter geregelt werden soll.</label>
             </div>
         
@@ -52,7 +52,7 @@
     <script src="/js/postload.js"></script>
     <script type="text/javascript">
       function fillPVZeroConfig(data, url) {
-        ["check_interval", "shelly3emAddr", "voltage", "max_amperage"
+        ["check_interval", "shelly3emAddr", "max_voltage", "max_amperage"
         ].forEach(function(id,idy,arr) {
           document.getElementById(id).value = data["pvzero"][id];
         });

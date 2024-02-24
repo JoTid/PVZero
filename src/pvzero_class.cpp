@@ -89,14 +89,14 @@ void PVZeroClass::setup()
   // _mqttHelper.setup(_ewcMqtt);
   _tsMeasLoopStart = millis();
   _shelly3emConnector.setCallbackState(std::bind(&PVZeroClass::_onTotalWatt, this, std::placeholders::_1, std::placeholders::_2));
-  EWC::I::get().logger() << F("Setup ok") << endl;
 
   //---------------------------------------------------------------------------------------------------
   // setup the control algorithm 
   //
   clCaP.init();
-  clCaP.setFeedInTargetDcVoltage(24.0);
-  clCaP.setFeedInTargetDcCurrentLimits(0.0, 1.6);
+  EWC::I::get().logger() << F("set maxVoltage: ") << PZI::get().config().maxVoltage << ", maxCurrent: " << PZI::get().config().maxAmperage << endl;
+  clCaP.setFeedInTargetDcVoltage(PZI::get().config().maxVoltage);
+  clCaP.setFeedInTargetDcCurrentLimits(0.0, PZI::get().config().maxAmperage);
 
   //---------------------------------------------------------------------------------------------------
   // update the PSU
@@ -111,6 +111,7 @@ void PVZeroClass::setup()
     aclPsuP[slPsuNrT].set(clCaP.feedInTargetDcVoltage(), clCaP.feedInTargetDcCurrent());
     aclPsuP[slPsuNrT].enable(true);
   }
+  EWC::I::get().logger() << F("Setup ok") << endl;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -390,19 +391,21 @@ void PVZeroClass::_onPVZeroSave(WebServer *webServer)
       config["pvzero"]["shelly3emAddr"] = val;
     }
   }
-  if (webServer->hasArg("voltage"))
+  if (webServer->hasArg("max_voltage"))
   {
-    long val = webServer->arg("voltage").toInt();
+    float val = webServer->arg("max_voltage").toFloat();
     if (val >= 0)
     {
-      config["pvzero"]["voltage"] = val;
+      config["pvzero"]["max_voltage"] = val;
     }
   }
-  if (webServer->hasArg("voltage"))
+  if (webServer->hasArg("max_voltage"))
   {
-    long val = webServer->arg("max_amperage").toInt();
+    I::get().logger() << F("Ampare: ") << webServer->arg("max_amperage") << endl;
+    float val = webServer->arg("max_amperage").toFloat();
     if (val >= 0)
     {
+      I::get().logger() << F("  Ampare value: ") << val << endl;
       config["pvzero"]["max_amperage"] = val;
     }
   }
@@ -424,7 +427,7 @@ void PVZeroClass::_onPVZeroState(WebServer *webServer)
   }
   JsonDocument jsonDoc;
   JsonObject json = jsonDoc.to<JsonObject>();
-  json["name"] = I::get().server().brand();
+  json["name"] = I::get().config().paramDeviceName;
   json["version"] = I::get().server().version();
   json["consumption_power"] = _shelly3emConnector.consumptionPower();
   json["feed_in_power"] = _shelly3emConnector.feedInPower();

@@ -32,7 +32,7 @@ limitations under the License.
 
 namespace PVZ
 {
-  typedef std::function<void(bool, int)> SellyStateCallback;
+  typedef std::function<void(bool, int)> ShellyStateCallback;
 
   class Shelly3emConnector
   {
@@ -50,7 +50,7 @@ namespace PVZ
     ~Shelly3emConnector();
     void setup(bool resetConfig = false);
     void loop();
-    void setCallbackState(SellyStateCallback callback) { _callbackState = callback; }
+    void setCallbackState(ShellyStateCallback callback) { _callbackState = callback; }
     String state2string(Shelly3emConnector::State state);
     String info() { return _infoState; }
     String infoSleepUntil() { return _sleepUntil; }
@@ -66,7 +66,7 @@ namespace PVZ
     WiFiClient _wifiClient;
     HTTPClient _httpClient;
     unsigned int _reachedUpperLimit;
-    SellyStateCallback _callbackState;
+    ShellyStateCallback _callbackState;
     State _currentState;
     Sleeper _sleeper;
     String _infoState;

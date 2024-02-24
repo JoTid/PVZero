@@ -26,15 +26,8 @@ void setup()
   //---------------------------------------------------------------------------------------------------
   // Use serial interface for debug
   //
-  Serial.begin(115200); // Setup serial object and define transmission speed
-  Serial.println("Starting setup...");
-
-  //---------------------------------------------------------------------------------------------------
-  //
-  //
-  Serial.println();
-  Serial.print("ESP heap: ");
-  Serial.println(ESP.getFreeHeap());
+  // Setup serial object and define transmission speed
+  EWC::I::get().logger().setLogging(true, 115200);
 
   //---------------------------------------------------------------------------------------------------
   // initialise EspWebConfig
@@ -49,18 +42,11 @@ void setup()
   // initialise PVZero
   //
   pvz.setup();
-  Serial.print("ESP heap: ");
-  Serial.println(ESP.getFreeHeap());
-  Serial.println("acconfig");
   if (I::get().config().paramWifiDisabled)
   {
-    Serial.println("STANDALONE");
+    I::get().logger() << F("STANDALONE") << endl;
   }
-  else
-  {
-    Serial.println("TIMEOUT_WIFI");
-  }
-  Serial.println("initialized");
+  I::get().logger() << F("initialized") << endl;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//

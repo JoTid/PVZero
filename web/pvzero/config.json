@@ -1,10 +1,9 @@
 {
     "pvzero": {
-        "version": "1.0.0",
         "check_interval": 10,
-        "taster_func": 1,
         "shelly3emAddr": "",
-        "voltage": 38,
-        "max_amperage": 10
+        "max_voltage": 36,
+        "max_amperage": 7,
+        "taster_func": 1
     }
 }
