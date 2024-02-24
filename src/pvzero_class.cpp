@@ -101,10 +101,16 @@ void PVZeroClass::setup()
   //---------------------------------------------------------------------------------------------------
   // update the PSU
   //
-  // aclPsuP[0].init(Serial1);
+  aclPsuP[0].init(Serial1);
   aclPsuP[1].init(Serial2);
-  aclPsuP[1].set(clCaP.feedInTargetDcVoltage(), clCaP.feedInTargetDcCurrent());
-  aclPsuP[1].enable(true);
+  
+  int32_t slPsuNrT = 2;
+  while (slPsuNrT > 0)
+  {
+    slPsuNrT--;
+    aclPsuP[slPsuNrT].set(clCaP.feedInTargetDcVoltage(), clCaP.feedInTargetDcCurrent());
+    aclPsuP[slPsuNrT].enable(true);
+  }
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -146,6 +152,7 @@ void PVZeroClass::loop()
 {
   String clStringT;
   PvzLcd::WifiConfig_ts tsWifiT;
+  int32_t slLcdScreenNrT;
 
   unsigned long ts_now = millis();
   _taster.loop();
@@ -223,26 +230,52 @@ void PVZeroClass::loop()
       //----------------------------------------------------------------------------------- 
       // Print Infos from PSUs only if they are available
       //
+      slLcdScreenNrT = 0;
+
+      //----------------------------------------------------------------------------------- 
+      // display info that depends on PSU A
+      //
       if (aclPsuP[0].isAvailable())
       {
         atsLcdScreenG[0].aclLine[1] = String("A[Wh]: " + String(clCaP.feedInTargetPower(), 0) + " | " + String(aclPsuP[1].actualVoltage() * aclPsuP[1].actualCurrent(),0));
+        slLcdScreenNrT++;
+
+        atsLcdScreenG[slLcdScreenNrT].aclLine[0] = String("Feed-in via PSU A");
+        atsLcdScreenG[slLcdScreenNrT].aclLine[1] = String("("+String(clCaP.feedInTargetPower(), 0) + ")" + String(clCaP.feedInTargetPowerApprox(), 0) + "Wh=" +
+                                            String(clCaP.feedInTargetDcVoltage(), 0) + "V+" +
+                                            String(clCaP.feedInTargetDcCurrent(), 1) + "A");
+
+        atsLcdScreenG[slLcdScreenNrT].aclLine[2] = String("" + String(aclPsuP[1].actualVoltage() * aclPsuP[1].actualCurrent(), 0) + " Wh = " +
+                                            String(aclPsuP[1].actualVoltage(), 0) + "V + " +
+                                            String(aclPsuP[1].actualCurrent(), 1) + "A");
+      } else 
+      {
+        atsLcdScreenG[0].aclLine[1] = String(" - No PSU A connected");
       }
+
+      //----------------------------------------------------------------------------------- 
+      // display info that depends on PSU A
+      //
       if (aclPsuP[1].isAvailable())
       {
         atsLcdScreenG[0].aclLine[2] = String("B[Wh]: " + String(clCaP.feedInTargetPower(), 0) + " | " + String(aclPsuP[1].actualVoltage() * aclPsuP[1].actualCurrent(),0));
+        
+        slLcdScreenNrT++;        
+
+        atsLcdScreenG[slLcdScreenNrT].aclLine[0] = String("Feed-in via PSU B");
+        atsLcdScreenG[slLcdScreenNrT].aclLine[1] = String("("+String(clCaP.feedInTargetPower(), 0) + ")" + String(clCaP.feedInTargetPowerApprox(), 0) + "Wh=" +
+                                            String(clCaP.feedInTargetDcVoltage(), 0) + "V+" +
+                                            String(clCaP.feedInTargetDcCurrent(), 1) + "A");
+
+        atsLcdScreenG[slLcdScreenNrT].aclLine[2] = String("" + String(aclPsuP[1].actualVoltage() * aclPsuP[1].actualCurrent(), 0) + " Wh = " +
+                                            String(aclPsuP[1].actualVoltage(), 0) + "V + " +
+                                            String(aclPsuP[1].actualCurrent(), 1) + "A");
+
+      } else {
+        atsLcdScreenG[0].aclLine[2] = String(" - No PSU B connected");
       }
 
-
-      atsLcdScreenG[1].aclLine[0] = String("Feed-in target/actual");
-      atsLcdScreenG[1].aclLine[1] = String("("+String(clCaP.feedInTargetPower(), 0) + ")" + String(clCaP.feedInTargetPowerApprox(), 0) + "Wh=" +
-                                           String(clCaP.feedInTargetDcVoltage(), 0) + "V+" +
-                                           String(clCaP.feedInTargetDcCurrent(), 1) + "A");
-
-      atsLcdScreenG[1].aclLine[2] = String("" + String(aclPsuP[1].actualVoltage() * aclPsuP[1].actualCurrent(), 0) + " Wh = " +
-                                           String(aclPsuP[1].actualVoltage(), 0) + "V + " +
-                                           String(aclPsuP[1].actualCurrent(), 1) + "A");
-
-      _lcd.setScreen(&atsLcdScreenG[0], 2);
+      _lcd.setScreen(&atsLcdScreenG[0], slLcdScreenNrT+1);
       _lcd.ok();
     }
     //---------------------------------------------------------------------------
