@@ -43,7 +43,7 @@ PVZeroClass::PVZeroClass()
   PZI::get()._pvz = this;
   PZI::get()._config = &_config;
   PZI::get()._ewcServer = &_ewcServer;
-  PZI::get()._lcd = &_lcd;
+  PZI::get()._ewcMail = &_ewcMail;
   PZI::get()._shelly3emConnector = &_shelly3emConnector;
   PZI::get()._lcd = &_lcd;
 }
