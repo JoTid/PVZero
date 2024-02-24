@@ -77,7 +77,7 @@ void loop()
       I::get().logger() << "connected, " << I::get().time().str() << endl;
       onceAfterConnect = true;
     }
-    if (!onceTimeSet)
+    if (!onceTimeSet && I::get().time().timeAvailable())
     {
       I::get().logger() << "Send email about reboot" << endl;
       PZI::get().mail().sendChange("PVZ rebooted", I::get().time().str().c_str());
