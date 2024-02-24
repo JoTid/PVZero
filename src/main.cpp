@@ -15,6 +15,7 @@ PVZeroClass pvz;
 \*--------------------------------------------------------------------------------------------------------------------*/
 
 bool onceAfterConnect = false;
+bool onceTimeSet = false;
 
 //--------------------------------------------------------------------------------------------------------------------//
 //                                                                                                                    //
@@ -75,6 +76,12 @@ void loop()
     {
       I::get().logger() << "connected, " << I::get().time().str() << endl;
       onceAfterConnect = true;
+    }
+    if (!onceTimeSet)
+    {
+      I::get().logger() << "Send email about reboot" << endl;
+      PZI::get().mail().sendChange("PVZ rebooted", I::get().time().str().c_str());
+      onceTimeSet = true;
     }
   }
   else
