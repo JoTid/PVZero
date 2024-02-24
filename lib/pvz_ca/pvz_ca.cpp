@@ -220,10 +220,11 @@ void PvzCa::process(void)
     //---------------------------------------------------------------------------------------------------
     // store feed-in target current and calculate feed in power P = U * I
     //
+
     ftFeedInTargetDcCurrentP = discreteApproximation(ftFeedInActualDcCurrentP, ftCalcT);
 
-    ftCalcT = ftFeedInTargetDcVoltageP * ftFeedInTargetDcCurrentP;
-    ftFeedInTargetPowerP = ftCalcT;
+    ftFeedInTargetPowerApproxP = (ftFeedInTargetDcVoltageP * ftFeedInTargetDcCurrentP);
+    ftFeedInTargetPowerP = (ftCalcT * ftFeedInTargetDcVoltageP);
   }
 }
 

@@ -38,6 +38,8 @@ private:
   float ftFeedInTargetDcCurrentP;
   float ftFeedInTargetDcVoltageP;
   
+  float ftFeedInTargetPowerApproxP;
+
   float ftFeedInActualPowerP;
   float ftFeedInActualDcCurrentP;
   float ftFeedInActualDcVoltageP;
@@ -147,6 +149,11 @@ public:
   float feedInTargetPower(void) {
     return ftFeedInTargetPowerP;
   }
+  float feedInTargetPowerApprox(void) {
+    return ftFeedInTargetPowerApproxP;
+  }
+
+  
 
   float feedInActualDcCurrent(void) {
     return ftFeedInActualDcCurrentP;

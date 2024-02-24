@@ -234,9 +234,9 @@ void PVZeroClass::loop()
 
 
       atsLcdScreenG[1].aclLine[0] = String("Feed-in target/actual");
-      atsLcdScreenG[1].aclLine[1] = String("" + String(clCaP.feedInTargetPower(), 0) + " Wh = " +
-                                           String(clCaP.feedInTargetDcVoltage(), 0) + "V +" +
-                                           String(clCaP.feedInTargetDcCurrent(), 0) + "A");
+      atsLcdScreenG[1].aclLine[1] = String("("+String(clCaP.feedInTargetPower(), 0) + ")" + String(clCaP.feedInTargetPowerApprox(), 0) + "Wh=" +
+                                           String(clCaP.feedInTargetDcVoltage(), 0) + "V+" +
+                                           String(clCaP.feedInTargetDcCurrent(), 1) + "A");
 
       atsLcdScreenG[1].aclLine[2] = String("" + String(aclPsuP[1].actualVoltage() * aclPsuP[1].actualCurrent(), 0) + " Wh = " +
                                            String(aclPsuP[1].actualVoltage(), 0) + "V + " +
