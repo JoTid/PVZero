@@ -27,6 +27,7 @@ namespace EWC
 {
   class ConfigServer;
   class Mail;
+  class MqttHA;
 };
 
 //---------------------------------------------------------------------------------------------------------
@@ -52,6 +53,7 @@ namespace PVZ
     Config &config() { return *_config; }
     EWC::ConfigServer &ewcServer() { return *_ewcServer; }
     EWC::Mail &mail() { return *_ewcMail; }
+    EWC::MqttHA &mqttHA() { return *_ewcMqttHA; }
     PvzLcd &lcd() { return *_lcd; }
 
   private:
@@ -60,6 +62,7 @@ namespace PVZ
     Shelly3emConnector *_shelly3emConnector;
     EWC::ConfigServer *_ewcServer;
     EWC::Mail *_ewcMail;
+    EWC::MqttHA *_ewcMqttHA;
     PvzLcd *_lcd;
   };
 

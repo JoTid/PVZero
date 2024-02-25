@@ -28,6 +28,7 @@ limitations under the License.
 #include <extensions/ewcUpdater.h>
 #include <extensions/ewcMail.h>
 #include <extensions/ewcMqtt.h>
+#include <extensions/ewcMqttHA.h>
 #include "config.h"
 #include "shelly_3em_connector.h"
 #include "pvz_ca.hpp"
@@ -62,6 +63,7 @@ namespace PVZ
     EWC::ConfigServer _ewcServer;
     EWC::Updater _ewcUpdater;
     EWC::Mqtt _ewcMqtt;
+    EWC::MqttHA _ewcMqttHA;
     EWC::Mail _ewcMail;
     Shelly3emConnector _shelly3emConnector;
     Taster _taster;
