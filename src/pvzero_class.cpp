@@ -64,6 +64,7 @@ void PVZeroClass::setup()
   EWC::I::get().configFS().addConfig(_ewcMail);
   EWC::I::get().configFS().addConfig(_ewcMqtt);
   EWC::I::get().configFS().addConfig(_config);
+  EWC::I::get().configFS().addConfig(_shelly3emConnector);
   // EWC::I::get().led().enable(true, LED_BUILTIN, LOW);
   EWC::I::get().server().enableConfigUri();
   EWC::I::get().server().setup();
@@ -84,7 +85,6 @@ void PVZeroClass::setup()
   // _ewcMqttHomie.setup(_ewcMqtt, I::get().config().paramDeviceName, "pvz-" + I::get().config().getChipId());
   // _ewcMqttHomie.addNode("pvz", "pvz");
   // _ewcMqttHomie.addProperty("pvz", "consumption-power", "consumption power", "integer", "", "W", false);
-  _shelly3emConnector.setup(EWC::I::get().configFS().resetDetected());
   _taster.setup(EWC::I::get().configFS().resetDetected());
   // _mqttHelper.setup(_ewcMqtt);
   _tsMeasLoopStart = millis();
@@ -123,9 +123,9 @@ void PVZeroClass::processControlAlgorithm(void)
   //---------------------------------------------------------------------------------------------------
   // collect and provide data to the control algorithm
   //
-  if (_shelly3emConnector.isValid())
+  if (isConsumptionPowerValid)
   {
-    clCaP.updateConsumptionPower(_shelly3emConnector.consumptionPower());
+    clCaP.updateConsumptionPower(consumptionPower);
   }
   else
   {
@@ -224,9 +224,9 @@ void PVZeroClass::loop()
     _lcd.updateWifiInfo(&tsWifiT);
     _lcd.updateWifiRssi(WiFi.RSSI());
 
-    if ((PZI::get().shelly3emConnector().isValid()))
+    if (isConsumptionPowerValid)
     {
-      atsLcdScreenG[0].aclLine[0] = String("Cons. power: " + String(PZI::get().shelly3emConnector().consumptionPower()) + "Wh");
+      atsLcdScreenG[0].aclLine[0] = String("Cons. power: " + String(consumptionPower) + "Wh");
 
       //----------------------------------------------------------------------------------- 
       // Print Infos from PSUs only if they are available
@@ -429,8 +429,8 @@ void PVZeroClass::_onPVZeroState(WebServer *webServer)
   JsonObject json = jsonDoc.to<JsonObject>();
   json["name"] = I::get().config().paramDeviceName;
   json["version"] = I::get().server().version();
-  json["consumption_power"] = _shelly3emConnector.consumptionPower();
-  json["feed_in_power"] = _shelly3emConnector.feedInPower();
+  json["consumption_power"] = consumptionPower;
+  json["feed_in_power"] = String(clCaP.feedInTargetPower(), 0);
   json["check_info"] = _shelly3emConnector.info();
   json["check_interval"] = PZI::get().config().checkInterval;
   json["next_check"] = _shelly3emConnector.infoSleepUntil();
@@ -452,8 +452,10 @@ void PVZeroClass::_onPVZeroCheck(WebServer *webServer)
   webServer->send(200, FPSTR(PROGMEM_CONFIG_APPLICATION_JSON), "{\"success\": true}");
 }
 
-void PVZeroClass::_onTotalWatt(bool state, int totalWatt)
+void PVZeroClass::_onTotalWatt(bool state, int32_t totalWatt)
 {
   // _mqttHelper.publishC1Pump();
   I::get().logger() << F("[PVZ] callback with state: ") << state << F(", Verbrauch: ") << totalWatt << endl;
+  consumptionPower = totalWatt;
+  isConsumptionPowerValid = state;
 }

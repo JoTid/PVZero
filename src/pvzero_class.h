@@ -68,11 +68,13 @@ namespace PVZ
     PvzCa clCaP;
     PvzLcd _lcd;
     PvzPsu aclPsuP[2]; // support up to 2 PSUs
+    int32_t consumptionPower = -1;
+    bool isConsumptionPowerValid = false;
     void _onPVZeroConfig(WebServer *webServer);
     void _onPVZeroSave(WebServer *webServer);
     void _onPVZeroState(WebServer *webServer);
     void _onPVZeroCheck(WebServer *webServer);
-    void _onTotalWatt(bool state, int totalWatt);
+    void _onTotalWatt(bool state, int32_t totalWatt);
     void processControlAlgorithm(void);
   };
 }; // namespace

@@ -28,13 +28,14 @@ limitations under the License.
 #include <HttpClient.h>
 #endif
 #include <Arduino.h>
+#include "ewcConfigInterface.h"
 #include "sleeper.h"
 
 namespace PVZ
 {
-  typedef std::function<void(bool, int)> ShellyStateCallback;
+  typedef std::function<void(bool, int32_t)> ShellyStateCallback;
 
-  class Shelly3emConnector
+  class Shelly3emConnector : public EWC::ConfigInterface
   {
   public:
     enum State
@@ -48,37 +49,41 @@ namespace PVZ
     bool mailStateChanged; // use for state detection for e-mail send
     Shelly3emConnector(int potPin = A0);
     ~Shelly3emConnector();
-    void setup(bool resetConfig = false);
+    void setup(JsonDocument &config, bool resetConfig = false);
+    void fillJson(JsonDocument &config);
+    void fromJson(JsonDocument &config);
     void loop();
     void setCallbackState(ShellyStateCallback callback) { _callbackState = callback; }
     String state2string(Shelly3emConnector::State state);
     String info() { return _infoState; }
     String infoSleepUntil() { return _sleepUntil; }
-    int consumptionPower() { return _consumptionPower; }
-    int feedInPower() { return _feedInPower; }
-    bool isValid() { return btIsValidP; }
+    // ------ protected by mutex -----------
+    int32_t getConsumptionPower();
+    bool isValidConsumptionPower();
+    String getUri();
 
   protected:
     int _potPin;
 #ifdef ESP8266
     uint8_t _utcAddress;
 #endif
-    WiFiClient _wifiClient;
-    HTTPClient _httpClient;
+    TaskHandle_t _httpTaskHandle = NULL;
     unsigned int _reachedUpperLimit;
     ShellyStateCallback _callbackState;
-    State _currentState;
     Sleeper _sleeper;
     String _infoState;
     String _sleepUntil;
     bool _isRequesting;
-    long _consumptionPower;
-    long _feedInPower;
     long _countRequestsFailed;
-    long btIsValidP;
 
-    void httpTask();
-    static void startTaskImpl(void *);
+    static void httpTask(void *_this);
+    // ------ protected by mutex -----------
+    void _onTaskResult(bool valid, int32_t consumptionPower);
+    bool _isTaskRunning();
+    bool _taskIsRunning;
+    String _taskShelly3emUri;
+    bool _taskConsumptionPowerValid;
+    int32_t _taskConsumptionPower;
   };
 }; // namespace
 
