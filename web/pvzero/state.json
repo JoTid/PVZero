@@ -3,6 +3,8 @@
     "version": "0.0.0",
     "consumption_power": -999,
     "feed_in_power": 0,
+    "enable_second_psu": false,
+    "enable_lcd": true,
     "check_interval": -1,
     "check_info": "No value",
     "next_check": "2020.08.17|17:08"

@@ -381,6 +381,18 @@ void PVZeroClass::_onPVZeroSave(WebServer *webServer)
       config["pvzero"]["taster_func"] = val;
     }
   }
+  bool enableSecondPsu = false;
+  if (webServer->hasArg("enable_second_psu"))
+  {
+    enableSecondPsu = webServer->arg("enable_second_psu").equals("true");
+  }
+  config["pvzero"]["enable_second_psu"] = enableSecondPsu;
+  bool enableLcd = false;
+  if (webServer->hasArg("enable_lcd"))
+  {
+    enableLcd = webServer->arg("enable_lcd").equals("true");
+  }
+  config["pvzero"]["enable_lcd"] = enableLcd;
   if (webServer->hasArg("shelly3emAddr"))
   {
     String val = webServer->arg("shelly3emAddr");
@@ -429,6 +441,7 @@ void PVZeroClass::_onPVZeroState(WebServer *webServer)
   json["version"] = I::get().server().version();
   json["consumption_power"] = consumptionPower;
   json["feed_in_power"] = String(clCaP.feedInTargetPower(), 0);
+  json["enable_second_psu"] = consumptionPower;
   json["check_info"] = _shelly3emConnector.info();
   json["check_interval"] = PZI::get().config().checkInterval;
   json["next_check"] = _shelly3emConnector.infoSleepUntil();

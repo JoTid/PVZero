@@ -43,9 +43,10 @@ namespace PVZ
     String shelly3emAddr;
     float maxVoltage;
     float maxAmperage;
+    bool enableSecondPsu;
 
     // LCD enabled
-    bool lcdEnabled;
+    bool enabledLcd;
     // taster configuration parameter
     uint8_t tasterFunc;
 

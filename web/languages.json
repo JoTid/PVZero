@@ -209,6 +209,17 @@
     },
     "btn_test_send": {
         "de": "Testen"
+    },
+    "lbl_enable_serial_log": {
+      "de": "Aktiviere Log"
+    },
+    "info_enable_serial_log": {
+      "de": "Aktiviert seriellen Port für die Log Ausgaben."
+    },
+    "lbl_enable_second_psu": {
+      "de": "Aktieviert zweite PSU"
+    },
+    "info_enable_second_psu": {
+      "de": "Aktiviert zweite PSU auf den seriellen Port. Log wird deaktiviert."
     }
-
 }

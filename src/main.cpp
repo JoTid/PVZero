@@ -24,12 +24,6 @@ bool onceTimeSet = false;
 void setup()
 {
   //---------------------------------------------------------------------------------------------------
-  // Use serial interface for debug
-  //
-  // Setup serial object and define transmission speed
-  EWC::I::get().logger().setLogging(true, 115200);
-
-  //---------------------------------------------------------------------------------------------------
   // initialise EspWebConfig
   //
   EWC::I::get().config().paramDeviceName = String("pvz-") + EWC::I::get().config().getChipId();

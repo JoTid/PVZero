@@ -25,12 +25,19 @@
                 </select>
                 <label id="info_taster_func">Funktion des blauen Tasters. Standard: jetzt prüfen</label>
             </div> -->
-            <div class="line_named">Shelly Em3</div>
             <div>
                 <label id="lbl_shelly3emAddr" for="shelly3emAddr">Shelly Em3 Address</label>
                 <input id="shelly3emAddr" type="text" name="shelly3emAddr" placeholder="192.168.1.131">
                 <label id="info_shelly3emAddr">/status wird angehängt.</label>
             </div>
+            <div>
+              <input id="enable_second_psu" type="checkbox" name="enable_second_psu" value="true" checked><label id="lbl_enable_second_psu">Enable second PSU</label></input>
+              <label id="info_enable_second_psu">Enables second PSU on serial port. Logging will be disabled.</label>
+            </div>
+            <div>
+              <input id="enable_lcd" type="checkbox" name="enable_lcd" value="true" checked><label id="lbl_enable_lcd">Enable LCD</label></input>
+            </div>
+            <div class="line_named">Leistungssteuerung</div>
             <div>
               <label id="lbl_voltage" for="max_voltage">Maximale Spannung</label>
               <input id="max_voltage" type="number" step="0.01" name="max_voltage" placeholder="36">
@@ -41,7 +48,7 @@
               <input id="max_amperage" type="number" step="0.01" name="max_amperage" placeholder="7">
               <label id="info_max_amperage">Maximale Stromstärke, die über den Step-Up Konverter geregelt werden soll.</label>
             </div>
-        
+
         </div>
           <input id="npt_apply" type="submit" name="apply" value="Apply">
         </form>
@@ -57,6 +64,8 @@
           document.getElementById(id).value = data["pvzero"][id];
         });
         document.getElementById("check_interval_output").value = data["pvzero"]["check_interval"];
+        document.getElementById("enable_second_psu").checked = data["pvzero"]["enable_second_psu"];
+        document.getElementById("enable_lcd").checked = data["pvzero"]["enable_lcd"];
         // setTimeout(getJSON.bind(null, "/bbs/config.json", "fillBbsConfig"), 3000);
       }
     </script>

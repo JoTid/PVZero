@@ -50,7 +50,8 @@ void Config::fillJson(JsonDocument &config)
   config["pvzero"]["shelly3emAddr"] = shelly3emAddr;
   config["pvzero"]["max_voltage"] = String(maxVoltage, 2);
   config["pvzero"]["max_amperage"] = String(maxAmperage, 2);
-  config["pvzero"]["lcd_enabled"] = lcdEnabled;
+  config["pvzero"]["enable_lcd"] = enabledLcd;
+  config["pvzero"]["enable_second_psu"] = enableSecondPsu;
 }
 
 void Config::fromJson(JsonDocument &config)
@@ -80,10 +81,18 @@ void Config::fromJson(JsonDocument &config)
   {
     maxAmperage = jv.as<float>();
   }
-  jv = config["pvzero"]["lcd_enabled"];
+  jv = config["pvzero"]["enable_lcd"];
   if (!jv.isNull())
   {
-    lcdEnabled = jv.as<bool>();
+    enabledLcd = jv.as<bool>();
+  }
+  jv = config["pvzero"]["enable_second_psu"];
+  if (!jv.isNull())
+  {
+    enableSecondPsu = jv.as<bool>();
+    if (enableSecondPsu) {
+      EWC::I::get().logger().setLogging(false);
+    }
   }
 }
 
@@ -96,5 +105,6 @@ void Config::_initParameter()
   tasterFunc = TASTER_CHECK_NOW;
   maxVoltage = 36;
   maxAmperage = 7;
-  lcdEnabled = false;
+  enableSecondPsu = false;
+  enabledLcd = true;
 }
