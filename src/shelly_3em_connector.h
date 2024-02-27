@@ -64,9 +64,6 @@ namespace PVZ
 
   protected:
     int _potPin;
-#ifdef ESP8266
-    uint8_t _utcAddress;
-#endif
     TaskHandle_t _httpTaskHandle = NULL;
     unsigned int _reachedUpperLimit;
     ShellyStateCallback _callbackState;

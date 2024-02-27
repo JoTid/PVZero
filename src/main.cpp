@@ -26,11 +26,12 @@ void setup()
   //---------------------------------------------------------------------------------------------------
   // initialise EspWebConfig
   //
+  EWC::I::get().logger().setLogging(true);
+  EWC::I::get().led().enable(true, LED1_PIN, HIGH);
   EWC::I::get().config().paramDeviceName = String("pvz-") + EWC::I::get().config().getChipId();
   EWC::I::get().config().paramAPName = String("pvz-") + EWC::I::get().config().getChipId();
   EWC::I::get().config().paramHostname = String("pvz-") + EWC::I::get().config().getChipId();
   EWC::I::get().server().setBrand("PVZero", FIRMWARE_VERSION);
-  EWC::I::get().led().enable(true, LED1_PIN, HIGH);
 
   //---------------------------------------------------------------------------------------------------
   // initialise PVZero

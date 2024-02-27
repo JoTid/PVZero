@@ -19,10 +19,6 @@ limitations under the License.
 
 **************************************************************/
 #include <mutex>
-#ifdef ESP8266
-#include "ewcRTC.h"
-#elif defined(ESP32)
-#endif
 #include <extensions/ewcTime.h>
 #include <extensions/ewcMail.h>
 #include <ewcTickerLED.h>
@@ -47,10 +43,7 @@ Shelly3emConnector::Shelly3emConnector(int potPin) : EWC::ConfigInterface("Shell
   _isRequesting = false;
   _taskIsRunning = false;
   _countRequestsFailed = 0;
-#ifdef ESP8266
-  // initialize utc addresses in sutup method
-  _utcAddress = 0;
-#endif
+  _taskShelly3emUri = "";
 }
 
 Shelly3emConnector::~Shelly3emConnector()
@@ -61,10 +54,6 @@ Shelly3emConnector::~Shelly3emConnector()
 void Shelly3emConnector::setup(JsonDocument &config, bool resetConfig)
 {
   fromJson(config);
-#ifdef ESP8266
-  _utcAddress = EWC::I::get().rtc().get();
-  _reachedUpperLimit = EWC::I::get().rtc().read(_utcAddress);
-#endif
   if (_reachedUpperLimit != 1)
   {
     _reachedUpperLimit = 0;
@@ -72,26 +61,36 @@ void Shelly3emConnector::setup(JsonDocument &config, bool resetConfig)
   // pinMode(_potPin, OUTPUT);
   // digitalWrite(_potPin, LOW);
   // _sleeper->setup(resetConfig);
-#ifdef ESP8266
-  EWC::I::get()
-          .logger()
-      << F("Shelly3emConnector: reads from UTC (addr: ") << _utcAddress << F(") stored last state: ") << _reachedUpperLimit << endl;
-#endif
 }
 
 void Shelly3emConnector::fillJson(JsonDocument &config)
 {
+  // we use this method to be informed about save configuration
+  String uri = PZI::get().config().getShelly3emAddr();
+  if (uri.length() > 0 && !uri.startsWith("http"))
+  {
+    uri = String("http://") + uri;
+  }
+  if (uri.length() > 0)
+  {
+    std::lock_guard<std::mutex> lck(httpTaskMutex);
+    EWC::I::get().logger() << F("Shelly3emConnector: set uri ") << uri << endl;
+    _taskShelly3emUri = uri + "/status";
+  }
 }
 void Shelly3emConnector::fromJson(JsonDocument &config)
 {
   String uri = PZI::get().config().getShelly3emAddr();
-  if (!uri.startsWith("http"))
+  if (uri.length() > 0 && !uri.startsWith("http"))
   {
     uri = String("http://") + uri;
   }
-  std::lock_guard<std::mutex> lck(httpTaskMutex);
-  EWC::I::get().logger() << F("Shelly3emConnector: set uri ") << uri << endl;
-  _taskShelly3emUri = uri + "/status";
+  if (uri.length() > 0)
+  {
+    std::lock_guard<std::mutex> lck(httpTaskMutex);
+    EWC::I::get().logger() << F("Shelly3emConnector: set uri ") << uri << endl;
+    _taskShelly3emUri = uri + "/status";
+  }
 }
 
 void Shelly3emConnector::loop()
@@ -104,73 +103,81 @@ void Shelly3emConnector::loop()
   }
   if (_sleeper.finished())
   {
-    // we are in the requesting loop
-    if (!_isTaskRunning())
+    if (getUri().length() > 0)
     {
-      // http request is not running, should we resume the task
-      if (_httpTaskHandle != NULL)
+      // we are in the requesting loop
+      if (!_isTaskRunning())
       {
-        if (!_isRequesting)
+        // http request is not running, should we resume the task
+        if (_httpTaskHandle != NULL)
         {
-          _isRequesting = true;
-          EWC::I::get().logger() << F("Shelly3emConnector: request consumption power from ") << getUri() << endl;
-          I::get().led().start(1000, 250);
-          vTaskResume(_httpTaskHandle);
-          std::lock_guard<std::mutex> lck(httpTaskMutex);
-          _taskIsRunning = true;
-        }
-        else
-        {
-          // our request is active -> task was finished, check the results
-          _isRequesting = false;
-          I::get().led().stop();
-          if (isValidConsumptionPower())
+          if (!_isRequesting)
           {
-            // successful request
-            if (_callbackState != NULL)
-            {
-              _callbackState(true, getConsumptionPower());
-            }
-            if (_countRequestsFailed >= 3)
-            {
-              _infoState = String("Nach ") + _countRequestsFailed + " Versuchen wurde der Wert " + getConsumptionPower() + " W geholt.";
-              PZI::get().mail().sendWarning("Shelly 3em wieder erreichbar", _infoState.c_str());
-            }
-            _countRequestsFailed = 0;
-            EWC::I::get().logger() << F("Shelly3emConnector: request finished... sleep ") << endl;
-            _sleepUntil = I::get().time().str(PZI::get().config().getCheckInterval());
-            _infoState = "Nächster check um " + _sleepUntil;
-            _sleeper.sleep(PZI::get().config().getCheckInterval() * 1000);
+            _isRequesting = true;
+            EWC::I::get().logger() << F("Shelly3emConnector: request consumption power from ") << getUri() << endl;
+            I::get().led().start(1000, 250);
+            vTaskResume(_httpTaskHandle);
+            std::lock_guard<std::mutex> lck(httpTaskMutex);
+            _taskIsRunning = true;
           }
           else
           {
-            // failed request
-            I::get().led().start(3000, 3000);
-            _countRequestsFailed += 1;
-            if (_callbackState != NULL)
+            // our request is active -> task was finished, check the results
+            _isRequesting = false;
+            I::get().led().stop();
+            if (isValidConsumptionPower())
             {
-              _callbackState(false, 0);
+              // successful request
+              if (_callbackState != NULL)
+              {
+                _callbackState(true, getConsumptionPower());
+              }
+              if (_countRequestsFailed >= 3)
+              {
+                _infoState = String("Nach ") + _countRequestsFailed + " Versuchen wurde der Wert " + getConsumptionPower() + " W geholt.";
+                PZI::get().mail().sendWarning("Shelly 3em wieder erreichbar", _infoState.c_str());
+              }
+              _countRequestsFailed = 0;
+              EWC::I::get().logger() << F("Shelly3emConnector: request finished... sleep ") << endl;
+              _sleepUntil = I::get().time().str(PZI::get().config().getCheckInterval());
+              _infoState = "Nächster check um " + _sleepUntil;
+              _sleeper.sleep(PZI::get().config().getCheckInterval() * 1000);
             }
-            if (_countRequestsFailed == 3)
+            else
             {
-              _infoState = "Fehler beim holen der aktuellen Verbrauchswerte vom Shelly " + getUri();
-              PZI::get().mail().sendWarning("Shelly 3em nicht erreichbar", _infoState.c_str());
+              // failed request
+              I::get().led().start(3000, 3000);
+              _countRequestsFailed += 1;
+              if (_callbackState != NULL)
+              {
+                _callbackState(false, 0);
+              }
+              if (_countRequestsFailed == 3)
+              {
+                _infoState = "Fehler beim holen der aktuellen Verbrauchswerte vom Shelly " + getUri();
+                PZI::get().mail().sendWarning("Shelly 3em nicht erreichbar", _infoState.c_str());
+              }
             }
           }
         }
+        else
+        {
+          // create request task
+          EWC::I::get().logger() << F("Shelly3emConnector: create request task") << endl;
+          xTaskCreate(
+              this->httpTask,                // Function that should be called
+              "GET current by http request", // Name of the task (for debugging)
+              4096,                          // Stack size (bytes)
+              this,                          // Parameter to pass
+              5,                             // Task priority
+              &_httpTaskHandle               // Task handle
+          );
+        }
       }
-      else
-      {
-        // create request task
-        xTaskCreate(
-            this->httpTask,                // Function that should be called
-            "GET current by http request", // Name of the task (for debugging)
-            4096,                          // Stack size (bytes)
-            this,                          // Parameter to pass
-            5,                             // Task priority
-            &_httpTaskHandle               // Task handle
-        );
-      }
+    }
+    else
+    {
+      _sleeper.sleep(PZI::get().config().getCheckInterval() * 1000);
     }
   }
 };
