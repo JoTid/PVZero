@@ -25,6 +25,7 @@ limitations under the License.
 #include "generated/webShelly_3em_connectorJS.h"
 #include "pvzero_class.h"
 #include "pvzero_interface.h"
+#include "sw_ovs.h"
 
 using namespace EWC;
 using namespace PVZ;
@@ -36,6 +37,9 @@ using namespace PVZ;
 #endif
 
 PvzLcd::Screen_ts atsLcdScreenG[5]; // make screen of LCD available for whole application
+McOvs_ts          atsOvsInputsG[4]; // prepare software oversampling for up to 4 values 
+float ftPsuSupplyGainG;
+float ftPsuSupplyOffsetG;
 
 PVZeroClass::PVZeroClass()
     : _shelly3emConnector(MY_SHELLY_PIN) // pinPot=D6
@@ -110,6 +114,21 @@ void PVZeroClass::setup()
     aclPsuP[slPsuNrT].enable(true);
   }
   EWC::I::get().logger() << F("Setup ok") << endl;
+
+
+  //--------------------------------------------------------------------------------------------------- 
+  // prepare software oversampling
+  //
+  McOvsInit(&atsOvsInputsG[0], 4); // increase ADC value to 14 bit 
+
+  //---------------------------------------------------------------------------------------------------      
+  // calculate the gain and offset based on on impirically based values
+  // 10368 <=> 12.1
+  // 23535 <=> 24.3
+  // y=m*x+b
+  //
+  ftPsuSupplyGainG = ((24.3-12.1) / (23535.0 - 10368.0));
+  ftPsuSupplyOffsetG = (12.1 - (10368*ftPsuSupplyGainG));  
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -155,6 +174,16 @@ void PVZeroClass::loop()
   _taster.loop();
   _ewcMail.loop();
   _ewcUpdater.loop();
+
+  //--------------------------------------------------------------------------------------------------- 
+  // Calculate PSU Vcc
+  //
+  float ftPsuVccT = 0.0;
+  if (McOvsSample(&atsOvsInputsG[0], analogRead(34)) == true)
+  {
+    ftPsuVccT = (ftPsuSupplyGainG * (float)McOvsGetResult(&atsOvsInputsG[0])) + ftPsuSupplyOffsetG;
+    I::get().logger() << F("PSU Vcc: : ") << ftPsuVccT << F(" V") << endl;
+  }
 
   //---------------------------------------------------------------------------------------------------
   // Trigger 3EM loop and NTP time each second
