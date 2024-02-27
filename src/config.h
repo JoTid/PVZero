@@ -39,19 +39,28 @@ namespace PVZ
     void fillJson(JsonDocument &config);
     void fromJson(JsonDocument &config);
     /** === parameter  === **/
-    int checkInterval;
-    String shelly3emAddr;
-    float maxVoltage;
-    float maxAmperage;
-    bool enableSecondPsu;
-
+    int getCheckInterval() { return _checkInterval; }
+    String getShelly3emAddr() { return _shelly3emAddr; }
+    float getMaxVoltage() { return _maxVoltage; }
+    float getMaxAmperage() { return _maxAmperage; }
+    bool isEnabledSecondPsu() { return _enableSecondPsu; }
     // LCD enabled
-    bool enabledLcd;
+    bool isEnabledLcd() { return _enabledLcd; }
     // taster configuration parameter
-    uint8_t tasterFunc;
+    uint8_t getTasterFunc() { return _tasterFunc; }
 
   protected:
     void _initParameter();
+    int _checkInterval;
+    String _shelly3emAddr;
+    float _maxVoltage;
+    float _maxAmperage;
+    bool _enableSecondPsu;
+
+    // LCD enabled
+    bool _enabledLcd;
+    // taster configuration parameter
+    uint8_t _tasterFunc;
   };
 }; // namespace
 

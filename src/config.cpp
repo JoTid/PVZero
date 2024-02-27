@@ -45,13 +45,13 @@ void Config::fillJson(JsonDocument &config)
 {
   config["pvzero"]["name"] = EWC::I::get().config().paramDeviceName;
   config["pvzero"]["version"] = EWC::I::get().server().version();
-  config["pvzero"]["check_interval"] = checkInterval;
-  config["pvzero"]["taster_func"] = tasterFunc;
-  config["pvzero"]["shelly3emAddr"] = shelly3emAddr;
-  config["pvzero"]["max_voltage"] = String(maxVoltage, 2);
-  config["pvzero"]["max_amperage"] = String(maxAmperage, 2);
-  config["pvzero"]["enable_lcd"] = enabledLcd;
-  config["pvzero"]["enable_second_psu"] = enableSecondPsu;
+  config["pvzero"]["check_interval"] = _checkInterval;
+  config["pvzero"]["taster_func"] = _tasterFunc;
+  config["pvzero"]["shelly3emAddr"] = _shelly3emAddr;
+  config["pvzero"]["max_voltage"] = String(_maxVoltage, 2);
+  config["pvzero"]["max_amperage"] = String(_maxAmperage, 2);
+  config["pvzero"]["enable_lcd"] = _enabledLcd;
+  config["pvzero"]["enable_second_psu"] = _enableSecondPsu;
 }
 
 void Config::fromJson(JsonDocument &config)
@@ -59,52 +59,54 @@ void Config::fromJson(JsonDocument &config)
   JsonVariant jv = config["pvzero"]["check_interval"];
   if (!jv.isNull())
   {
-    checkInterval = jv.as<int>();
+    _checkInterval = jv.as<int>();
   }
   jv = config["pvzero"]["taster_func"];
   if (!jv.isNull())
   {
-    tasterFunc = jv.as<unsigned char>();
+    _tasterFunc = jv.as<unsigned char>();
   }
   jv = config["pvzero"]["shelly3emAddr"];
   if (!jv.isNull())
   {
-    shelly3emAddr = jv.as<String>();
+    _shelly3emAddr = jv.as<String>();
   }
   jv = config["pvzero"]["max_voltage"];
   if (!jv.isNull())
   {
-    maxVoltage = jv.as<float>();
+    _maxVoltage = jv.as<float>();
   }
   jv = config["pvzero"]["max_amperage"];
   if (!jv.isNull())
   {
-    maxAmperage = jv.as<float>();
+    _maxAmperage = jv.as<float>();
   }
   jv = config["pvzero"]["enable_lcd"];
   if (!jv.isNull())
   {
-    enabledLcd = jv.as<bool>();
+    _enabledLcd = jv.as<bool>();
   }
   jv = config["pvzero"]["enable_second_psu"];
   if (!jv.isNull())
   {
-    enableSecondPsu = jv.as<bool>();
-    if (enableSecondPsu) {
+    _enableSecondPsu = jv.as<bool>();
+    if (_enableSecondPsu) {
       EWC::I::get().logger().setLogging(false);
     }
+    // if psu activated, we should disable the settings to disallow enable the logger again.
+    EWC::I::get().config().disableLogSetting = _enableSecondPsu;
   }
 }
 
 void Config::_initParameter()
 {
-  checkInterval = 1;
+  _checkInterval = 1;
   // deep_sleep("deep-sleep", "Deep sleep"),
-  shelly3emAddr = "";
+  _shelly3emAddr = "";
   // taster
-  tasterFunc = TASTER_CHECK_NOW;
-  maxVoltage = 36;
-  maxAmperage = 7;
-  enableSecondPsu = false;
-  enabledLcd = true;
+  _tasterFunc = TASTER_CHECK_NOW;
+  _maxVoltage = 36;
+  _maxAmperage = 7;
+  _enableSecondPsu = false;
+  _enabledLcd = true;
 }

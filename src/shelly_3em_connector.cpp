@@ -84,7 +84,7 @@ void Shelly3emConnector::fillJson(JsonDocument &config)
 }
 void Shelly3emConnector::fromJson(JsonDocument &config)
 {
-  String uri = PZI::get().config().shelly3emAddr;
+  String uri = PZI::get().config().getShelly3emAddr();
   if (!uri.startsWith("http"))
   {
     uri = String("http://") + uri;
@@ -138,9 +138,9 @@ void Shelly3emConnector::loop()
             }
             _countRequestsFailed = 0;
             EWC::I::get().logger() << F("Shelly3emConnector: request finished... sleep ") << endl;
-            _sleepUntil = I::get().time().str(PZI::get().config().checkInterval);
+            _sleepUntil = I::get().time().str(PZI::get().config().getCheckInterval());
             _infoState = "Nächster check um " + _sleepUntil;
-            _sleeper.sleep(PZI::get().config().checkInterval * 1000);
+            _sleeper.sleep(PZI::get().config().getCheckInterval() * 1000);
           }
           else
           {

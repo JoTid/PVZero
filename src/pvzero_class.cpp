@@ -89,19 +89,19 @@ void PVZeroClass::setup()
   _shelly3emConnector.setCallbackState(std::bind(&PVZeroClass::_onTotalWatt, this, std::placeholders::_1, std::placeholders::_2));
 
   //---------------------------------------------------------------------------------------------------
-  // setup the control algorithm 
+  // setup the control algorithm
   //
   clCaP.init();
-  EWC::I::get().logger() << F("set maxVoltage: ") << PZI::get().config().maxVoltage << ", maxCurrent: " << PZI::get().config().maxAmperage << endl;
-  clCaP.setFeedInTargetDcVoltage(PZI::get().config().maxVoltage);
-  clCaP.setFeedInTargetDcCurrentLimits(0.0, PZI::get().config().maxAmperage);
+  EWC::I::get().logger() << F("set maxVoltage: ") << PZI::get().config().getMaxVoltage() << ", maxCurrent: " << PZI::get().config().getMaxAmperage() << endl;
+  clCaP.setFeedInTargetDcVoltage(PZI::get().config().getMaxVoltage());
+  clCaP.setFeedInTargetDcCurrentLimits(0.0, PZI::get().config().getMaxAmperage());
 
   //---------------------------------------------------------------------------------------------------
   // update the PSU
   //
   aclPsuP[0].init(Serial1);
   aclPsuP[1].init(Serial2);
-  
+
   int32_t slPsuNrT = 2;
   while (slPsuNrT > 0)
   {
@@ -133,20 +133,18 @@ void PVZeroClass::processControlAlgorithm(void)
     // Set the power to 0 so that the current is also limited to 0.
     clCaP.updateConsumptionPower(0.0);
   }
-  clCaP.updateFeedInActualDcValues(aclPsuP[1].actualVoltage(), aclPsuP[1].actualCurrent()); 
+  clCaP.updateFeedInActualDcValues(aclPsuP[1].actualVoltage(), aclPsuP[1].actualCurrent());
 
   //---------------------------------------------------------------------------------------------------
   // finally trigger the processing of data
   //
   clCaP.process();
-
 }
-
 
 //--------------------------------------------------------------------------------------------------------------------//
 //                                                                                                                    //
 //                                                                                                                    //
-//--------------------------------------------------------------------------------------------------------------------// 
+//--------------------------------------------------------------------------------------------------------------------//
 void PVZeroClass::loop()
 {
   String clStringT;
@@ -194,7 +192,7 @@ void PVZeroClass::loop()
       _shelly3emConnector.loop();
     }
 
-    //------------------------------------------------------------------------------------------- 
+    //-------------------------------------------------------------------------------------------
     // Update target data of the PSU only one time in second
     //
     aclPsuP[1].set(clCaP.feedInTargetDcVoltage(), clCaP.feedInTargetDcCurrent());
@@ -226,55 +224,57 @@ void PVZeroClass::loop()
     {
       atsLcdScreenG[0].aclLine[0] = String("Cons. power: " + String(consumptionPower) + "Wh");
 
-      //----------------------------------------------------------------------------------- 
+      //-----------------------------------------------------------------------------------
       // Print Infos from PSUs only if they are available
       //
       slLcdScreenNrT = 0;
 
-      //----------------------------------------------------------------------------------- 
+      //-----------------------------------------------------------------------------------
       // display info that depends on PSU A
       //
       if (aclPsuP[0].isAvailable())
       {
-        atsLcdScreenG[0].aclLine[1] = String("A[Wh]: " + String(clCaP.feedInTargetPower(), 0) + " | " + String(aclPsuP[1].actualVoltage() * aclPsuP[1].actualCurrent(),0));
+        atsLcdScreenG[0].aclLine[1] = String("A[Wh]: " + String(clCaP.feedInTargetPower(), 0) + " | " + String(aclPsuP[1].actualVoltage() * aclPsuP[1].actualCurrent(), 0));
         slLcdScreenNrT++;
 
         atsLcdScreenG[slLcdScreenNrT].aclLine[0] = String("Feed-in via PSU A");
-        atsLcdScreenG[slLcdScreenNrT].aclLine[1] = String("("+String(clCaP.feedInTargetPower(), 0) + ")" + String(clCaP.feedInTargetPowerApprox(), 0) + "Wh=" +
-                                            String(clCaP.feedInTargetDcVoltage(), 0) + "V+" +
-                                            String(clCaP.feedInTargetDcCurrent(), 1) + "A");
+        atsLcdScreenG[slLcdScreenNrT].aclLine[1] = String("(" + String(clCaP.feedInTargetPower(), 0) + ")" + String(clCaP.feedInTargetPowerApprox(), 0) + "Wh=" +
+                                                          String(clCaP.feedInTargetDcVoltage(), 0) + "V+" +
+                                                          String(clCaP.feedInTargetDcCurrent(), 1) + "A");
 
         atsLcdScreenG[slLcdScreenNrT].aclLine[2] = String("" + String(aclPsuP[1].actualVoltage() * aclPsuP[1].actualCurrent(), 0) + " Wh = " +
-                                            String(aclPsuP[1].actualVoltage(), 0) + "V + " +
-                                            String(aclPsuP[1].actualCurrent(), 1) + "A");
-      } else 
+                                                          String(aclPsuP[1].actualVoltage(), 0) + "V + " +
+                                                          String(aclPsuP[1].actualCurrent(), 1) + "A");
+      }
+      else
       {
         atsLcdScreenG[0].aclLine[1] = String(" - No PSU A connected");
       }
 
-      //----------------------------------------------------------------------------------- 
+      //-----------------------------------------------------------------------------------
       // display info that depends on PSU A
       //
       if (aclPsuP[1].isAvailable())
       {
-        atsLcdScreenG[0].aclLine[2] = String("B[Wh]: " + String(clCaP.feedInTargetPower(), 0) + " | " + String(aclPsuP[1].actualVoltage() * aclPsuP[1].actualCurrent(),0));
-        
-        slLcdScreenNrT++;        
+        atsLcdScreenG[0].aclLine[2] = String("B[Wh]: " + String(clCaP.feedInTargetPower(), 0) + " | " + String(aclPsuP[1].actualVoltage() * aclPsuP[1].actualCurrent(), 0));
+
+        slLcdScreenNrT++;
 
         atsLcdScreenG[slLcdScreenNrT].aclLine[0] = String("Feed-in via PSU B");
-        atsLcdScreenG[slLcdScreenNrT].aclLine[1] = String("("+String(clCaP.feedInTargetPower(), 0) + ")" + String(clCaP.feedInTargetPowerApprox(), 0) + "Wh=" +
-                                            String(clCaP.feedInTargetDcVoltage(), 0) + "V+" +
-                                            String(clCaP.feedInTargetDcCurrent(), 1) + "A");
+        atsLcdScreenG[slLcdScreenNrT].aclLine[1] = String("(" + String(clCaP.feedInTargetPower(), 0) + ")" + String(clCaP.feedInTargetPowerApprox(), 0) + "Wh=" +
+                                                          String(clCaP.feedInTargetDcVoltage(), 0) + "V+" +
+                                                          String(clCaP.feedInTargetDcCurrent(), 1) + "A");
 
         atsLcdScreenG[slLcdScreenNrT].aclLine[2] = String("" + String(aclPsuP[1].actualVoltage() * aclPsuP[1].actualCurrent(), 0) + " Wh = " +
-                                            String(aclPsuP[1].actualVoltage(), 0) + "V + " +
-                                            String(aclPsuP[1].actualCurrent(), 1) + "A");
-
-      } else {
+                                                          String(aclPsuP[1].actualVoltage(), 0) + "V + " +
+                                                          String(aclPsuP[1].actualCurrent(), 1) + "A");
+      }
+      else
+      {
         atsLcdScreenG[0].aclLine[2] = String(" - No PSU B connected");
       }
 
-      _lcd.setScreen(&atsLcdScreenG[0], slLcdScreenNrT+1);
+      _lcd.setScreen(&atsLcdScreenG[0], slLcdScreenNrT + 1);
       _lcd.ok();
     }
     //---------------------------------------------------------------------------
@@ -282,7 +282,7 @@ void PVZeroClass::loop()
     //
     else
     {
-      _lcd.warning("Request ERROR at 3EM", "Check URL:", PZI::get().config().shelly3emAddr);
+      _lcd.warning("Request ERROR at 3EM", "Check URL:", PZI::get().config().getShelly3emAddr());
     }
   }
 
@@ -387,6 +387,7 @@ void PVZeroClass::_onPVZeroSave(WebServer *webServer)
     enableSecondPsu = webServer->arg("enable_second_psu").equals("true");
   }
   config["pvzero"]["enable_second_psu"] = enableSecondPsu;
+  I::get().config().disableLogSetting = enableSecondPsu;
   bool enableLcd = false;
   if (webServer->hasArg("enable_lcd"))
   {
@@ -443,7 +444,7 @@ void PVZeroClass::_onPVZeroState(WebServer *webServer)
   json["feed_in_power"] = String(clCaP.feedInTargetPower(), 0);
   json["enable_second_psu"] = consumptionPower;
   json["check_info"] = _shelly3emConnector.info();
-  json["check_interval"] = PZI::get().config().checkInterval;
+  json["check_interval"] = PZI::get().config().getCheckInterval();
   json["next_check"] = _shelly3emConnector.infoSleepUntil();
   String output;
   serializeJson(json, output);
@@ -466,7 +467,8 @@ void PVZeroClass::_onPVZeroCheck(WebServer *webServer)
 void PVZeroClass::_onTotalWatt(bool state, int32_t totalWatt)
 {
   I::get().logger() << F("[PVZ] callback with state: ") << state << F(", Verbrauch: ") << totalWatt << endl;
-  if (isConsumptionPowerValid) {
+  if (isConsumptionPowerValid)
+  {
     _ewcMqttHA.publishState("consumption" + I::get().config().getChipId(), String(consumptionPower));
     _ewcMqttHA.publishState("feedIn" + I::get().config().getChipId(), String(clCaP.feedInTargetPower(), 0));
   }

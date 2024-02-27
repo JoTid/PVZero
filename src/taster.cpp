@@ -48,7 +48,7 @@ void Taster::setup(bool resetConfig)
 
 void Taster::loop()
 {
-  if (PZI::get().config().tasterFunc != TASTER_NONE)
+  if (PZI::get().config().getTasterFunc() != TASTER_NONE)
   {
     int value = digitalRead(_pin);
     if (value > 0)
@@ -71,14 +71,14 @@ void Taster::loop()
       if (_pressDetected)
       {
         // execute action
-        switch (PZI::get().config().tasterFunc)
+        switch (PZI::get().config().getTasterFunc())
         {
         case TASTER_CHECK_NOW:
           I::get().logger() << "[Taster] trigger check now" << endl;
           // PZI::get().shelly3emConnector().sleeper().wakeup();
           break;
         default:
-          I::get().logger() << "[Taster] undefined action: " << PZI::get().config().tasterFunc << endl;
+          I::get().logger() << "[Taster] undefined action: " << PZI::get().config().getTasterFunc() << endl;
           break;
         }
         _pressDetected = false;
