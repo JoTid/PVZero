@@ -1,10 +1,15 @@
 {
-    "pvzero": {
-        "check_interval": 10,
-        "shelly3emAddr": "",
-        "enable_second_psu": false,
-        "max_voltage": 36,
-        "max_amperage": 7,
-        "taster_func": 1
-    }
+  "pvzero": {
+    "check_interval": 10,
+    "shelly3emAddr": "",
+    "enable_second_psu": false,
+    "enable_lcd": true,
+    "max_voltage": 36,
+    "max_amperage": 7,
+    "filter_order": 1,
+    "calibration_low": 24,
+    "calibration_low_mes": -1,
+    "calibration_high": 48,
+    "calibration_high_mes": -1
+  }
 }

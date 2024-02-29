@@ -23,6 +23,7 @@ limitations under the License.
 
 #include <map>
 #include <Arduino.h>
+#include <ewcConfigServer.h>
 #include "ewcConfigInterface.h"
 #include "pvzero_interface.h"
 #include "defaults.h"
@@ -30,37 +31,51 @@ limitations under the License.
 namespace PVZ
 {
 
-  class Config : public EWC::ConfigInterface
+  // takes user defined calibration value and returns measured value
+  typedef std::function<float(float)> CalibrationCallback;
+
+  class PVZConfig : public EWC::ConfigInterface
   {
   public:
-    Config();
-    ~Config();
+    PVZConfig();
+    ~PVZConfig();
     void setup(JsonDocument &config, bool resetConfig = false);
     void fillJson(JsonDocument &config);
     void fromJson(JsonDocument &config);
+    /** === callbacks  === **/
+    void setCalibrationLowCallback(CalibrationCallback cb) { _cbLow = cb; }
+    void setCalibrationHighCallback(CalibrationCallback cb) { _cbHigh = cb; }
     /** === parameter  === **/
     int getCheckInterval() { return _checkInterval; }
     String getShelly3emAddr() { return _shelly3emAddr; }
+    uint8_t getFilterOrder() { return _filterOrder; }
     float getMaxVoltage() { return _maxVoltage; }
     float getMaxAmperage() { return _maxAmperage; }
     bool isEnabledSecondPsu() { return _enableSecondPsu; }
     // LCD enabled
     bool isEnabledLcd() { return _enabledLcd; }
-    // taster configuration parameter
-    uint8_t getTasterFunc() { return _tasterFunc; }
 
   protected:
     void _initParameter();
     int _checkInterval;
     String _shelly3emAddr;
+    int _filterOrder;
     float _maxVoltage;
     float _maxAmperage;
     bool _enableSecondPsu;
-
-    // LCD enabled
     bool _enabledLcd;
-    // taster configuration parameter
-    uint8_t _tasterFunc;
+    float _calibrationLow;
+    float _calibrationLowMes;
+    float _calibrationHigh;
+    float _calibrationHighMes;
+
+    CalibrationCallback _cbLow;
+    CalibrationCallback _cbHigh;
+
+    void _onConfigGet(WebServer *webServer);
+    void _onConfigSave(WebServer *webServer);
+    void _onCalibrationLow(WebServer *webServer);
+    void _onCalibrationHigh(WebServer *webServer);
   };
 }; // namespace
 

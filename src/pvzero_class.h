@@ -29,13 +29,11 @@ limitations under the License.
 #include <extensions/ewcMail.h>
 #include <extensions/ewcMqtt.h>
 #include <extensions/ewcMqttHA.h>
-#include "config.h"
+#include "pvz_config.h"
 #include "shelly_3em_connector.h"
 #include "pvz_ca.hpp"
 #include "pvz_lcd.hpp"
 #include "pvz_psu.hpp"
-
-#include "taster.h"
 
 namespace PVZ
 {
@@ -51,7 +49,8 @@ namespace PVZ
     void setup();
     void loop();
 
-    Config &config() { return _config; }
+    PVZConfig &config() { return _config; }
+    PvzCa clCaP;
 
   protected:
     unsigned long _tsStarted = 0;
@@ -59,25 +58,24 @@ namespace PVZ
     unsigned long _tsMeasLoopStart = 0;
     unsigned long _maxPumpTime = 0;
     String _sleepInfoStr;
-    Config _config;
+    PVZConfig _config;
     EWC::ConfigServer _ewcServer;
     EWC::Updater _ewcUpdater;
     EWC::Mqtt _ewcMqtt;
     EWC::MqttHA _ewcMqttHA;
     EWC::Mail _ewcMail;
     Shelly3emConnector _shelly3emConnector;
-    Taster _taster;
-    PvzCa clCaP;
     PvzLcd _lcd;
     PvzPsu aclPsuP[2]; // support up to 2 PSUs
+    float ftPsuVccT = 0.0;
     int32_t consumptionPower = -1;
     bool isConsumptionPowerValid = false;
-    void _onPVZeroConfig(WebServer *webServer);
-    void _onPVZeroSave(WebServer *webServer);
     void _onPVZeroState(WebServer *webServer);
     void _onPVZeroCheck(WebServer *webServer);
     void _onTotalWatt(bool state, int32_t totalWatt);
     void processControlAlgorithm(void);
+    float handleCalibrationLow(float value);
+    float handleCalibrationHigh(float value);
   };
 }; // namespace
 

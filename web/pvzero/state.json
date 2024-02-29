@@ -3,6 +3,7 @@
     "version": "0.0.0",
     "consumption_power": -999,
     "feed_in_power": 0,
+    "psu_vcc": 0.0,
     "enable_second_psu": false,
     "enable_lcd": true,
     "check_interval": -1,

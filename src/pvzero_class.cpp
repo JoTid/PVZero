@@ -19,7 +19,6 @@ limitations under the License.
 
 **************************************************************/
 #include <ewcConfigServer.h>
-#include "generated/pvzeroSetupHTML.h"
 #include "generated/webIndexHTML.h"
 #include "generated/webLanguagesJSON.h"
 #include "generated/webShelly_3em_connectorJS.h"
@@ -37,7 +36,7 @@ using namespace PVZ;
 #endif
 
 PvzLcd::Screen_ts atsLcdScreenG[5]; // make screen of LCD available for whole application
-McOvs_ts          atsOvsInputsG[4]; // prepare software oversampling for up to 4 values 
+McOvs_ts atsOvsInputsG[4];          // prepare software oversampling for up to 4 values
 float ftPsuSupplyGainG;
 float ftPsuSupplyOffsetG;
 
@@ -74,23 +73,21 @@ void PVZeroClass::setup()
   EWC::I::get().server().enableConfigUri();
   EWC::I::get().server().setup();
   EWC::I::get().config().paramLanguage = "de";
-  EWC::I::get().server().insertMenuG("Device", "/pvzero/setup", "menu_device", FPSTR(PROGMEM_CONFIG_TEXT_HTML), HTML_PVZERO_SETUP_GZIP, sizeof(HTML_PVZERO_SETUP_GZIP), true, 0);
   WebServer *ws = &EWC::I::get().server().webServer();
   EWC::I::get().logger() << F("Setup WebServer") << endl;
   EWC::I::get().server().webServer().on(HOME_URI, std::bind(&ConfigServer::sendContentG, &EWC::I::get().server(), ws, FPSTR(PROGMEM_CONFIG_TEXT_HTML), HTML_WEB_INDEX_GZIP, sizeof(HTML_WEB_INDEX_GZIP)));
   EWC::I::get().server().webServer().on("/languages.json", std::bind(&ConfigServer::sendContentG, &EWC::I::get().server(), ws, FPSTR(PROGMEM_CONFIG_APPLICATION_JSON), JSON_WEB_LANGUAGES_GZIP, sizeof(JSON_WEB_LANGUAGES_GZIP)));
-  EWC::I::get().server().webServer().on("/pvzero/config.json", std::bind(&PVZeroClass::_onPVZeroConfig, this, ws));
-  // EWC::I::get().server().webServer().on("/bbs/cycle.svg", std::bind(&ConfigServer::sendContentG, &EWC::I::get().server(), ws, "image/svg+xml", SVG_BBS_CYCLE_GZIP, sizeof(SVG_BBS_CYCLE_GZIP)));
-  EWC::I::get().server().webServer().on("/pvzero/config/save", std::bind(&PVZeroClass::_onPVZeroSave, this, ws));
   EWC::I::get().server().webServer().on("/pvzero/state.json", std::bind(&PVZeroClass::_onPVZeroState, this, ws));
   EWC::I::get().server().webServer().on("/check", std::bind(&PVZeroClass::_onPVZeroCheck, this, ws));
   EWC::I::get().server().webServer().on("/js/shelly_3em_connector.js", std::bind(&ConfigServer::sendContentG, &EWC::I::get().server(), ws, FPSTR(PROGMEM_CONFIG_APPLICATION_JS), JS_WEB_SHELLY_3EM_CONNECTOR_GZIP, sizeof(JS_WEB_SHELLY_3EM_CONNECTOR_GZIP)));
   _ewcMqttHA.setup(_ewcMqtt, "pvz." + I::get().config().getChipId(), I::get().config().paramDeviceName, "pvz");
   _ewcMqttHA.addProperty("sensor", "consumption" + I::get().config().getChipId(), "Consumption", "power", "consumption", "W", false);
   _ewcMqttHA.addProperty("sensor", "feedIn" + I::get().config().getChipId(), "Feed-In", "power", "feedIn", "W", false);
-  _taster.setup(EWC::I::get().configFS().resetDetected());
   _tsMeasLoopStart = millis();
   _shelly3emConnector.setCallbackState(std::bind(&PVZeroClass::_onTotalWatt, this, std::placeholders::_1, std::placeholders::_2));
+
+  _config.setCalibrationLowCallback(std::bind(&PVZeroClass::handleCalibrationLow, this, std::placeholders::_1));
+  _config.setCalibrationHighCallback(std::bind(&PVZeroClass::handleCalibrationHigh, this, std::placeholders::_1));
 
   //---------------------------------------------------------------------------------------------------
   // setup the control algorithm
@@ -99,12 +96,16 @@ void PVZeroClass::setup()
   EWC::I::get().logger() << F("set maxVoltage: ") << PZI::get().config().getMaxVoltage() << ", maxCurrent: " << PZI::get().config().getMaxAmperage() << endl;
   clCaP.setFeedInTargetDcVoltage(PZI::get().config().getMaxVoltage());
   clCaP.setFeedInTargetDcCurrentLimits(0.0, PZI::get().config().getMaxAmperage());
+  clCaP.setFilterOrder(_config.getFilterOrder());
 
   //---------------------------------------------------------------------------------------------------
   // update the PSU
   //
   aclPsuP[0].init(Serial1);
-  aclPsuP[1].init(Serial2);
+  if (_config.isEnabledSecondPsu())
+  {
+    aclPsuP[1].init(Serial2);
+  }
 
   int32_t slPsuNrT = 2;
   while (slPsuNrT > 0)
@@ -115,20 +116,19 @@ void PVZeroClass::setup()
   }
   EWC::I::get().logger() << F("Setup ok") << endl;
 
-
-  //--------------------------------------------------------------------------------------------------- 
+  //---------------------------------------------------------------------------------------------------
   // prepare software oversampling
   //
-  McOvsInit(&atsOvsInputsG[0], 4); // increase ADC value to 14 bit 
+  McOvsInit(&atsOvsInputsG[0], 4); // increase ADC value to 14 bit
 
-  //---------------------------------------------------------------------------------------------------      
-  // calculate the gain and offset based on on impirically based values
+  //---------------------------------------------------------------------------------------------------
+  // calculate the gain and offset based on on imperially based values
   // 10368 <=> 12.1
   // 23535 <=> 24.3
   // y=m*x+b
   //
-  ftPsuSupplyGainG = ((24.3-12.1) / (23535.0 - 10368.0));
-  ftPsuSupplyOffsetG = (12.1 - (10368*ftPsuSupplyGainG));  
+  ftPsuSupplyGainG = ((24.3 - 12.1) / (23535.0 - 10368.0));
+  ftPsuSupplyOffsetG = (12.1 - (10368 * ftPsuSupplyGainG));
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -171,14 +171,12 @@ void PVZeroClass::loop()
   int32_t slLcdScreenNrT;
 
   unsigned long ts_now = millis();
-  _taster.loop();
   _ewcMail.loop();
   _ewcUpdater.loop();
 
-  //--------------------------------------------------------------------------------------------------- 
+  //---------------------------------------------------------------------------------------------------
   // Calculate PSU Vcc
   //
-  float ftPsuVccT = 0.0;
   if (McOvsSample(&atsOvsInputsG[0], analogRead(34)) == true)
   {
     ftPsuVccT = (ftPsuSupplyGainG * (float)McOvsGetResult(&atsOvsInputsG[0])) + ftPsuSupplyOffsetG;
@@ -370,93 +368,6 @@ void PVZeroClass::loop()
   _lcd.process();
 }
 
-void PVZeroClass::_onPVZeroConfig(WebServer *webServer)
-{
-  I::get().logger() << F("[PVZ] config request") << endl;
-  if (!I::get().server().isAuthenticated(webServer))
-  {
-    I::get().logger() << F("[PVZ] not sufficient authentication") << endl;
-    return webServer->requestAuthentication();
-  }
-  JsonDocument jsonDoc;
-  _config.fillJson(jsonDoc);
-  String output;
-  serializeJson(jsonDoc, output);
-  webServer->send(200, FPSTR(PROGMEM_CONFIG_APPLICATION_JSON), output);
-}
-
-void PVZeroClass::_onPVZeroSave(WebServer *webServer)
-{
-  I::get().logger() << F("[PVZ] save config request") << endl;
-  if (!I::get().server().isAuthenticated(webServer))
-  {
-    I::get().logger() << F("[PVZ] not sufficient authentication") << endl;
-    return webServer->requestAuthentication();
-  }
-  JsonDocument config;
-  if (webServer->hasArg("check_interval"))
-  {
-    long val = webServer->arg("check_interval").toInt();
-    if (val > 0)
-    {
-      config["pvzero"]["check_interval"] = val;
-    }
-  }
-  if (webServer->hasArg("taster_func"))
-  {
-    long val = webServer->arg("taster_func").toInt();
-    if (val >= 0)
-    {
-      config["pvzero"]["taster_func"] = val;
-    }
-  }
-  bool enableSecondPsu = false;
-  if (webServer->hasArg("enable_second_psu"))
-  {
-    enableSecondPsu = webServer->arg("enable_second_psu").equals("true");
-  }
-  config["pvzero"]["enable_second_psu"] = enableSecondPsu;
-  I::get().config().disableLogSetting = enableSecondPsu;
-  bool enableLcd = false;
-  if (webServer->hasArg("enable_lcd"))
-  {
-    enableLcd = webServer->arg("enable_lcd").equals("true");
-  }
-  config["pvzero"]["enable_lcd"] = enableLcd;
-  if (webServer->hasArg("shelly3emAddr"))
-  {
-    String val = webServer->arg("shelly3emAddr");
-    if (val.length() >= 0)
-    {
-      config["pvzero"]["shelly3emAddr"] = val;
-    }
-  }
-  if (webServer->hasArg("max_voltage"))
-  {
-    float val = webServer->arg("max_voltage").toFloat();
-    if (val >= 0)
-    {
-      config["pvzero"]["max_voltage"] = val;
-    }
-  }
-  if (webServer->hasArg("max_voltage"))
-  {
-    I::get().logger() << F("Ampare: ") << webServer->arg("max_amperage") << endl;
-    float val = webServer->arg("max_amperage").toFloat();
-    if (val >= 0)
-    {
-      I::get().logger() << F("  Ampare value: ") << val << endl;
-      config["pvzero"]["max_amperage"] = val;
-    }
-  }
-
-  _config.fromJson(config);
-  I::get().configFS().save();
-  String details;
-  serializeJsonPretty(config["pvzero"], details);
-  I::get().server().sendPageSuccess(webServer, "PVZ Config save", "Save successful!", "/pvzero/setup", "<pre id=\"json\">" + details + "</pre>");
-}
-
 void PVZeroClass::_onPVZeroState(WebServer *webServer)
 {
   I::get().logger() << F("[PVZ] state request") << endl;
@@ -471,6 +382,7 @@ void PVZeroClass::_onPVZeroState(WebServer *webServer)
   json["version"] = I::get().server().version();
   json["consumption_power"] = consumptionPower;
   json["feed_in_power"] = String(clCaP.feedInTargetPower(), 0);
+  json["psu_vcc"] = String(ftPsuVccT, 2);
   json["enable_second_psu"] = consumptionPower;
   json["check_info"] = _shelly3emConnector.info();
   json["check_interval"] = PZI::get().config().getCheckInterval();
@@ -503,4 +415,16 @@ void PVZeroClass::_onTotalWatt(bool state, int32_t totalWatt)
   }
   consumptionPower = totalWatt;
   isConsumptionPowerValid = state;
+}
+
+float PVZeroClass::handleCalibrationLow(float value)
+{
+  I::get().logger() << F("[PVZ] callback calibration low for ") << String(value, 2) << endl;
+  return 0.5;
+}
+
+float PVZeroClass::handleCalibrationHigh(float value)
+{
+  I::get().logger() << F("[PVZ] callback calibration high for ") << String(value, 2) << endl;
+  return 1.5;
 }

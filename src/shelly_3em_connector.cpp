@@ -25,7 +25,7 @@ limitations under the License.
 #include <ewcInterface.h>
 #include "shelly_3em_connector.h"
 #include "ewcLogger.h"
-#include "config.h"
+#include "pvz_config.h"
 #include "pvzero_interface.h"
 
 using namespace EWC;
@@ -163,6 +163,8 @@ void Shelly3emConnector::loop()
         else
         {
           // create request task
+          httpClient.useHTTP10(true);
+          httpClient.setReuse(true);
           EWC::I::get().logger() << F("Shelly3emConnector: create request task") << endl;
           xTaskCreate(
               this->httpTask,                // Function that should be called
@@ -235,25 +237,20 @@ void Shelly3emConnector::httpTask(void *_this)
   while (true)
   {
     vTaskSuspend(NULL);
-    WiFiClient wifiClient;
-    HTTPClient httpClient;
-    httpClient.useHTTP10(true);
-    // httpClient.setReuse(true);
-
     String infoState;
     bool valid = false;
     int32_t consumptionPower = 0;
     String requestUri = sc->getUri();
     // Send request
-    httpClient.begin(wifiClient, requestUri.c_str());
-    int httpCode = httpClient.GET();
+    sc->httpClient.begin(sc->wifiClient, requestUri.c_str());
+    int httpCode = sc->httpClient.GET();
     if (httpCode != 200)
     {
     }
     else
     {
       JsonDocument doc;
-      String jsonStr = httpClient.getString();
+      String jsonStr = sc->httpClient.getString();
       deserializeJson(doc, jsonStr);
       consumptionPower = (int)doc["total_power"];
       valid = true;

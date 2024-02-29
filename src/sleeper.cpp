@@ -22,7 +22,7 @@ limitations under the License.
 #ifdef ESP8266
 #include "ewcRTC.h"
 #endif
-#include "config.h"
+#include "pvz_config.h"
 #include "ewcLogger.h"
 #include "ewcInterface.h"
 

@@ -38,7 +38,7 @@ class PvzLcd;
 namespace PVZ
 {
   class PVZeroClass;
-  class Config;
+  class PVZConfig;
   class Shelly3emConnector;
 
   class InterfaceData
@@ -50,7 +50,7 @@ namespace PVZ
 
     PVZeroClass &pvz() { return *_pvz; }
     Shelly3emConnector &shelly3emConnector() { return *_shelly3emConnector; }
-    Config &config() { return *_config; }
+    PVZConfig &config() { return *_config; }
     EWC::ConfigServer &ewcServer() { return *_ewcServer; }
     EWC::Mail &mail() { return *_ewcMail; }
     EWC::MqttHA &mqttHA() { return *_ewcMqttHA; }
@@ -58,7 +58,7 @@ namespace PVZ
 
   private:
     PVZeroClass *_pvz;
-    Config *_config;
+    PVZConfig *_config;
     Shelly3emConnector *_shelly3emConnector;
     EWC::ConfigServer *_ewcServer;
     EWC::Mail *_ewcMail;
