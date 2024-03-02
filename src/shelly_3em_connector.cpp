@@ -114,7 +114,7 @@ void Shelly3emConnector::loop()
           if (!_isRequesting)
           {
             _isRequesting = true;
-            EWC::I::get().logger() << F("Shelly3emConnector: request consumption power from ") << getUri() << endl;
+            EWC::I::get().logger() << F("Shelly3emConnector: request consumption power from ") << getUri() << " actually task is " << _taskIsRunning << endl;
             I::get().led().start(1000, 250);
             vTaskResume(_httpTaskHandle);
             std::lock_guard<std::mutex> lck(httpTaskMutex);
@@ -241,11 +241,18 @@ void Shelly3emConnector::httpTask(void *_this)
     bool valid = false;
     int32_t consumptionPower = 0;
     String requestUri = sc->getUri();
+
+    //------------------------------------------------------------------------------------------- 
+    // Before sending the Request increase the timeout time. This has been done to avoid 
+    // HTTPC_ERROR_READ_TIMEOUT errors that has been occurred sometimes.
+    //
+    sc->httpClient.setTimeout(15000);
     // Send request
     sc->httpClient.begin(sc->wifiClient, requestUri.c_str());
     int httpCode = sc->httpClient.GET();
     if (httpCode != 200)
     {
+      EWC::I::get().logger() << F("Shelly3emConnector: ERROR httpCode of GET: ") << httpCode << endl;
     }
     else
     {
