@@ -39,6 +39,8 @@ PvzLcd::Screen_ts atsLcdScreenG[5]; // make screen of LCD available for whole ap
 McOvs_ts atsOvsInputsG[4];          // prepare software oversampling for up to 4 values
 float ftPsuSupplyGainG;
 float ftPsuSupplyOffsetG;
+int32_t aftPsuSupplyCalRawG[2];     // index 0 contains Low value and 1 high value 
+float   aftPsuSupplyCalNominalG[2]; // index 0 contains Low value and 1 high value 
 
 PVZeroClass::PVZeroClass()
     : _shelly3emConnector(MY_SHELLY_PIN) // pinPot=D6
@@ -101,18 +103,24 @@ void PVZeroClass::setup()
   //---------------------------------------------------------------------------------------------------
   // update the PSU
   //
-  aclPsuP[0].init(Serial1);
   if (_config.isEnabledSecondPsu())
   {
-    aclPsuP[1].init(Serial2);
+    aclPsuP[0].init(Serial1);
   }
+  aclPsuP[1].init(Serial2);
 
   int32_t slPsuNrT = 2;
   while (slPsuNrT > 0)
   {
     slPsuNrT--;
-    aclPsuP[slPsuNrT].set(clCaP.feedInTargetDcVoltage(), clCaP.feedInTargetDcCurrent());
-    aclPsuP[slPsuNrT].enable(true);
+    if (aclPsuP[slPsuNrT].isAvailable())
+    {
+      aclPsuP[slPsuNrT].set(clCaP.feedInTargetDcVoltage(), clCaP.feedInTargetDcCurrent());
+      aclPsuP[slPsuNrT].enable(true);
+    } else
+    {
+      EWC::I::get().logger() << F("No PSU has been found via Serial") << slPsuNrT+1 << endl;
+    }
   }
   EWC::I::get().logger() << F("Setup ok") << endl;
 
@@ -127,8 +135,16 @@ void PVZeroClass::setup()
   // 23535 <=> 24.3
   // y=m*x+b
   //
-  ftPsuSupplyGainG = ((24.3 - 12.1) / (23535.0 - 10368.0));
-  ftPsuSupplyOffsetG = (12.1 - (10368 * ftPsuSupplyGainG));
+  aftPsuSupplyCalRawG[0] = 2895;     // index 0 contains Low value and 1 high value 
+  aftPsuSupplyCalRawG[1] = 23546;     
+  aftPsuSupplyCalNominalG[0] = 5.0; // index 0 contains Low value and 1 high value 
+  aftPsuSupplyCalNominalG[1] = 24.3; 
+  
+  // 
+  updatePsuVccScaling();
+
+  I::get().logger() << F("init gain: ") << String(ftPsuSupplyGainG,5) << " offset" << String(ftPsuSupplyOffsetG, 2) << endl;
+  clBatGuardP.init();
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -179,7 +195,10 @@ void PVZeroClass::loop()
   //
   if (McOvsSample(&atsOvsInputsG[0], analogRead(34)) == true)
   {
-    ftPsuVccT = (ftPsuSupplyGainG * (float)McOvsGetResult(&atsOvsInputsG[0])) + ftPsuSupplyOffsetG;
+    ftPsuVccT = (float)McOvsGetResult(&atsOvsInputsG[0]);
+    ftPsuVccT *= ftPsuSupplyGainG;
+    ftPsuVccT += ftPsuSupplyOffsetG;
+
     I::get().logger() << F("PSU Vcc: : ") << ftPsuVccT << F(" V") << endl;
   }
 
@@ -222,6 +241,7 @@ void PVZeroClass::loop()
     //-------------------------------------------------------------------------------------------
     // Update target data of the PSU only one time in second
     //
+    aclPsuP[0].set(clCaP.feedInTargetDcVoltage(), clCaP.feedInTargetDcCurrent());
     aclPsuP[1].set(clCaP.feedInTargetDcVoltage(), clCaP.feedInTargetDcCurrent());
   }
 
@@ -234,7 +254,10 @@ void PVZeroClass::loop()
   //---------------------------------------------------------------------------------------------------
   // process algorithm
   //
-  processControlAlgorithm();
+  if ((aclPsuP[0].isAvailable() == true) || (aclPsuP[1].isAvailable() == true))
+  {
+    processControlAlgorithm();
+  }
 
   //---------------------------------------------------------------------------------------------------
   // Prepare informations for the LCD screens, when WiFi is connected
@@ -419,12 +442,48 @@ void PVZeroClass::_onTotalWatt(bool state, int32_t totalWatt)
 
 float PVZeroClass::handleCalibrationLow(float value)
 {
-  I::get().logger() << F("[PVZ] callback calibration low for ") << String(value, 2) << endl;
+  I::get().logger() << F("[PVZ] callback calibration low for ") << String(value, 2) << " <=> " << McOvsGetResult(&atsOvsInputsG[0]) << endl;
+
+  //--------------------------------------------------------------------------------------------------- 
+  // update calibration parameter and calculate new gain and offset
+  //  
+  aftPsuSupplyCalRawG[0] = McOvsGetResult(&atsOvsInputsG[0]);
+  aftPsuSupplyCalNominalG[0] = value; 
+
+  I::get().logger() << F("[PVZ] callback calibration gain: ") << String(ftPsuSupplyGainG,5) << " offset: " << String(ftPsuSupplyOffsetG, 2) << endl;
+
+  // \todo store content of aftPsuSupplyCalRawG[0] and aftPsuSupplyCalNominalG [0]
+
   return 0.5;
 }
 
+
 float PVZeroClass::handleCalibrationHigh(float value)
 {
-  I::get().logger() << F("[PVZ] callback calibration high for ") << String(value, 2) << endl;
+  I::get().logger() << F("[PVZ] callback calibration high for ") << String(value, 2) << " <=> " << McOvsGetResult(&atsOvsInputsG[0]) << endl;
+
+
+  //--------------------------------------------------------------------------------------------------- 
+  // update calibration parameter and calculate new gain and offset
+  //  
+  aftPsuSupplyCalRawG[1] = McOvsGetResult(&atsOvsInputsG[0]);
+  aftPsuSupplyCalNominalG[1] = value; 
+  updatePsuVccScaling();
+
+  I::get().logger() << F("[PVZ] callback calibration gain: ") << String(ftPsuSupplyGainG,5) << " offset" << String(ftPsuSupplyOffsetG, 2) << endl;
+
+  // \todo store content of aftPsuSupplyCalRawG[1] and aftPsuSupplyCalNominalG [1]
+
   return 1.5;
+}
+
+
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------// 
+void PVZeroClass::updatePsuVccScaling()
+{
+  ftPsuSupplyGainG = ((aftPsuSupplyCalNominalG[1] - aftPsuSupplyCalNominalG[0]) / (aftPsuSupplyCalRawG[1] - aftPsuSupplyCalRawG[0]));
+  ftPsuSupplyOffsetG = (aftPsuSupplyCalNominalG[0] - (aftPsuSupplyCalRawG[0] * ftPsuSupplyGainG));
 }
