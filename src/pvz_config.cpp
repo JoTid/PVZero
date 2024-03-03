@@ -61,9 +61,9 @@ void PVZConfig::fillJson(JsonDocument &config)
   config["pvzero"]["enable_lcd"] = _enabledLcd;
   config["pvzero"]["enable_second_psu"] = _enableSecondPsu;
   config["pvzero"]["calibration_low"] = String(_calibrationLow, 2);
-  config["pvzero"]["calibration_low_mes"] = String(_calibrationLowMes, 2);
+  config["pvzero"]["calibration_low_mes"] = String(_calibrationLowMes, 0);
   config["pvzero"]["calibration_high"] = String(_calibrationHigh, 2);
-  config["pvzero"]["calibration_high_mes"] = String(_calibrationHighMes, 2);
+  config["pvzero"]["calibration_high_mes"] = String(_calibrationHighMes, 0);
 }
 
 void PVZConfig::fromJson(JsonDocument &config)
