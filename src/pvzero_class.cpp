@@ -103,17 +103,18 @@ void PVZeroClass::setup()
   clCaP.setFeedInTargetDcCurrentLimits(0.0, PZI::get().config().getMaxAmperage());
   clCaP.setFilterOrder(_config.getFilterOrder());
 
-  int32_t slPsuNrT = 2;
-  while (slPsuNrT > 0)
+  int32_t slPsuCountT = 2;
+  while (slPsuCountT > 0)
   {
-    slPsuNrT--;
-    if (aclPsuP[slPsuNrT].isAvailable())
+    slPsuCountT--;
+    if (aclPsuP[slPsuCountT].isAvailable())
     {
-      aclPsuP[slPsuNrT].set(clCaP.feedInTargetDcVoltage(), clCaP.feedInTargetDcCurrent());
-      aclPsuP[slPsuNrT].enable(true);
-    } else
+      aclPsuP[slPsuCountT].set(clCaP.feedInTargetDcVoltage(), clCaP.feedInTargetDcCurrent());
+      aclPsuP[slPsuCountT].enable(true);
+    }
+    else
     {
-      EWC::I::get().logger() << F("No PSU has been found via Serial") << slPsuNrT+1 << endl;
+      EWC::I::get().logger() << F("No PSU has been found via Serial") << slPsuCountT + 1 << endl;
     }
   }
   EWC::I::get().logger() << F("Setup ok") << endl;
@@ -125,9 +126,20 @@ void PVZeroClass::setup()
 
   //---------------------------------------------------------------------------------------------------
   // calculate the gain and offset based on on imperially based values
-  // 
+  //
   updatePsuVccScaling(0);
-  clBatGuardP.init();
+
+  //---------------------------------------------------------------------------------------------------
+  // initialise the battery guard to avoid discharging of the battery
+  //
+  // \todo provide the recover voltage and minimal recover time from web gui
+  //
+  // add here demo value so, the application runs
+  //
+  clBatGuardP.init(44.0, 60);
+
+  // \todo disable the guarding only while debug
+  clBatGuardP.enable(false);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -183,7 +195,17 @@ void PVZeroClass::loop()
     ftPsuVccT += ftPsuSupplyOffsetP;
 
     I::get().logger() << F("PSU Vcc: : ") << ftPsuVccT << F(" V") << endl;
+
+    //-------------------------------------------------------------------------------------------
+    // update value for battery guard
+    //
+    clBatGuardP.updateVoltage(ftPsuVccT);
   }
+
+  //---------------------------------------------------------------------------------------------------
+  // process battery guard
+  //
+  clBatGuardP.process();
 
   //---------------------------------------------------------------------------------------------------
   // Trigger 3EM loop and NTP time each second
@@ -224,8 +246,16 @@ void PVZeroClass::loop()
     //-------------------------------------------------------------------------------------------
     // Update target data of the PSU only one time in second
     //
-    aclPsuP[0].set(clCaP.feedInTargetDcVoltage(), clCaP.feedInTargetDcCurrent());
-    aclPsuP[1].set(clCaP.feedInTargetDcVoltage(), clCaP.feedInTargetDcCurrent());
+    if (clBatGuardP.alarm() == false)
+    {
+      aclPsuP[0].set(clCaP.feedInTargetDcVoltage(), clCaP.feedInTargetDcCurrent());
+      aclPsuP[1].set(clCaP.feedInTargetDcVoltage(), clCaP.feedInTargetDcCurrent());
+    }
+    else
+    {
+      aclPsuP[0].enable(false);
+      aclPsuP[1].enable(false);
+    }
   }
 
   //---------------------------------------------------------------------------------------------------
@@ -245,7 +275,7 @@ void PVZeroClass::loop()
   //---------------------------------------------------------------------------------------------------
   // Prepare informations for the LCD screens, when WiFi is connected
   //
-  if (WiFi.isConnected() == true)
+  if ((WiFi.isConnected() == true) && (clBatGuardP.alarm() == false))
   {
     tsWifiT.clIp = WiFi.localIP();
     tsWifiT.clSsid = WiFi.SSID();
@@ -322,7 +352,7 @@ void PVZeroClass::loop()
   //---------------------------------------------------------------------------------------------------
   // Show failure info, when WiFi is not connected
   //
-  else
+  else if ((clBatGuardP.alarm() == false))
   {
     _lcd.updateTime("");
     _lcd.updateWifiRssi(0);
@@ -366,6 +396,22 @@ void PVZeroClass::loop()
 
       _lcd.warning("WiFi connection lost:", String("WiFi status: " + String(WiFi.status())), clStringT);
     }
+  }
+
+  //---------------------------------------------------------------------------------------------------
+  // handle the case the battery has been discharged
+  //
+  else if (clBatGuardP.alarm() == true)
+  {
+    tsWifiT.clIp = WiFi.localIP();
+    tsWifiT.clSsid = WiFi.SSID();
+
+    _lcd.updateWifiInfo(&tsWifiT);
+    _lcd.updateWifiRssi(WiFi.RSSI());
+
+    _lcd.warning("Bat. discharge alarm!",
+                 String("Vbat: " + String(ftPsuVccT, 1) + " / " + String(clBatGuardP.alarmRecoverVoltage(), 1)),
+                 String("Time: " + String(clBatGuardP.alarmPendingTime()) + " / " + String(clBatGuardP.alarmRecoverTime())));
   }
 
   //---------------------------------------------------------------------------------------------------
@@ -425,61 +471,59 @@ void PVZeroClass::_onTotalWatt(bool state, int32_t totalWatt)
 
 float PVZeroClass::handleCalibrationLow(float value)
 {
-  //--------------------------------------------------------------------------------------------------- 
+  //---------------------------------------------------------------------------------------------------
   // update calibration parameter (RAW low) and calculate new gain and offset
-  //  
+  //
   updatePsuVccScaling(1);
 
-  //--------------------------------------------------------------------------------------------------- 
+  //---------------------------------------------------------------------------------------------------
   // Return RAW value, so it will be stored in config class
-  // 
+  //
   return (float)McOvsGetResult(&atsOvsInputsP[0]);
 }
-
 
 float PVZeroClass::handleCalibrationHigh(float value)
 {
-  //--------------------------------------------------------------------------------------------------- 
+  //---------------------------------------------------------------------------------------------------
   // update calibration parameter (RAW high) and calculate new gain and offset
-  //  
+  //
   updatePsuVccScaling(2);
 
-  //--------------------------------------------------------------------------------------------------- 
+  //---------------------------------------------------------------------------------------------------
   // Return RAW value, so it will be stored in config class
-  // 
+  //
   return (float)McOvsGetResult(&atsOvsInputsP[0]);
 }
-
 
 //--------------------------------------------------------------------------------------------------------------------//
 //                                                                                                                    //
 //                                                                                                                    //
-//--------------------------------------------------------------------------------------------------------------------// 
+//--------------------------------------------------------------------------------------------------------------------//
 void PVZeroClass::updatePsuVccScaling(uint8_t ubSetupV)
 {
   float ftRawLowT;
   float ftRawHighT;
 
-  //--------------------------------------------------------------------------------------------------- 
+  //---------------------------------------------------------------------------------------------------
   // use different values, for RAW depending on calibration or configuration
   //
-  if (ubSetupV == 1)  // take low RAW value from ADC and high from configuration 
+  if (ubSetupV == 1) // take low RAW value from ADC and high from configuration
   {
     ftRawLowT = (float)McOvsGetResult(&atsOvsInputsP[0]);
     ftRawHighT = _config.getCalibrationRawHigh();
   }
-  else if (ubSetupV == 2)  // take high RAW value from ADC and low from configuration 
+  else if (ubSetupV == 2) // take high RAW value from ADC and low from configuration
   {
     ftRawLowT = _config.getCalibrationRawLow();
     ftRawHighT = (float)McOvsGetResult(&atsOvsInputsP[0]);
   }
-  else  // take booth values from configuration
+  else // take booth values from configuration
   {
     ftRawLowT = _config.getCalibrationRawLow();
     ftRawHighT = _config.getCalibrationRawHigh();
   }
 
-  //--------------------------------------------------------------------------------------------------- 
+  //---------------------------------------------------------------------------------------------------
   // perform calculation of gain and offset based on y=m*x+b
   //
   ftPsuSupplyGainP = ((_config.getCalibrationNominalHigh() - _config.getCalibrationNominalLow()) / (ftRawHighT - ftRawLowT));
