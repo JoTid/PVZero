@@ -3,6 +3,14 @@
 With an ESP32, the power grid data of a **Shelly 3EM** is queried, processed and used for current limiting with a
 **DPM86xx** power supply unit, so that a zero-current feed-in of a PV system can be realized.
 
+## System setup
+
+The system for which the PVZero application is being realised looks as follows in its full configuration:
+
+![processing](./docs/images/system_setup.drawio.svg)
+
+The settings for the maximum power to be fed in and how many strings are controlled are made via the Web GUI.
+
 ## Processing
 
 The limitation of the **Feed-in target DC Current** is determined in the following steps:
