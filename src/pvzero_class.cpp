@@ -84,22 +84,24 @@ void PVZeroClass::setup()
   _config.setCalibrationHighCallback(std::bind(&PVZeroClass::handleCalibrationHigh, this, std::placeholders::_1));
 
   //---------------------------------------------------------------------------------------------------
+  // initialize the PSU
+  //
+  uint8_t ubStringCountT = 1;
+  aclPsuP[1].init(Serial2);
+  if (_config.isEnabledSecondPsu())
+  {
+    aclPsuP[0].init(Serial1);
+    ubStringCountT = 2;
+  }
+
+  //---------------------------------------------------------------------------------------------------
   // setup the control algorithm
   //
-  clCaP.init();
+  clCaP.init(ubStringCountT);
   EWC::I::get().logger() << F("set maxVoltage: ") << PZI::get().config().getMaxVoltage() << ", maxCurrent: " << PZI::get().config().getMaxAmperage() << endl;
   clCaP.setFeedInTargetDcVoltage(PZI::get().config().getMaxVoltage());
   clCaP.setFeedInTargetDcCurrentLimits(0.0, PZI::get().config().getMaxAmperage());
   clCaP.setFilterOrder(_config.getFilterOrder());
-
-  //---------------------------------------------------------------------------------------------------
-  // update the PSU
-  //
-  if (_config.isEnabledSecondPsu())
-  {
-    aclPsuP[0].init(Serial1);
-  }
-  aclPsuP[1].init(Serial2);
 
   int32_t slPsuNrT = 2;
   while (slPsuNrT > 0)
