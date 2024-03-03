@@ -23,30 +23,29 @@
                 <label id="info_shelly3emAddr">/status wird angehängt.</label>
             </div>
             <div>
-              <input id="enable_second_psu" type="checkbox" name="enable_second_psu" value="true" checked><label id="lbl_enable_second_psu">Enable second PSU</label></input>
-              <label id="info_enable_second_psu">Enables second PSU on serial port. Logging will be disabled.</label>
-            </div>
-            <div>
               <input id="enable_lcd" type="checkbox" name="enable_lcd" value="true" checked><label id="lbl_enable_lcd">Enable LCD</label></input>
             </div>
             <div class="line_named">Leistungssteuerung</div>
             <div>
-                <label id="lbl_filter_order" for="filter_order">Filter Faktor </label>
+                <label id="lbl_filter_order" for="filter_order">Filterkonstante</label>
                 <input type="range" min="1" max="255" value="1" class="slider" id="filter_order" name="filter_order" oninput="this.nextElementSibling.value = this.value">
                 <output id="filter_order_output">1</output>
-                <label id="info_filter_order">Anzahl der Messungen, die in den Filter einfliessen.</label>
+                <label id="info_filter_order">Mit steigendem Wert wird das Rauschen der Gesamtleistung vom Shelly 3EM stärker unterdrückt und träge nachgefahren.</label>
             </div>
             <div>
-              <label id="lbl_voltage" for="max_voltage">Maximale Spannung</label>
+              <label id="lbl_voltage" for="max_voltage">Maximale Spannung je String</label>
               <input id="max_voltage" type="number" step="0.01" name="max_voltage" placeholder="36">
-              <label id="info_voltage">Maximale Ausgangsspannung, die über den Step-Up Konverter geregelt werden soll.</label>
+              <label id="info_voltage">Darf max. MPPT Spannung des Wechselrichters nicht überschreiten.</label>
             </div>
             <div>
-              <label id="lbl_max_amperage" for="max_amperage">Maximale Stromstärke</label>
+              <label id="lbl_max_amperage" for="max_amperage">Maximaler Strom je String</label>
               <input id="max_amperage" type="number" step="0.01" name="max_amperage" placeholder="7">
-              <label id="info_max_amperage">Maximale Stromstärke, die über den Step-Up Konverter geregelt werden soll.</label>
+              <label id="info_max_amperage">Darf max. Eingangsstrom des Wechselrichters je String-Eingang nicht überschreiten.</label>
             </div>
-
+            <div>
+              <input id="enable_second_psu" type="checkbox" name="enable_second_psu" value="true" checked><label id="lbl_enable_second_psu">Control two string inputs of the microinverter</label></input>
+              <label id="info_enable_second_psu">Second PSU will be controlled via additional serial port. Logging will be disabled.</label>
+            </div>            
         </div>
           <input id="npt_apply" type="submit" name="apply" value="Apply">
         </form>
@@ -55,7 +54,7 @@
         <form action="/pvzero/calibration/low" method="post">
           <div class="noorder">
             <div>
-                <label id="lbl_calibration_low" for="calibration_low">Low</label>
+                <label id="lbl_calibration_low" for="calibration_low">Sollwert bei Low</label>
                 <input id="calibration_low" type="number" step="0.01" name="calibration_low" placeholder="24">
                 <input id="npt_apply" type="submit" name="calibration_low_apply" value="LOW">
                 <label id="calibration_low_mes">--</label>
@@ -64,7 +63,7 @@
         <form action="/pvzero/calibration/high" method="post">
           <div class="noorder">
             <div>
-                <label id="lbl_calibration_high" for="calibration_high">Low</label>
+                <label id="lbl_calibration_high" for="calibration_high">Sollwert bei High</label>
                 <input id="calibration_high" type="number" step="0.01" name="calibration_high" placeholder="48">
                 <input id="npt_apply" type="submit" name="calibration_high_apply" value="HIGH">
                 <label id="calibration_high_mes">--</label>
@@ -85,10 +84,10 @@
         document.getElementById("enable_lcd").checked = data["pvzero"]["enable_lcd"];
         document.getElementById("filter_order_output").value = data["pvzero"]["filter_order"];
         if (data["pvzero"]["calibration_low_mes"] > 0) {
-          document.getElementById("calibration_low_mes").innerText = "gemessen: " + data["pvzero"]["calibration_low_mes"];
+          document.getElementById("calibration_low_mes").innerText = "gemessener RAW Wert: " + data["pvzero"]["calibration_low_mes"];
         }
         if (data["pvzero"]["calibration_high_mes"] > 0) {
-          document.getElementById("calibration_high_mes").innerText = "gemessen: " + data["pvzero"]["calibration_high_mes"];
+          document.getElementById("calibration_high_mes").innerText = "gemessener RAW Wert: " + data["pvzero"]["calibration_high_mes"];
         }
         // setTimeout(getJSON.bind(null, "/bbs/config.json", "fillBbsConfig"), 3000);
       }
