@@ -24,7 +24,6 @@ limitations under the License.
 #include "generated/webShelly_3em_connectorJS.h"
 #include "pvzero_class.h"
 #include "pvzero_interface.h"
-#include "sw_ovs.h"
 
 using namespace EWC;
 using namespace PVZ;
@@ -34,13 +33,6 @@ using namespace PVZ;
 #else
 #define MY_SHELLY_PIN 6
 #endif
-
-PvzLcd::Screen_ts atsLcdScreenG[5]; // make screen of LCD available for whole application
-McOvs_ts atsOvsInputsG[4];          // prepare software oversampling for up to 4 values
-float ftPsuSupplyGainG;
-float ftPsuSupplyOffsetG;
-int32_t aftPsuSupplyCalRawG[2];     // index 0 contains Low value and 1 high value 
-float   aftPsuSupplyCalNominalG[2]; // index 0 contains Low value and 1 high value 
 
 PVZeroClass::PVZeroClass()
     : _shelly3emConnector(MY_SHELLY_PIN) // pinPot=D6
@@ -127,23 +119,12 @@ void PVZeroClass::setup()
   //---------------------------------------------------------------------------------------------------
   // prepare software oversampling
   //
-  McOvsInit(&atsOvsInputsG[0], 4); // increase ADC value to 14 bit
+  McOvsInit(&atsOvsInputsP[0], 4); // increase ADC value to 14 bit
 
   //---------------------------------------------------------------------------------------------------
   // calculate the gain and offset based on on imperially based values
-  // 10368 <=> 12.1
-  // 23535 <=> 24.3
-  // y=m*x+b
-  //
-  aftPsuSupplyCalRawG[0] = 2895;     // index 0 contains Low value and 1 high value 
-  aftPsuSupplyCalRawG[1] = 23546;     
-  aftPsuSupplyCalNominalG[0] = 5.0; // index 0 contains Low value and 1 high value 
-  aftPsuSupplyCalNominalG[1] = 24.3; 
-  
   // 
-  updatePsuVccScaling();
-
-  I::get().logger() << F("init gain: ") << String(ftPsuSupplyGainG,5) << " offset" << String(ftPsuSupplyOffsetG, 2) << endl;
+  updatePsuVccScaling(0);
   clBatGuardP.init();
 }
 
@@ -193,11 +174,11 @@ void PVZeroClass::loop()
   //---------------------------------------------------------------------------------------------------
   // Calculate PSU Vcc
   //
-  if (McOvsSample(&atsOvsInputsG[0], analogRead(34)) == true)
+  if (McOvsSample(&atsOvsInputsP[0], analogRead(34)) == true)
   {
-    ftPsuVccT = (float)McOvsGetResult(&atsOvsInputsG[0]);
-    ftPsuVccT *= ftPsuSupplyGainG;
-    ftPsuVccT += ftPsuSupplyOffsetG;
+    ftPsuVccT = (float)McOvsGetResult(&atsOvsInputsP[0]);
+    ftPsuVccT *= ftPsuSupplyGainP;
+    ftPsuVccT += ftPsuSupplyOffsetP;
 
     I::get().logger() << F("PSU Vcc: : ") << ftPsuVccT << F(" V") << endl;
   }
@@ -272,7 +253,7 @@ void PVZeroClass::loop()
 
     if (isConsumptionPowerValid)
     {
-      atsLcdScreenG[0].aclLine[0] = String("Cons. power: " + String(consumptionPower) + "Wh");
+      atsLcdScreenP[0].aclLine[0] = String("Cons. power: " + String(consumptionPower) + "Wh");
 
       //-----------------------------------------------------------------------------------
       // Print Infos from PSUs only if they are available
@@ -284,21 +265,21 @@ void PVZeroClass::loop()
       //
       if (aclPsuP[0].isAvailable())
       {
-        atsLcdScreenG[0].aclLine[1] = String("A[Wh]: " + String(clCaP.feedInTargetPower(), 0) + " | " + String(aclPsuP[1].actualVoltage() * aclPsuP[1].actualCurrent(), 0));
+        atsLcdScreenP[0].aclLine[1] = String("A[Wh]: " + String(clCaP.feedInTargetPower(), 0) + " | " + String(aclPsuP[1].actualVoltage() * aclPsuP[1].actualCurrent(), 0));
         slLcdScreenNrT++;
 
-        atsLcdScreenG[slLcdScreenNrT].aclLine[0] = String("Feed-in via PSU A");
-        atsLcdScreenG[slLcdScreenNrT].aclLine[1] = String("(" + String(clCaP.feedInTargetPower(), 0) + ")" + String(clCaP.feedInTargetPowerApprox(), 0) + "Wh=" +
+        atsLcdScreenP[slLcdScreenNrT].aclLine[0] = String("Feed-in via PSU A");
+        atsLcdScreenP[slLcdScreenNrT].aclLine[1] = String("(" + String(clCaP.feedInTargetPower(), 0) + ")" + String(clCaP.feedInTargetPowerApprox(), 0) + "Wh=" +
                                                           String(clCaP.feedInTargetDcVoltage(), 0) + "V+" +
                                                           String(clCaP.feedInTargetDcCurrent(), 1) + "A");
 
-        atsLcdScreenG[slLcdScreenNrT].aclLine[2] = String("" + String(aclPsuP[1].actualVoltage() * aclPsuP[1].actualCurrent(), 0) + " Wh = " +
+        atsLcdScreenP[slLcdScreenNrT].aclLine[2] = String("" + String(aclPsuP[1].actualVoltage() * aclPsuP[1].actualCurrent(), 0) + " Wh = " +
                                                           String(aclPsuP[1].actualVoltage(), 0) + "V + " +
                                                           String(aclPsuP[1].actualCurrent(), 1) + "A");
       }
       else
       {
-        atsLcdScreenG[0].aclLine[1] = String(" - No PSU A connected");
+        atsLcdScreenP[0].aclLine[1] = String(" - No PSU A connected");
       }
 
       //-----------------------------------------------------------------------------------
@@ -306,25 +287,25 @@ void PVZeroClass::loop()
       //
       if (aclPsuP[1].isAvailable())
       {
-        atsLcdScreenG[0].aclLine[2] = String("B[Wh]: " + String(clCaP.feedInTargetPower(), 0) + " | " + String(aclPsuP[1].actualVoltage() * aclPsuP[1].actualCurrent(), 0));
+        atsLcdScreenP[0].aclLine[2] = String("B[Wh]: " + String(clCaP.feedInTargetPower(), 0) + " | " + String(aclPsuP[1].actualVoltage() * aclPsuP[1].actualCurrent(), 0));
 
         slLcdScreenNrT++;
 
-        atsLcdScreenG[slLcdScreenNrT].aclLine[0] = String("Feed-in via PSU B");
-        atsLcdScreenG[slLcdScreenNrT].aclLine[1] = String("(" + String(clCaP.feedInTargetPower(), 0) + ")" + String(clCaP.feedInTargetPowerApprox(), 0) + "Wh=" +
+        atsLcdScreenP[slLcdScreenNrT].aclLine[0] = String("Feed-in via PSU B");
+        atsLcdScreenP[slLcdScreenNrT].aclLine[1] = String("(" + String(clCaP.feedInTargetPower(), 0) + ")" + String(clCaP.feedInTargetPowerApprox(), 0) + "Wh=" +
                                                           String(clCaP.feedInTargetDcVoltage(), 0) + "V+" +
                                                           String(clCaP.feedInTargetDcCurrent(), 1) + "A");
 
-        atsLcdScreenG[slLcdScreenNrT].aclLine[2] = String("" + String(aclPsuP[1].actualVoltage() * aclPsuP[1].actualCurrent(), 0) + " Wh = " +
+        atsLcdScreenP[slLcdScreenNrT].aclLine[2] = String("" + String(aclPsuP[1].actualVoltage() * aclPsuP[1].actualCurrent(), 0) + " Wh = " +
                                                           String(aclPsuP[1].actualVoltage(), 0) + "V + " +
                                                           String(aclPsuP[1].actualCurrent(), 1) + "A");
       }
       else
       {
-        atsLcdScreenG[0].aclLine[2] = String(" - No PSU B connected");
+        atsLcdScreenP[0].aclLine[2] = String(" - No PSU B connected");
       }
 
-      _lcd.setScreen(&atsLcdScreenG[0], slLcdScreenNrT + 1);
+      _lcd.setScreen(&atsLcdScreenP[0], slLcdScreenNrT + 1);
       _lcd.ok();
     }
     //---------------------------------------------------------------------------
@@ -442,39 +423,29 @@ void PVZeroClass::_onTotalWatt(bool state, int32_t totalWatt)
 
 float PVZeroClass::handleCalibrationLow(float value)
 {
-  I::get().logger() << F("[PVZ] callback calibration low for ") << String(value, 2) << " <=> " << McOvsGetResult(&atsOvsInputsG[0]) << endl;
+  //--------------------------------------------------------------------------------------------------- 
+  // update calibration parameter (RAW low) and calculate new gain and offset
+  //  
+  updatePsuVccScaling(1);
 
   //--------------------------------------------------------------------------------------------------- 
-  // update calibration parameter and calculate new gain and offset
-  //  
-  aftPsuSupplyCalRawG[0] = McOvsGetResult(&atsOvsInputsG[0]);
-  aftPsuSupplyCalNominalG[0] = value; 
-
-  I::get().logger() << F("[PVZ] callback calibration gain: ") << String(ftPsuSupplyGainG,5) << " offset: " << String(ftPsuSupplyOffsetG, 2) << endl;
-
-  // \todo store content of aftPsuSupplyCalRawG[0] and aftPsuSupplyCalNominalG [0]
-
-  return 0.5;
+  // Return RAW value, so it will be stored in config class
+  // 
+  return (float)McOvsGetResult(&atsOvsInputsP[0]);
 }
 
 
 float PVZeroClass::handleCalibrationHigh(float value)
 {
-  I::get().logger() << F("[PVZ] callback calibration high for ") << String(value, 2) << " <=> " << McOvsGetResult(&atsOvsInputsG[0]) << endl;
-
+  //--------------------------------------------------------------------------------------------------- 
+  // update calibration parameter (RAW high) and calculate new gain and offset
+  //  
+  updatePsuVccScaling(2);
 
   //--------------------------------------------------------------------------------------------------- 
-  // update calibration parameter and calculate new gain and offset
-  //  
-  aftPsuSupplyCalRawG[1] = McOvsGetResult(&atsOvsInputsG[0]);
-  aftPsuSupplyCalNominalG[1] = value; 
-  updatePsuVccScaling();
-
-  I::get().logger() << F("[PVZ] callback calibration gain: ") << String(ftPsuSupplyGainG,5) << " offset" << String(ftPsuSupplyOffsetG, 2) << endl;
-
-  // \todo store content of aftPsuSupplyCalRawG[1] and aftPsuSupplyCalNominalG [1]
-
-  return 1.5;
+  // Return RAW value, so it will be stored in config class
+  // 
+  return (float)McOvsGetResult(&atsOvsInputsP[0]);
 }
 
 
@@ -482,8 +453,33 @@ float PVZeroClass::handleCalibrationHigh(float value)
 //                                                                                                                    //
 //                                                                                                                    //
 //--------------------------------------------------------------------------------------------------------------------// 
-void PVZeroClass::updatePsuVccScaling()
+void PVZeroClass::updatePsuVccScaling(uint8_t ubSetupV)
 {
-  ftPsuSupplyGainG = ((aftPsuSupplyCalNominalG[1] - aftPsuSupplyCalNominalG[0]) / (aftPsuSupplyCalRawG[1] - aftPsuSupplyCalRawG[0]));
-  ftPsuSupplyOffsetG = (aftPsuSupplyCalNominalG[0] - (aftPsuSupplyCalRawG[0] * ftPsuSupplyGainG));
+  float ftRawLowT;
+  float ftRawHighT;
+
+  //--------------------------------------------------------------------------------------------------- 
+  // use different values, for RAW depending on calibration or configuration
+  //
+  if (ubSetupV == 1)  // take low RAW value from ADC and high from configuration 
+  {
+    ftRawLowT = (float)McOvsGetResult(&atsOvsInputsP[0]);
+    ftRawHighT = _config.getCalibrationRawHigh();
+  }
+  else if (ubSetupV == 2)  // take high RAW value from ADC and low from configuration 
+  {
+    ftRawLowT = _config.getCalibrationRawLow();
+    ftRawHighT = (float)McOvsGetResult(&atsOvsInputsP[0]);
+  }
+  else  // take booth values from configuration
+  {
+    ftRawLowT = _config.getCalibrationRawLow();
+    ftRawHighT = _config.getCalibrationRawHigh();
+  }
+
+  //--------------------------------------------------------------------------------------------------- 
+  // perform calculation of gain and offset based on y=m*x+b
+  //
+  ftPsuSupplyGainP = ((_config.getCalibrationNominalHigh() - _config.getCalibrationNominalLow()) / (ftRawHighT - ftRawLowT));
+  ftPsuSupplyOffsetP = (_config.getCalibrationNominalLow() - (ftRawLowT * ftPsuSupplyGainP));
 }

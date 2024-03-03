@@ -34,6 +34,7 @@ limitations under the License.
 #include "pvz_ca.hpp"
 #include "pvz_lcd.hpp"
 #include "pvz_psu.hpp"
+#include "sw_ovs.h"
 #include "battery_guard.hpp"
 
 namespace PVZ
@@ -72,13 +73,17 @@ namespace PVZ
     float ftPsuVccT = 0.0;
     int32_t consumptionPower = -1;
     bool isConsumptionPowerValid = false;
+    McOvs_ts atsOvsInputsP[4];          // prepare software oversampling for up to 4 values
+    float ftPsuSupplyGainP;
+    float ftPsuSupplyOffsetP;
+    PvzLcd::Screen_ts atsLcdScreenP[5]; 
     void _onPVZeroState(WebServer *webServer);
     void _onPVZeroCheck(WebServer *webServer);
     void _onTotalWatt(bool state, int32_t totalWatt);
     void processControlAlgorithm(void);
     float handleCalibrationLow(float value);
     float handleCalibrationHigh(float value);
-    void updatePsuVccScaling();
+    void updatePsuVccScaling(uint8_t ubSetupV);
   };
 }; // namespace
 
