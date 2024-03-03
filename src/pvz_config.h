@@ -55,6 +55,11 @@ namespace PVZ
     // LCD enabled
     bool isEnabledLcd() { return _enabledLcd; }
 
+    float getCalibrationRawLow() { return _calibrationLowMes; }
+    float getCalibrationRawHigh() { return _calibrationHighMes; }
+    float getCalibrationNominalLow() { return _calibrationLow; }
+    float getCalibrationNominalHigh() { return _calibrationHigh; }
+
   protected:
     void _initParameter();
     int _checkInterval;
