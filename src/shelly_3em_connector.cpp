@@ -127,6 +127,10 @@ void Shelly3emConnector::loop()
             I::get().led().stop();
             if (isValidConsumptionPower())
             {
+              // update time
+              if (!I::get().time().isNtpEnabled()) {
+                I::get().time().setLocalTime(getTimestamp());
+              }
               // successful request
               if (_callbackState != NULL)
               {
@@ -134,8 +138,9 @@ void Shelly3emConnector::loop()
               }
               if (_countRequestsFailed >= 3)
               {
-                _infoState = String("Nach ") + _countRequestsFailed + " Versuchen wurde der Wert " + getConsumptionPower() + " W geholt.";
+                _infoState = String("Nach ") + _countRequestsFailed + " Versuchen wurde der Wert " + getConsumptionPower() + " W geholt." + "\nHttpCodes" + getErrorCodes();
                 PZI::get().mail().sendWarning("Shelly 3em wieder erreichbar", _infoState.c_str());
+                deleteErrorCodes();
               }
               _countRequestsFailed = 0;
               EWC::I::get().logger() << F("Shelly3emConnector: request finished... sleep ") << endl;
@@ -154,7 +159,7 @@ void Shelly3emConnector::loop()
               }
               if (_countRequestsFailed == 3)
               {
-                _infoState = "Fehler beim holen der aktuellen Verbrauchswerte vom Shelly " + getUri();
+                _infoState = "Fehler beim holen der aktuellen Verbrauchswerte vom Shelly " + getUri() + "\nHttpCode" + getErrorCodes();
                 PZI::get().mail().sendWarning("Shelly 3em nicht erreichbar", _infoState.c_str());
               }
             }
@@ -223,12 +228,34 @@ bool Shelly3emConnector::_isTaskRunning()
   return _taskIsRunning;
 }
 
-void Shelly3emConnector::_onTaskResult(bool valid, int32_t consumptionPower)
+uint64_t Shelly3emConnector::getTimestamp()
+{
+  std::lock_guard<std::mutex> lck(httpTaskMutex);
+  return _taskTimestamp;
+}
+
+String Shelly3emConnector::getErrorCodes()
+{
+  std::lock_guard<std::mutex> lck(httpTaskMutex);
+  return _taskErrorCodes;
+}
+
+void Shelly3emConnector::deleteErrorCodes()
+{
+  std::lock_guard<std::mutex> lck(httpTaskMutex);
+  _taskErrorCodes = "";
+}
+
+void Shelly3emConnector::_onTaskResult(bool valid, int32_t consumptionPower, uint64_t timestamp, int httpCode)
 {
   std::lock_guard<std::mutex> lck(httpTaskMutex);
   _taskConsumptionPowerValid = valid;
   _taskConsumptionPower = consumptionPower;
   _taskIsRunning = false;
+  _taskTimestamp = timestamp;
+  if (!valid) {
+    _taskErrorCodes += ": " + String(httpCode) + ", ";
+  }
 }
 
 void Shelly3emConnector::httpTask(void *_this)
@@ -240,13 +267,14 @@ void Shelly3emConnector::httpTask(void *_this)
     String infoState;
     bool valid = false;
     int32_t consumptionPower = 0;
+    uint64_t timestamp = 0;
     String requestUri = sc->getUri();
 
-    //------------------------------------------------------------------------------------------- 
-    // Before sending the Request increase the timeout time. This has been done to avoid 
+    //-------------------------------------------------------------------------------------------
+    // Before sending the Request increase the timeout time. This has been done to avoid
     // HTTPC_ERROR_READ_TIMEOUT errors that has been occurred sometimes.
     //
-    sc->httpClient.setTimeout(15000);
+    // sc->httpClient.setTimeout(50);
     // Send request
     sc->httpClient.begin(sc->wifiClient, requestUri.c_str());
     int httpCode = sc->httpClient.GET();
@@ -260,8 +288,9 @@ void Shelly3emConnector::httpTask(void *_this)
       String jsonStr = sc->httpClient.getString();
       deserializeJson(doc, jsonStr);
       consumptionPower = (int)doc["total_power"];
+      timestamp = (uint64_t)doc["unixtime"];
       valid = true;
     }
-    sc->_onTaskResult(valid, consumptionPower);
+    sc->_onTaskResult(valid, consumptionPower, timestamp, httpCode);
   }
 }

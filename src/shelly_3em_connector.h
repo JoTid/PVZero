@@ -59,8 +59,11 @@ namespace PVZ
     String infoSleepUntil() { return _sleepUntil; }
     // ------ protected by mutex -----------
     int32_t getConsumptionPower();
+    uint64_t getTimestamp();
     bool isValidConsumptionPower();
     String getUri();
+    String getErrorCodes();
+    void deleteErrorCodes();
 
   protected:
     int _potPin;
@@ -77,12 +80,14 @@ namespace PVZ
     WiFiClient wifiClient;
     HTTPClient httpClient;
     // ------ protected by mutex -----------
-    void _onTaskResult(bool valid, int32_t consumptionPower);
+    void _onTaskResult(bool valid, int32_t consumptionPower, uint64_t timestamp, int httpCode);
     bool _isTaskRunning();
     bool _taskIsRunning;
     String _taskShelly3emUri;
     bool _taskConsumptionPowerValid;
     int32_t _taskConsumptionPower;
+    uint64_t _taskTimestamp;
+    String _taskErrorCodes;
   };
 }; // namespace
 

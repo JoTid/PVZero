@@ -26,8 +26,8 @@ void setup()
   //---------------------------------------------------------------------------------------------------
   // initialise EspWebConfig
   //
-  EWC::I::get().logger().setLogging(true);
-  EWC::I::get().led().enable(true, LED1_PIN, HIGH);
+  // EWC::I::get().logger().setLogging(true);
+  EWC::I::get().led().init(true, LED1_PIN, HIGH);
   EWC::I::get().config().paramDeviceName = String("pvz-") + EWC::I::get().config().getChipId();
   EWC::I::get().config().paramAPName = String("pvz-") + EWC::I::get().config().getChipId();
   EWC::I::get().config().paramHostname = String("pvz-") + EWC::I::get().config().getChipId();
@@ -57,11 +57,11 @@ void loop()
     {
       I::get().logger() << "connected, " << I::get().time().str() << endl;
       onceAfterConnect = true;
+      I::get().logger() << "Send email about reboot" << endl;
+      PZI::get().mail().sendChange("PVZ rebooted", I::get().time().str().c_str());
     }
     if (!onceTimeSet && I::get().time().timeAvailable())
     {
-      I::get().logger() << "Send email about reboot" << endl;
-      PZI::get().mail().sendChange("PVZ rebooted", I::get().time().str().c_str());
       onceTimeSet = true;
     }
   }
