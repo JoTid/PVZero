@@ -18,6 +18,14 @@
 #include <cstdint>
 #include <mov_av_filter.hpp>
 
+#ifndef CA_APPROX_STEP
+#define CA_APPROX_STEP 0.2
+#endif
+
+#ifndef CA_REFRESH_TIME
+#define CA_REFRESH_TIME 500
+#endif
+
 /*--------------------------------------------------------------------------------------------------------------------*\
 ** Declaration                                                                                                        **
 **                                                                                                                    **
@@ -25,8 +33,6 @@
 class PvzCa
 {
 private:
-#define CA_REFRESH_TIME 500
-
   bool btConsumptionPowerPendingP;
   bool btActualValuesPendingP;
 

@@ -140,12 +140,16 @@ float PvzCa::discreteApproximation(float ftActualV, float ftTargetV)
   float ftReturnT;
 
   //---------------------------------------------------------------------------------------------------
-  // Jump function: Takes place during a downward correction so that a current flow is interrupted as
-  // quickly as possible. A change from 9 A to 1 A, for example, takes place in one step.
+  // Stair function: The target value is approached in defined steps so voltage of PSU is not break
+  // down when we change from 9 A to 1 A.
   //
   if (ftActualV > ftTargetV)
   {
-    ftReturnT = ftTargetV;
+    ftReturnT = ftActualV - CA_APPROX_STEP;
+    if (ftReturnT < ftTargetV)
+    {
+      ftReturnT = ftTargetV;
+    }
   }
 
   //---------------------------------------------------------------------------------------------------
@@ -154,7 +158,7 @@ float PvzCa::discreteApproximation(float ftActualV, float ftTargetV)
   //
   else
   {
-    ftReturnT = ftActualV + 0.5; // step up by 0,5 A
+    ftReturnT = ftActualV + CA_APPROX_STEP;
     if (ftReturnT > ftTargetV)
     {
       ftReturnT = ftTargetV;
@@ -205,7 +209,7 @@ void PvzCa::process(void)
     ftCalcT = ftConsumptionPowerP + ftFeedInActualPowerP;
 
     //---------------------------------------------------------------------------------------------------
-    // scale values y = m * x + b
+    // scale values y = m * x + b = current to feed in
     //
     ftCalcT = (ftCalcT * ftCurrentGainP);
     ftCalcT += ftCurrentOffsetP;
@@ -230,12 +234,11 @@ void PvzCa::process(void)
     //---------------------------------------------------------------------------------------------------
     // store feed-in target current and calculate feed in power P = U * I
     //
-    // TEST_MESSAGE(String("1: ftFeedInTargetPowerP : " + String(ftFeedInTargetPowerP, 0) + " Target Current: " + String(ftCalcT, 1) + " for " + String(ubStringCountP) + " strings.").c_str()); // run as "Verbose Test" to see that
     ftFeedInTargetDcCurrentP = discreteApproximation(ftFeedInActualDcCurrentP, ftCalcT);
 
     ftFeedInTargetPowerApproxP = (ftFeedInTargetDcVoltageP * ftFeedInTargetDcCurrentP);
     ftFeedInTargetPowerP = (ftCalcT * ftFeedInTargetDcVoltageP);
-    // TEST_MESSAGE(String("2: ftFeedInTargetPowerP : " + String(ftFeedInTargetPowerP, 0) + " Target Current: " + String(ftFeedInTargetDcCurrentP, 1) + " for " + String(ubStringCountP) + " strings.").c_str()); // run as "Verbose Test" to see that
+    // TEST_MESSAGE(String("Actual Power: " + String(ftConsumptionPowerP, 1) + "Wh; Feed In measured: " + String(ftFeedInActualPowerP, 1) + "Wh = " + String(ftFeedInActualDcVoltageP, 1) + "V * " + String(ftFeedInActualDcCurrentP, 1) + "A " + " => Target : " + String(ftFeedInTargetPowerP, 1) + "Wh = " + String(ftFeedInTargetDcVoltageP, 1) + "V * " + String(ftCalcT, 1) + "A => APPROX: " + String(ftFeedInTargetPowerApproxP, 1) + "Wh = " + String(ftFeedInTargetDcVoltageP, 1) + "V * " + String(ftFeedInTargetDcCurrentP, 1) + "A").c_str()); // run as "Verbose Test" to see that
   }
 }
 

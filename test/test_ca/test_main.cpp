@@ -85,10 +85,15 @@ void test_ca_filter(void)
   clCaG.setFilterOrder(1);
 }
 
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
 void test_ca_set_power_to_min_at_start(void)
 {
   /**
    * @brief Set consumption power to 0 Wh after power up / start, the current output should be also at 0.
+   *
    * Test parameter while test:
    *            current [A] = x     consumption [Wh]
    * min             0    => 0 * 36 =      0
@@ -100,23 +105,23 @@ void test_ca_set_power_to_min_at_start(void)
   //---------------------------------------------------------------------------------------------------
   // trigger test method
   //
-  clCaG.updateFeedInActualDcValues(0.0, 0.0);
-  TEST_ASSERT_EQUAL(clCaG.updateConsumptionPower(0.0), 0);
+  clCaG.updateFeedInActualDcValues(0.0, 0.0);              // actual feed in is set to 0 for voltage and current
+  TEST_ASSERT_EQUAL(clCaG.updateConsumptionPower(0.0), 0); // return value of update is filtered set value
 
   //---------------------------------------------------------------------------------------------------
   // run process defined number before test
   //
-  int32_t slPCyclesT = 1;
-  while (slPCyclesT > 0)
+  int32_t slPCyclesT = millis() + 4000;
+  while (slPCyclesT > millis())
   {
     clCaG.process();
-    slPCyclesT--;
   }
 
   //---------------------------------------------------------------------------------------------------
   // check expected values
   //
   TEST_ASSERT_EQUAL(0.0, clCaG.feedInTargetPower());
+  TEST_ASSERT_EQUAL(0.0, clCaG.feedInTargetPowerApprox());
   TEST_ASSERT_EQUAL(36.0, clCaG.feedInTargetDcVoltage());
   TEST_ASSERT_EQUAL(0.0, clCaG.feedInTargetDcCurrent());
 }
@@ -124,7 +129,8 @@ void test_ca_set_power_to_min_at_start(void)
 void test_ca_set_power_to_max_at_start(void)
 {
   /**
-   * @brief Set consumption power to 0 Wh after power up / start, the current output should be also at 0.
+   * @brief Set consumption power to 600 Wh after power up / start, the current output should be also at 0.
+   *
    * Test parameter while test:
    *            current [A] = x     consumption [Wh]
    * min             0    => 0 * 36 =      0
@@ -135,13 +141,14 @@ void test_ca_set_power_to_max_at_start(void)
   //---------------------------------------------------------------------------------------------------
   // trigger test method
   //
-  clCaG.updateFeedInActualDcValues(0.0, 0.0);
-  TEST_ASSERT_EQUAL(clCaG.updateConsumptionPower(600.0), 600);
+  clCaG.updateFeedInActualDcValues(0.0, 0.0);                  // actual feed in is set to 0 for voltage and current
+  TEST_ASSERT_EQUAL(clCaG.updateConsumptionPower(600.0), 600); // return value of update is filtered set value
 
   //---------------------------------------------------------------------------------------------------
-  // run process defined time: a change from 0A to 9A is done in 0,5A/0,5sec steps, so we need 9 sec
+  // run process defined time: a change from 0A to 9A is done each CA_REFRESH_TIME msec in CA_APPROX_STEP A steps
   //
-  int32_t slPCyclesT = millis() + 5700;
+  TEST_MESSAGE(String("Trigger the processing of algorithm 10 times.").c_str()); // run as "Verbose Test" to see that
+  int32_t slPCyclesT = millis() + CA_REFRESH_TIME * 10 + 1;                      // trigger algorithm 10 times
   while (slPCyclesT > millis())
   {
     clCaG.process();
@@ -149,19 +156,20 @@ void test_ca_set_power_to_max_at_start(void)
     // simulate the actual value so the "discrete approximation" is considered here
     clCaG.updateFeedInActualDcValues(36.0, clCaG.feedInTargetDcCurrent());
   }
-  TEST_MESSAGE("STOP -------------------"); // run as "Verbose Test" to see that
-  String clStringT = String(" actual: " + String(clCaG.feedInActualDcCurrent()) + " target: " + String(clCaG.feedInTargetDcCurrent()));
-  TEST_MESSAGE(clStringT.c_str()); // run as "Verbose Test" to see that
 
   //---------------------------------------------------------------------------------------------------
   // check expected values:  => y=mx+b : DcInCurrent = 600 * 0,0278 + 0 = 9 A
   //                         => P=UI : 36 V * 9 A = 324 W
-  TEST_ASSERT_EQUAL(5.5, clCaG.feedInTargetDcCurrent());
+  TEST_ASSERT_EQUAL(CA_APPROX_STEP * 10, clCaG.feedInTargetDcCurrent());
   TEST_ASSERT_EQUAL(36.0, clCaG.feedInTargetDcVoltage());
-  TEST_ASSERT_EQUAL(5.5 * 36.0, clCaG.feedInTargetPowerApprox());
-  TEST_ASSERT_EQUAL(9.0 * 36.0, clCaG.feedInTargetPower());
+  TEST_ASSERT_EQUAL((CA_APPROX_STEP * 10) * 36.0, clCaG.feedInTargetPowerApprox());
+  TEST_ASSERT_EQUAL(9.0 * 36.0, clCaG.feedInTargetPower()); // This is the target value that we are approaching in defined steps
 
-  slPCyclesT = millis() + 4000;
+  //---------------------------------------------------------------------------------------------------
+  // proceed the test and check the increasing of the current
+  //
+  TEST_MESSAGE(String("Trigger the processing of algorithm next 5 times.").c_str()); // run as "Verbose Test" to see that
+  slPCyclesT = millis() + CA_REFRESH_TIME * 5 + 1;                                   // trigger algorithm 10 times
   while (slPCyclesT > millis())
   {
     clCaG.process();
@@ -169,15 +177,19 @@ void test_ca_set_power_to_max_at_start(void)
     // simulate the actual value so the "discrete approximation" is considered here
     clCaG.updateFeedInActualDcValues(36.0, clCaG.feedInTargetDcCurrent());
   }
-  TEST_ASSERT_EQUAL(9, clCaG.feedInTargetDcCurrent());
+  TEST_ASSERT_EQUAL((CA_APPROX_STEP * 10) + (CA_APPROX_STEP * 5), clCaG.feedInTargetDcCurrent());
   TEST_ASSERT_EQUAL(36.0, clCaG.feedInTargetDcVoltage());
-  TEST_ASSERT_EQUAL(9 * 36.0, clCaG.feedInTargetPower());
+  TEST_ASSERT_EQUAL(9 * 36.0, clCaG.feedInTargetPower()); // This is the target value that we are approaching in defined steps
 }
 
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
 void test_ca_set_power_to_middle_after_max(void)
 {
   /**
-   * @brief Set consumption power to 0 Wh after power up / start, the current output should be also at 0.
+   * @brief Set consumption power to 300 Wh & 9A after max value , the current should stay at 9A
    * Test parameter while test:
    *            current [A] = x     consumption [Wh]
    * min             0    => 0 * 36 =      0
@@ -195,11 +207,11 @@ void test_ca_set_power_to_middle_after_max(void)
   //---------------------------------------------------------------------------------------------------
   // run process defined number before test
   //
-  int32_t slPCyclesT = 20;
-  while (slPCyclesT > 0)
+  TEST_MESSAGE(String("Trigger the processing of algorithm 5 times.").c_str()); // run as "Verbose Test" to see that
+  int32_t slPCyclesT = millis() + CA_REFRESH_TIME * 5 + 1;                      // trigger algorithm 10 times
+  while (slPCyclesT > millis())
   {
     clCaG.process();
-    slPCyclesT--;
   }
 
   //---------------------------------------------------------------------------------------------------
@@ -210,10 +222,14 @@ void test_ca_set_power_to_middle_after_max(void)
   TEST_ASSERT_EQUAL(324.0, clCaG.feedInTargetPower());
 }
 
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
 void test_ca_set_power_to_zero_after_middle(void)
 {
   /**
-   * @brief Set consumption power to 0 Wh after power up / start, the current output should be also at 0.
+   * @brief Set consumption power to 0 Wh & 9A after it was at 300Wh the current stay 9 A.
    * Test parameter while test:
    *            current [A] = x     consumption [Wh]
    * min             0    => 0 * 36 =      0
@@ -231,11 +247,11 @@ void test_ca_set_power_to_zero_after_middle(void)
   //---------------------------------------------------------------------------------------------------
   // run process defined number before test
   //
-  int32_t slPCyclesT = 20;
-  while (slPCyclesT > 0)
+  TEST_MESSAGE(String("Trigger the processing of algorithm 5 times.").c_str()); // run as "Verbose Test" to see that
+  int32_t slPCyclesT = millis() + CA_REFRESH_TIME * 5 + 1;                      // trigger algorithm 10 times
+  while (slPCyclesT > millis())
   {
     clCaG.process();
-    slPCyclesT--;
   }
 
   //---------------------------------------------------------------------------------------------------
@@ -246,10 +262,14 @@ void test_ca_set_power_to_zero_after_middle(void)
   TEST_ASSERT_EQUAL(324.0, clCaG.feedInTargetPower());
 }
 
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
 void test_ca_set_power_to_negative_after_zero(void)
 {
   /**
-   * @brief Set consumption power to 0 Wh after power up / start, the current output should be also at 0.
+   * @brief Set consumption power to -160 Wh & 9A, the current output should be limited so power output is 0 Wh
    * Test parameter while test:
    *            current [A] = x     consumption [Wh]
    * min             0    => 0 * 36 =      0
@@ -265,20 +285,23 @@ void test_ca_set_power_to_negative_after_zero(void)
   clCaG.updateFeedInActualDcValues(36.0, 9.0);
 
   //---------------------------------------------------------------------------------------------------
-  // run process defined number before test
+  // run process defined time: a change from 0A to 9A is done each CA_REFRESH_TIME msec in CA_APPROX_STEP A steps
   //
-  int32_t slPCyclesT = millis() + 1000;
+  TEST_MESSAGE(String("Trigger the processing of algorithm 5 times.").c_str()); // run as "Verbose Test" to see that
+  int32_t slPCyclesT = millis() + CA_REFRESH_TIME * 5 + 1;                      // trigger algorithm x times
   while (slPCyclesT > millis())
   {
     clCaG.process();
+
+    // simulate the actual value so the "discrete approximation" is considered here
+    clCaG.updateFeedInActualDcValues(36.0, clCaG.feedInTargetDcCurrent());
   }
 
   //---------------------------------------------------------------------------------------------------
   // check expected values:  => y=mx+b, x=(-160+324)=164 : DcInCurrent = 164 * 0,0278 + 0 = 4,56 A
   //                         => P=UI : 36 V * 4,56 A = 164,16 W
-  TEST_ASSERT_EQUAL(4.0, clCaG.feedInTargetDcCurrent());
-  TEST_ASSERT_EQUAL(164.16, clCaG.feedInTargetPower());
-  TEST_ASSERT_EQUAL(164.16, clCaG.feedInTargetPowerApprox());
+  TEST_ASSERT_EQUAL(9 - (CA_APPROX_STEP * 5), clCaG.feedInTargetDcCurrent());
+  TEST_ASSERT_EQUAL((9 - (CA_APPROX_STEP * 5)) * 36.0, clCaG.feedInTargetPowerApprox());
 
   //---------------------------------------------------------------------------------------------------
   //---------------------------------------------------------------------------------------------------
@@ -289,26 +312,33 @@ void test_ca_set_power_to_negative_after_zero(void)
   clCaG.updateFeedInActualDcValues(36.0, 4.56);
 
   //---------------------------------------------------------------------------------------------------
-  // run process defined number before test
+  // run process defined time: a change from 0A to 9A is done each CA_REFRESH_TIME msec in CA_APPROX_STEP A steps
   //
-  slPCyclesT = 200;
-  while (slPCyclesT > 0)
+  TEST_MESSAGE(String("Trigger the processing of algorithm 5 times.").c_str()); // run as "Verbose Test" to see that
+  slPCyclesT = millis() + CA_REFRESH_TIME * 5 + 1;                              // trigger algorithm x times
+  while (slPCyclesT > millis())
   {
     clCaG.process();
-    slPCyclesT--;
+
+    // simulate the actual value so the "discrete approximation" is considered here
+    clCaG.updateFeedInActualDcValues(36.0, clCaG.feedInTargetDcCurrent());
   }
   //---------------------------------------------------------------------------------------------------
   // check expected values:  => y=mx+b, x=(0+164)=164 : DcInCurrent = 164 * 0,0278 + 0 = 4,56 A
   //                         => P=UI : 36 V * 4,56 A = 164,16 W
-  TEST_ASSERT_EQUAL(4.0, clCaG.feedInTargetDcCurrent());
+  TEST_ASSERT_EQUAL(9 - (CA_APPROX_STEP * 5), clCaG.feedInTargetDcCurrent());
   TEST_ASSERT_EQUAL(36.0, clCaG.feedInTargetDcVoltage());
-  TEST_ASSERT_EQUAL(164.16, clCaG.feedInTargetPower());
+  TEST_ASSERT_EQUAL((9 - (CA_APPROX_STEP * 5)) * 36.0, clCaG.feedInTargetPower());
 }
 
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
 void test_ca_set_power_to_negative_to_zero(void)
 {
   /**
-   * @brief Set consumption power to 0 Wh after power up / start, the current output should be also at 0.
+   * @brief Set consumption power to -100 Wh & 4,56 A, the current output should limited down
    * Test parameter while test:
    *            current [A] = x     consumption [Wh]
    * min             0    => 0 * 36 =      0
@@ -324,20 +354,33 @@ void test_ca_set_power_to_negative_to_zero(void)
   clCaG.updateFeedInActualDcValues(36.0, 4.56);
 
   //---------------------------------------------------------------------------------------------------
-  // run process defined number before test
+  // run process once, the feed in actual values can be processed
   //
-  int32_t slPCyclesT = millis() + 1000;
+  int32_t slPCyclesT = millis() + CA_REFRESH_TIME * 1 + 1; // trigger algorithm x times
   while (slPCyclesT > millis())
   {
     clCaG.process();
   }
 
   //---------------------------------------------------------------------------------------------------
+  // run process defined time: a change from 0A to 9A is done each CA_REFRESH_TIME msec in CA_APPROX_STEP A steps
+  //
+  TEST_MESSAGE(String("Trigger the processing of algorithm 5 times.").c_str()); // run as "Verbose Test" to see that
+  slPCyclesT = millis() + CA_REFRESH_TIME * 5 + 1;                              // trigger algorithm x times
+  while (slPCyclesT > millis())
+  {
+    clCaG.process();
+
+    // simulate the actual value so the "discrete approximation" is considered here
+    clCaG.updateFeedInActualDcValues(36.0, clCaG.feedInTargetDcCurrent());
+  }
+
+  //---------------------------------------------------------------------------------------------------
   // check expected values:  => y=mx+b, x=(-100+164)=64 : DcInCurrent = 64 * 0,0278 + 0 = 1,78 A
   //                         => P=UI : 36 V * 1,78 A = 64,08 W
-  TEST_ASSERT_EQUAL(1.78, clCaG.feedInTargetDcCurrent());
+  TEST_ASSERT_EQUAL(4.56 - (CA_APPROX_STEP * 6), clCaG.feedInTargetDcCurrent());
   TEST_ASSERT_EQUAL(36.0, clCaG.feedInTargetDcVoltage());
-  TEST_ASSERT_EQUAL(64.16, clCaG.feedInTargetPower());
+  TEST_ASSERT_EQUAL((4.56 - (CA_APPROX_STEP * 6)) * 36.0, clCaG.feedInTargetPowerApprox());
 
   //---------------------------------------------------------------------------------------------------
   //---------------------------------------------------------------------------------------------------
@@ -348,26 +391,43 @@ void test_ca_set_power_to_negative_to_zero(void)
   clCaG.updateFeedInActualDcValues(36.0, 1.78);
 
   //---------------------------------------------------------------------------------------------------
-  // run process defined number before test
+  // run process once, the feed in actual values can be processed
   //
-  slPCyclesT = millis() + 1000;
+  slPCyclesT = millis() + CA_REFRESH_TIME * 1 + 1; // trigger algorithm x times
   while (slPCyclesT > millis())
   {
     clCaG.process();
   }
 
   //---------------------------------------------------------------------------------------------------
+  // run process defined time: a change from 0A to 9A is done each CA_REFRESH_TIME msec in CA_APPROX_STEP A steps
+  //
+  TEST_MESSAGE(String("Trigger the processing of algorithm 5 times.").c_str()); // run as "Verbose Test" to see that
+  slPCyclesT = millis() + CA_REFRESH_TIME * 5 + 1;                              // trigger algorithm x times
+  while (slPCyclesT > millis())
+  {
+    clCaG.process();
+
+    // simulate the actual value so the "discrete approximation" is considered here
+    clCaG.updateFeedInActualDcValues(36.0, clCaG.feedInTargetDcCurrent());
+  }
+
+  //---------------------------------------------------------------------------------------------------
   // check expected values:  => y=mx+b, x=(-100+64,08)=-36 : DcInCurrent = -36 * 0,0278 + 0 = -1 A
   //                         => P=UI : 36 V * 1,78 A = 64,08 W
-  TEST_ASSERT_EQUAL(0, clCaG.feedInTargetDcCurrent());
+  TEST_ASSERT_EQUAL(1.78 - (CA_APPROX_STEP * 6), clCaG.feedInTargetDcCurrent());
   TEST_ASSERT_EQUAL(36.0, clCaG.feedInTargetDcVoltage());
-  TEST_ASSERT_EQUAL(0, clCaG.feedInTargetPower());
+  TEST_ASSERT_EQUAL((1.78 - (CA_APPROX_STEP * 6)) * 36.0, clCaG.feedInTargetPowerApprox());
 }
 
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
 void test_ca_set_power_to_300(void)
 {
   /**
-   * @brief Set consumption power to 300 Wh after power up / start, the target current output should be divided by two.
+   * @brief Set consumption power to 300 Wh & 0A, the target current output should be divided by two.
    *
    * Test parameter while test:
    *            current [A] = x     consumption [Wh]
@@ -383,9 +443,10 @@ void test_ca_set_power_to_300(void)
   TEST_ASSERT_EQUAL(clCaG.updateConsumptionPower(300.0), 300);
 
   //---------------------------------------------------------------------------------------------------
-  // run process defined time: a change from 0A to 9A is done in 0,5A/0,5sec steps, so we need 9 sec
+  // run process defined time: a change is done each CA_REFRESH_TIME msec in CA_APPROX_STEP A steps
   //
-  int32_t slPCyclesT = millis() + 5700;
+  TEST_MESSAGE(String("Trigger the processing of algorithm 6 times.").c_str()); // run as "Verbose Test" to see that
+  int32_t slPCyclesT = millis() + CA_REFRESH_TIME * 6 + 1;                      // trigger algorithm x times
   while (slPCyclesT > millis())
   {
     clCaG.process();
@@ -394,20 +455,20 @@ void test_ca_set_power_to_300(void)
     clCaG.updateFeedInActualDcValues(36.0, clCaG.feedInTargetDcCurrent());
     clCaG.updateConsumptionPower(300.0 - clCaG.feedInTargetPowerApprox());
   }
-  TEST_MESSAGE("STOP -------------------"); // run as "Verbose Test" to see that
-  String clStringT = String(" actual: " + String(clCaG.feedInActualDcCurrent()) + " target: " + String(clCaG.feedInTargetDcCurrent()));
-  TEST_MESSAGE(clStringT.c_str()); // run as "Verbose Test" to see that
 
   //---------------------------------------------------------------------------------------------------
   // check expected values:  => y=mx+b : DcInCurrent = 300 * 0,0278 + 0 = 8,34 A
   //                         => As we use 2 strings : 83,4 A / 2 = 4,17 A
   //                         => P=UI : (36 V * 4,17 A)*2 = 300 Wh
-  TEST_ASSERT_EQUAL(4.17, clCaG.feedInTargetDcCurrent());
+  TEST_ASSERT_EQUAL(((CA_APPROX_STEP * 6)), clCaG.feedInTargetDcCurrent());
   TEST_ASSERT_EQUAL(36.0, clCaG.feedInTargetDcVoltage());
-  TEST_ASSERT_EQUAL((4.17) * 36.0, clCaG.feedInTargetPowerApprox()); // 150 Wh
-  TEST_ASSERT_EQUAL((4.17) * 36.0, clCaG.feedInTargetPower());       // 150 Wh
+  TEST_ASSERT_EQUAL((CA_APPROX_STEP * 6) * 36.0, clCaG.feedInTargetPowerApprox()); // 150 Wh
 
-  slPCyclesT = millis() + 4000;
+  //---------------------------------------------------------------------------------------------------
+  // run process defined time: each CA_REFRESH_TIME msec in CA_APPROX_STEP A steps
+  //
+  TEST_MESSAGE(String("Trigger the processing of algorithm 6 times.").c_str()); // run as "Verbose Test" to see that
+  slPCyclesT = millis() + CA_REFRESH_TIME * 6 + 1;                              // trigger algorithm x times
   while (slPCyclesT > millis())
   {
     clCaG.process();
@@ -415,15 +476,15 @@ void test_ca_set_power_to_300(void)
     // simulate the actual value so the "discrete approximation" is considered here
     clCaG.updateFeedInActualDcValues(36.0, clCaG.feedInTargetDcCurrent());
   }
-  TEST_ASSERT_EQUAL(9 / 2, clCaG.feedInTargetDcCurrent());
+  TEST_ASSERT_EQUAL((CA_APPROX_STEP * 6 * 2), clCaG.feedInTargetDcCurrent());
   TEST_ASSERT_EQUAL(36.0, clCaG.feedInTargetDcVoltage());
-  TEST_ASSERT_EQUAL((8.34 / 2) * 36.0, clCaG.feedInTargetPower());
+  TEST_ASSERT_EQUAL((CA_APPROX_STEP * 6 * 2) * 36.0, clCaG.feedInTargetPowerApprox());
 }
 
 void test_ca_set_power_to_700(void)
 {
   /**
-   * @brief Set consumption power to 300 Wh after power up / start, the target current output should be divided by two.
+   * @brief Set consumption power to 700 Wh after power up / start, the target current output should be divided by two.
    *
    * Test parameter while test:
    *            current [A] = x     consumption [Wh]
@@ -439,9 +500,19 @@ void test_ca_set_power_to_700(void)
   TEST_ASSERT_EQUAL(clCaG.updateConsumptionPower(700.0), 700);
 
   //---------------------------------------------------------------------------------------------------
-  // run process defined time: a change from 0A to 9A is done in 0,5A/0,5sec steps, so we need 9 sec
+  // run process once, the feed in actual values can be processed
   //
-  int32_t slPCyclesT = millis() + 5700;
+  int32_t slPCyclesT = millis() + CA_REFRESH_TIME * 1 + 1; // trigger algorithm x times
+  while (slPCyclesT > millis())
+  {
+    clCaG.process();
+  }
+
+  //---------------------------------------------------------------------------------------------------
+  // run process defined time: a change is done each CA_REFRESH_TIME msec in CA_APPROX_STEP A steps
+  //
+  TEST_MESSAGE(String("Trigger the processing of algorithm 6 times.").c_str()); // run as "Verbose Test" to see that
+  slPCyclesT = millis() + CA_REFRESH_TIME * 6 + 1;                              // trigger algorithm x times
   while (slPCyclesT > millis())
   {
     clCaG.process();
@@ -450,20 +521,20 @@ void test_ca_set_power_to_700(void)
     clCaG.updateFeedInActualDcValues(36.0, clCaG.feedInTargetDcCurrent());
     clCaG.updateConsumptionPower(700.0 - clCaG.feedInTargetPowerApprox());
   }
-  TEST_MESSAGE("STOP -------------------"); // run as "Verbose Test" to see that
-  String clStringT = String(" actual: " + String(clCaG.feedInActualDcCurrent()) + " target: " + String(clCaG.feedInTargetDcCurrent()));
-  TEST_MESSAGE(clStringT.c_str()); // run as "Verbose Test" to see that
 
   //---------------------------------------------------------------------------------------------------
   // check expected values:  => y=mx+b : DcInCurrent = 700 * 0,0278 + 0 = 19,46 A
   //                         => As we use 2 strings : 83,4 A / 2 = 9,7 A => 9A max.
   //                         => P=UI : (36 V * 9 A)*2 = 324 Wh
-  TEST_ASSERT_EQUAL(9, clCaG.feedInTargetDcCurrent());
+  TEST_ASSERT_EQUAL(CA_APPROX_STEP * 7, clCaG.feedInTargetDcCurrent());
   TEST_ASSERT_EQUAL(36.0, clCaG.feedInTargetDcVoltage());
-  TEST_ASSERT_EQUAL(9 * 36.0, clCaG.feedInTargetPowerApprox()); // 324 Wh
-  TEST_ASSERT_EQUAL(9 * 36.0, clCaG.feedInTargetPower());       // 324 Wh
+  TEST_ASSERT_EQUAL((CA_APPROX_STEP * 7) * 36.0, clCaG.feedInTargetPowerApprox());
 
-  slPCyclesT = millis() + 4000;
+  //---------------------------------------------------------------------------------------------------
+  // run process defined time: a change is done each CA_REFRESH_TIME msec in CA_APPROX_STEP A steps
+  //
+  TEST_MESSAGE(String("Trigger the processing of algorithm 6 times.").c_str()); // run as "Verbose Test" to see that
+  slPCyclesT = millis() + CA_REFRESH_TIME * 6 + 1;                              // trigger algorithm x times
   while (slPCyclesT > millis())
   {
     clCaG.process();
@@ -471,9 +542,9 @@ void test_ca_set_power_to_700(void)
     // simulate the actual value so the "discrete approximation" is considered here
     clCaG.updateFeedInActualDcValues(36.0, clCaG.feedInTargetDcCurrent());
   }
-  TEST_ASSERT_EQUAL(9, clCaG.feedInTargetDcCurrent());
+  TEST_ASSERT_EQUAL((CA_APPROX_STEP * (7 + 6)), clCaG.feedInTargetDcCurrent());
   TEST_ASSERT_EQUAL(36.0, clCaG.feedInTargetDcVoltage());
-  TEST_ASSERT_EQUAL(9 * 36.0, clCaG.feedInTargetPower());
+  TEST_ASSERT_EQUAL((CA_APPROX_STEP * (7 + 6)) * 36.0, clCaG.feedInTargetPowerApprox());
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*\
@@ -501,6 +572,10 @@ void setup()
   RUN_TEST(test_ca_init_parameter);
 }
 
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
 void test_ca_init_2_strings(void)
 {
   clCaG.init(2);
