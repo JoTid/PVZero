@@ -3,6 +3,11 @@
 With an ESP32, the power grid data of a **Shelly 3EM** is queried, processed and used for current limiting with a
 **DPM86xx** power supply unit, so that a zero-current feed-in of a PV system can be realized.
 
+## Arduino Framework
+
+The project is based on [Arduino Framework](https://www.arduino.cc/reference/en) and is developed in
+[VS Code](https://code.visualstudio.com/) using the [PlatformIO IDE](https://platformio.org/) extension.
+
 ## System setup
 
 The system for which the PVZero application is being realised looks as follows in its full configuration:
@@ -25,7 +30,14 @@ to the **Feed-in target DC Current**. The values for **m** and **b** are determi
 It should be noted that the **Feed-in actual Power** influences the **Consumption Power** and must therefore be added to
 the total consumption value before each calculation in order to avoid oscillation or overshooting of the system.
 
-## Arduino Framework
+## Battery guard
 
-The project is based on [Arduino Framework](https://www.arduino.cc/reference/en) and is developed in
-[VS Code](https://code.visualstudio.com/) using the [PlatformIO IDE](https://platformio.org/) extension.
+The ESP32 measures the voltage of the battery to provide discharge protection. If the voltage falls below a
+defined level, all PSUs are switched off and only switched on again after a defined threshold value has been reached.
+
+Additionally the battery guard limits the **Feed-in target DC Current** depending on battery voltage.
+
+![processing](./docs/images/battery_guard.drawio.svg)
+
+As soon as the voltage falls below 41.0 V, the current is limited to 0.01 A or less so that the battery is not
+discharged any further.
