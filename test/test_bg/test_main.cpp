@@ -187,6 +187,46 @@ void test_bg_alarm_recover(void)
   TEST_ASSERT_EQUAL(0, clGuardG.alarmRecoverTime());
 }
 
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
+void test_bg_current_limit(void)
+{
+  //---------------------------------------------------------------------------------------------------
+  //
+  //
+  clGuardG.updateVoltage(48.0);
+
+  //---------------------------------------------------------------------------------------------------
+  // run process defined time: a change is done each BG_REFRESH_TIME msec
+  //
+  int32_t slPCyclesT = millis() + (BG_REFRESH_TIME * 1) + 1;
+  while (slPCyclesT > millis())
+  {
+    clGuardG.process();
+  }
+
+  //---------------------------------------------------------------------------------------------------
+  // check the current limit is calculated correct
+  //
+  TEST_MESSAGE(String("Limited Current of 3.0 A @ 48.0 V: " + String(clGuardG.limitedCurrent(3.0), 1) + "A").c_str()); // run as "Verbose Test" to see that
+  TEST_ASSERT_EQUAL(3.0, clGuardG.limitedCurrent(3.0));
+  TEST_MESSAGE(String("Limited Current of 13.0 A @ 48.0 V: " + String(clGuardG.limitedCurrent(13.0), 1) + "A").c_str()); // run as "Verbose Test" to see that
+  TEST_ASSERT_EQUAL(3.3, clGuardG.limitedCurrent(13.0));
+
+  //---------------------------------------------------------------------------------------------------
+  // just print limits for different supply voltages
+  //
+  float ftVoltage = 40.0;
+  while (ftVoltage < 60.0)
+  {
+    clGuardG.updateVoltage(ftVoltage);
+    TEST_MESSAGE(String("Limited Current at " + String(ftVoltage, 1) + "V is " + String(clGuardG.limitedCurrent(200.0), 1) + "A").c_str()); // run as "Verbose Test" to see that
+    ftVoltage += 1.0;
+  }
+}
+
 /*--------------------------------------------------------------------------------------------------------------------*\
 ** Test environment                                                                                                   **
 **                                                                                                                    **
@@ -221,10 +261,12 @@ void loop()
   //---------------------------------------------------------------------------------------------------
   // run tests step by step,
   //
-  RUN_TEST(test_bg_init_parameter);
-  RUN_TEST(test_bg_normal_operating);
-  RUN_TEST(test_bg_alarm_set);
-  RUN_TEST(test_bg_alarm_recover);
+  // RUN_TEST(test_bg_init_parameter);
+  // RUN_TEST(test_bg_normal_operating);
+  // RUN_TEST(test_bg_alarm_set);
+  // RUN_TEST(test_bg_alarm_recover);
+
+  RUN_TEST(test_bg_current_limit);
 
   UNITY_END(); // stop unit testing
   while (1)

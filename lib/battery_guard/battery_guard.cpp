@@ -52,6 +52,28 @@ void BatteryGuard::init(float ftMinimalOperatingVoltageV, uint32_t ulMinimumChar
   slMaxVoltageP = BG_DISCHARGE_VOLTAGE;
 
   //---------------------------------------------------------------------------------------------------
+  // prepare parameters for scaling: y = m * x + b
+  //
+
+  // setup minimal voltage value, provided by user
+  ftNominalVoltageMinP = ftMinimalOperatingVoltageV;
+
+  // setup maximal voltage value, provided by battery
+  ftNominalVoltageMaxP = BG_CHARGE_CUTOFF_VOLTAGE; // 58.40 V
+  ftNominalVoltageMaxP /= 10.0;
+
+  // setup minimal current that corresponds to the minimal voltage value
+  ftNominalCurrentMinP = 0.01; //  0.01 A
+  // setup maximal current that corresponds to the maximal voltage value
+  ftNominalCurrentMaxP = 12.0; // 12.00 A
+
+  // m = (y2-y1) / (x2-x1)
+  ftScaleGainP = (ftNominalCurrentMaxP - ftNominalCurrentMinP) / (ftNominalVoltageMaxP - ftNominalVoltageMinP);
+
+  // b = y1 - (m * x1)
+  ftScaleOffsetP = (ftNominalCurrentMinP - (ftScaleGainP * ftNominalVoltageMinP));
+
+  //---------------------------------------------------------------------------------------------------
   // take operating value and limit it to plausible range
   //
   slRecoverVoltageP = (int32_t)(ftMinimalOperatingVoltageV * 10);
@@ -173,5 +195,46 @@ void BatteryGuard::process(void)
 //--------------------------------------------------------------------------------------------------------------------//
 void BatteryGuard::updateVoltage(float ftVoltageV)
 {
-  slActualVoltageP = (int32_t)(ftVoltageV * 10.0);
+  ftActualVoltageP = ftVoltageV;
+  slActualVoltageP = (int32_t)(ftActualVoltageP * 10.0);
+}
+#include <unity.h>
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
+float BatteryGuard::limitedCurrent(float ftFeedTargetInCurrentV)
+{
+  float ftLimitedCurrentT;
+  int32_t slLimitedCurrentT;
+  int32_t slFeedInCurrent = (int32_t)(ftFeedTargetInCurrentV * 100);
+
+  //---------------------------------------------------------------------------------------------------
+  // calculate the current limit depending on the actual voltage
+  //
+  ftLimitedCurrentT = ftScaleGainP * ftActualVoltageP;
+  ftLimitedCurrentT += ftScaleOffsetP;
+  slLimitedCurrentT = (int32_t)(ftLimitedCurrentT * 100);
+
+  //---------------------------------------------------------------------------------------------------
+  // avoid negative values
+  //
+  if (slLimitedCurrentT < 0)
+  {
+    slLimitedCurrentT = 0;
+    ftLimitedCurrentT = 0.0;
+  }
+
+  //---------------------------------------------------------------------------------------------------
+  // limit the provide current if required
+  //
+  if (slFeedInCurrent > slLimitedCurrentT)
+  {
+    return ftLimitedCurrentT;
+  }
+
+  //---------------------------------------------------------------------------------------------------
+  // feed in current is within valid range do not change it
+  //
+  return ftFeedTargetInCurrentV;
 }
