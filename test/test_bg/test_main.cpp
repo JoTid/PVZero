@@ -261,10 +261,10 @@ void loop()
   //---------------------------------------------------------------------------------------------------
   // run tests step by step,
   //
-  // RUN_TEST(test_bg_init_parameter);
-  // RUN_TEST(test_bg_normal_operating);
-  // RUN_TEST(test_bg_alarm_set);
-  // RUN_TEST(test_bg_alarm_recover);
+  RUN_TEST(test_bg_init_parameter);
+  RUN_TEST(test_bg_normal_operating);
+  RUN_TEST(test_bg_alarm_set);
+  RUN_TEST(test_bg_alarm_recover);
 
   RUN_TEST(test_bg_current_limit);
 
