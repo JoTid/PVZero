@@ -198,7 +198,7 @@ void BatteryGuard::updateVoltage(float ftVoltageV)
   ftActualVoltageP = ftVoltageV;
   slActualVoltageP = (int32_t)(ftActualVoltageP * 10.0);
 }
-#include <unity.h>
+
 //--------------------------------------------------------------------------------------------------------------------//
 //                                                                                                                    //
 //                                                                                                                    //
@@ -210,27 +210,33 @@ float BatteryGuard::limitedCurrent(float ftFeedTargetInCurrentV)
   int32_t slFeedInCurrent = (int32_t)(ftFeedTargetInCurrentV * 100);
 
   //---------------------------------------------------------------------------------------------------
-  // calculate the current limit depending on the actual voltage
+  // consider the limit calculation only if battery guard is enabled
   //
-  ftLimitedCurrentT = ftScaleGainP * ftActualVoltageP;
-  ftLimitedCurrentT += ftScaleOffsetP;
-  slLimitedCurrentT = (int32_t)(ftLimitedCurrentT * 100);
-
-  //---------------------------------------------------------------------------------------------------
-  // avoid negative values
-  //
-  if (slLimitedCurrentT < 0)
+  if (btEnabledP == true)
   {
-    slLimitedCurrentT = 0;
-    ftLimitedCurrentT = 0.0;
-  }
+    //-------------------------------------------------------------------------------------------
+    // calculate the current limit depending on the actual voltage
+    //
+    ftLimitedCurrentT = ftScaleGainP * ftActualVoltageP;
+    ftLimitedCurrentT += ftScaleOffsetP;
+    slLimitedCurrentT = (int32_t)(ftLimitedCurrentT * 100);
 
-  //---------------------------------------------------------------------------------------------------
-  // limit the provide current if required
-  //
-  if (slFeedInCurrent > slLimitedCurrentT)
-  {
-    return ftLimitedCurrentT;
+    //-------------------------------------------------------------------------------------------
+    // avoid negative values
+    //
+    if (slLimitedCurrentT < 10)
+    {
+      slLimitedCurrentT = 10;
+      ftLimitedCurrentT = 0.10;
+    }
+
+    //-------------------------------------------------------------------------------------------
+    // limit the provide current if required
+    //
+    if (slFeedInCurrent > slLimitedCurrentT)
+    {
+      return ftLimitedCurrentT;
+    }
   }
 
   //---------------------------------------------------------------------------------------------------
