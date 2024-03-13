@@ -6,15 +6,11 @@
 //                                                                                                                    //
 //====================================================================================================================//
 
-
 /*--------------------------------------------------------------------------------------------------------------------*\
 ** Include files                                                                                                      **
 **                                                                                                                    **
-\*--------------------------------------------------------------------------------------------------------------------*/ 
+\*--------------------------------------------------------------------------------------------------------------------*/
 #include "pvz_psu.hpp"
-
-
-
 
 /*--------------------------------------------------------------------------------------------------------------------*\
 ** Definitions and variables of module                                                                                **
@@ -28,6 +24,8 @@
 PvzPsu::PvzPsu()
 {
   slModelNumberP = -1; // not initialised
+  ftActualVoltageP = 0.0;
+  ftActualCurrentP = 0.0;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -38,11 +36,10 @@ PvzPsu::~PvzPsu()
 {
 }
 
-
 int32_t PvzPsu::enable(bool btEnableV)
 {
   int32_t slReturnT = slModelNumberP;
-  
+
   if (slModelNumberP > 0)
   {
     slReturnT = clPsuP.power(btEnableV);
@@ -51,23 +48,21 @@ int32_t PvzPsu::enable(bool btEnableV)
   return slReturnT;
 }
 
-
 //--------------------------------------------------------------------------------------------------------------------//
 //                                                                                                                    //
 //                                                                                                                    //
 //--------------------------------------------------------------------------------------------------------------------//
 int32_t PvzPsu::init(HardwareSerial &clSerialR)
 {
-  //--------------------------------------------------------------------------------------------------- 
+  //---------------------------------------------------------------------------------------------------
   // init serial interface and PSU
   //
-  clSerialR.begin(9600);
-  clPsuP.begin(clSerialR);
+  clSerialR.begin(115200);
+  slModelNumberP = clPsuP.begin(clSerialR, 1);
 
-  //--------------------------------------------------------------------------------------------------- 
+  //---------------------------------------------------------------------------------------------------
   // read the model number of PSU, or negative value in case of an error
   //
-  slModelNumberP = (int32_t)clPsuP.read('m');
   if (slModelNumberP > 0)
   {
     clPsuP.power(false);
@@ -76,13 +71,11 @@ int32_t PvzPsu::init(HardwareSerial &clSerialR)
   return slModelNumberP;
 }
 
-
-
 //--------------------------------------------------------------------------------------------------------------------//
 //                                                                                                                    //
 //                                                                                                                    //
 //--------------------------------------------------------------------------------------------------------------------//
-void PvzPsu::process(void)
+void PvzPsu::process(bool btForceV)
 {
   static unsigned long ulOldTimeS;
   static uint32_t ulRefreshTimeT;
@@ -91,7 +84,7 @@ void PvzPsu::process(void)
   // Model number is negative in case of failure at initialisation.
   // In other case it contain the maximal A value (5, 8, 16 or 24)
   //
-  if (slModelNumberP < 0)
+  if ((slModelNumberP < 0) && (btForceV == false))
   {
     return;
   }
@@ -120,13 +113,13 @@ void PvzPsu::process(void)
   {
     ulRefreshTimeT = 0;
 
-    //------------------------------------------------------------------------------------------- 
-    // simple poll actual values from PSU 
+    //-------------------------------------------------------------------------------------------
+    // simple poll actual values from PSU
     //
     if (clPsuP.read('p') > 0)
     {
       btIsEnabledP = true;
-    } 
+    }
     else
     {
       btIsEnabledP = false;
@@ -134,17 +127,18 @@ void PvzPsu::process(void)
 
     ftActualVoltageP = clPsuP.read('v');
     ftActualCurrentP = clPsuP.read('c');
+    ftActualTemperatureP = clPsuP.read('t');
   }
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
 //                                                                                                                    //
 //                                                                                                                    //
-//--------------------------------------------------------------------------------------------------------------------// 
+//--------------------------------------------------------------------------------------------------------------------//
 int32_t PvzPsu::set(float ftVoltageV, float ftCurrentV)
 {
   int32_t slReturnT = slModelNumberP;
-  
+
   if (slModelNumberP > 0)
   {
     slReturnT = clPsuP.writeVC(ftVoltageV, ftCurrentV);

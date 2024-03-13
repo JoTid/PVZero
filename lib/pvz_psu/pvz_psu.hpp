@@ -6,15 +6,13 @@
 //                                                                                                                    //
 //====================================================================================================================//
 
-
 #ifndef PVZ_PSU_HPP
 #define PVZ_PSU_HPP
-
 
 /*--------------------------------------------------------------------------------------------------------------------*\
 ** Include files                                                                                                      **
 **                                                                                                                    **
-\*--------------------------------------------------------------------------------------------------------------------*/ 
+\*--------------------------------------------------------------------------------------------------------------------*/
 #include <Arduino.h>
 #include "DPM8600.h"
 
@@ -24,8 +22,8 @@
 \*--------------------------------------------------------------------------------------------------------------------*/
 
 /**
- * @brief 
- * 
+ * @brief
+ *
  */
 class PvzPsu
 {
@@ -44,44 +42,48 @@ public:
    * @brief Process the PSU operation.
    * This method must be called from main loop.
    */
-  void process(void);
+  void process(bool btForceV = false);
 
   int32_t set(float ftVoltageV, float ftCurrentV);
   int32_t enable(bool);
-  float actualVoltage() 
+  float actualVoltage()
   {
     return ftActualVoltageP;
   }
 
-  float actualCurrent() 
+  float actualCurrent()
   {
     return ftActualCurrentP;
   }
 
-  bool isEnabled() 
+  bool isEnabled()
   {
     return btIsEnabledP;
   }
 
-  bool isAvailable() 
+  bool isAvailable()
   {
     if (slModelNumberP > 0)
     {
       return true;
-    }else{
+    }
+    else
+    {
       return false;
     }
   }
 
+  int32_t model() { return slModelNumberP; }
 
 private:
-  #define PSU_REFRESH_TIME 500
+#define PSU_REFRESH_TIME 1000
 
   int32_t slModelNumberP;
   DPM8600 clPsuP;
 
   float ftActualVoltageP;
   float ftActualCurrentP;
+  float ftActualTemperatureP;
   bool btIsEnabledP;
 };
 
