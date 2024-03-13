@@ -1,6 +1,6 @@
-<mxfile host="Electron" modified="2024-03-12T21:53:38.395Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.0.4 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="axk3UxyzsSwIwe1JIdJG" version="24.0.4" type="device" pages="3">
+<mxfile host="Electron" modified="2024-03-13T20:10:19.692Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.0.4 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="PB2DXOpCeyJIVuUhFWMx" version="24.0.4" type="device" pages="3">
   <diagram id="GDF2bqVlT_cqfWEFH5KE" name="battery guard">
-    <mxGraphModel dx="1430" dy="825" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="2074" dy="1196" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -13,7 +13,7 @@
         <mxCell id="mHGMLyn1DUiSqq8-WLcD-1" value="Actor" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" parent="1" vertex="1">
           <mxGeometry x="410" y="644" width="30" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="mHGMLyn1DUiSqq8-WLcD-2" value="&amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp;min.&amp;nbsp; &amp;nbsp; max.&lt;div&gt;[V]&amp;nbsp; 41,0&amp;nbsp; &amp;nbsp; 0,01&lt;br&gt;[A]&amp;nbsp; 58,4&amp;nbsp; &amp;nbsp; 12,00&lt;/div&gt;" style="html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=2;fontFamily=Verdana;fontSize=12;align=left;shape=mxgraph.ios7ui.horLines;fillColor=none;" parent="1" vertex="1">
+        <mxCell id="mHGMLyn1DUiSqq8-WLcD-2" value="&amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp;min.&amp;nbsp; &amp;nbsp; max.&lt;div&gt;[V]&amp;nbsp; 41,0&amp;nbsp; &amp;nbsp; 58,4&lt;br&gt;[A]&amp;nbsp; 0,01&amp;nbsp; &amp;nbsp; 12,00&lt;/div&gt;" style="html=1;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=2;fontFamily=Verdana;fontSize=12;align=left;shape=mxgraph.ios7ui.horLines;fillColor=none;" parent="1" vertex="1">
           <mxGeometry x="260" y="500" width="130" height="50" as="geometry" />
         </mxCell>
         <mxCell id="mHGMLyn1DUiSqq8-WLcD-3" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;entryX=0.485;entryY=0.997;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.25;exitY=0.1;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" source="mHGMLyn1DUiSqq8-WLcD-1" target="mHGMLyn1DUiSqq8-WLcD-2" edge="1">
@@ -35,7 +35,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="GZ0tPdZaUgXcPJGI4uPR-1" value="0,1 A .. 12,0 A" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="1" vertex="1" connectable="0">
-          <mxGeometry x="360.00356098162297" y="609.9957823054198" as="geometry" />
+          <mxGeometry x="414.00356098162297" y="589.9957823054198" as="geometry" />
         </mxCell>
         <mxCell id="BalYCnzKqVYI-Why4gmt-2" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="Z-vPnnfJ0P7MunZE0ge0-2" target="1AOe-N41vXJ7CMZYW_XP-1" edge="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
