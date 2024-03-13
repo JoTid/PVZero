@@ -90,7 +90,7 @@ void PVZeroClass::setup()
   aclPsuP[1].init(Serial2);
   if (_config.isEnabledSecondPsu())
   {
-    aclPsuP[0].init(Serial1);
+    aclPsuP[0].init(Serial);
     ubStringCountT = 2;
   }
 
@@ -148,6 +148,8 @@ void PVZeroClass::setup()
 //--------------------------------------------------------------------------------------------------------------------//
 void PVZeroClass::processControlAlgorithm(void)
 {
+  float ftActualVoltageT;
+  float ftActualCurrentT;
   //---------------------------------------------------------------------------------------------------
   // collect and provide data to the control algorithm
   //
@@ -163,7 +165,14 @@ void PVZeroClass::processControlAlgorithm(void)
     // Set the power to 0 so that the current is also limited to 0.
     clCaP.updateConsumptionPower(0.0);
   }
-  clCaP.updateFeedInActualDcValues(aclPsuP[1].actualVoltage(), aclPsuP[1].actualCurrent());
+
+  //---------------------------------------------------------------------------------------------------
+  // \todo consider feed in of both PSUs
+  //
+  ftActualVoltageT = aclPsuP[1].actualVoltage();
+  ftActualCurrentT = (aclPsuP[0].actualCurrent() + aclPsuP[1].actualCurrent());
+
+  clCaP.updateFeedInActualDcValues(ftActualVoltageT, ftActualCurrentT);
 
   //---------------------------------------------------------------------------------------------------
   // finally trigger the processing of data
@@ -248,8 +257,8 @@ void PVZeroClass::loop()
     //
     if (clBatGuardP.alarm() == false)
     {
-      aclPsuP[0].set(clCaP.feedInTargetDcVoltage(), clCaP.feedInTargetDcCurrent());
-      aclPsuP[1].set(clCaP.feedInTargetDcVoltage(), clCaP.feedInTargetDcCurrent());
+      aclPsuP[0].set(clCaP.feedInTargetDcVoltage(), clBatGuardP.limitedCurrent(clCaP.feedInTargetDcCurrent()));
+      aclPsuP[1].set(clCaP.feedInTargetDcVoltage(), clBatGuardP.limitedCurrent(clCaP.feedInTargetDcCurrent()));
     }
     else
     {

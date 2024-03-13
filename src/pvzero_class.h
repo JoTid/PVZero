@@ -40,7 +40,7 @@ limitations under the License.
 namespace PVZ
 {
 
-#define FIRMWARE_VERSION "0.80.00"
+#define FIRMWARE_VERSION "0.81.01"
 
   class PVZeroClass
   {
@@ -73,10 +73,10 @@ namespace PVZ
     float ftPsuVccT = 0.0;
     int32_t consumptionPower = -1;
     bool isConsumptionPowerValid = false;
-    McOvs_ts atsOvsInputsP[4];          // prepare software oversampling for up to 4 values
+    McOvs_ts atsOvsInputsP[4]; // prepare software oversampling for up to 4 values
     float ftPsuSupplyGainP;
     float ftPsuSupplyOffsetP;
-    PvzLcd::Screen_ts atsLcdScreenP[5]; 
+    PvzLcd::Screen_ts atsLcdScreenP[5];
     void _onPVZeroState(WebServer *webServer);
     void _onPVZeroCheck(WebServer *webServer);
     void _onTotalWatt(bool state, int32_t totalWatt);
