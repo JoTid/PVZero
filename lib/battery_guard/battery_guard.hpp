@@ -70,6 +70,14 @@
  */
 #define BG_REFRESH_TIME 1000
 
+/**
+ * @brief Time specified in [sec] in which the battery should be fully charged once
+ *
+ * In case the battery should be loaded each 14 days this value is calculated as:
+ * define = (14 days, 24 hours, 60 minutes, 60 seconds)
+ */
+#define BG_FULL_CHARGE_REPETITION_TIME (14 * 24 * 60 * 60)
+
 /*--------------------------------------------------------------------------------------------------------------------*\
 ** Declaration                                                                                                        **
 **                                                                                                                    **
@@ -77,12 +85,43 @@
 class BatteryGuard
 {
 
+public:
+  typedef enum State_e
+  {
+
+    eCharging = 0,
+    eCharged,
+    eDischarging,
+    eDischarged,
+    eError
+
+  } State_te;
+
+  /**
+   * @brief     This handler is called up as soon as the time value needs to be saved
+   * @param[in] uqTimeV Unix time given in [sec] since 01.01.1970, that should be saved
+   *
+   * This callback is called when the the full charge of battery has been reached
+   * that value should be provided a call of init()
+   *
+   */
+  typedef std::function<void(uint64_t uqTimeV)> SaveTimeHandler_fn;
+  typedef std::function<void(State_te teStateV)> EventHandler_fn;
+
 private:
   bool btDischargeAlarmP;
-  float ftActualVoltageP;
-  int32_t slActualVoltageP;
-  int32_t slMinVoltageP;
-  int32_t slMaxVoltageP;
+
+  float ftBatteryVoltageP;          // float value for calculation
+  int32_t slBatteryVoltageP;        // int value for comparison with 1 DD
+  int32_t slBatteryVoltageMinimalP; // int value for comparison with 1 DD
+  int32_t slBatteryVoltageMaximalP; // int value for comparison with 1 DD
+
+  int32_t slBatteryCurrentP;        // int value for comparison with 2 DD
+  int32_t slBatteryCurrentMinimalP; // int value for comparison with 2 DD
+  int32_t slBatteryCurrentMaximalP; // int value for comparison with 2 DD
+
+  float ftTargetCurrentP;
+  float ftLimitedCurrentP;
 
   //---------------------------------------------------------------------------------------------------
   // that float values are used to calculate the gain and offset to determine the maximal current
@@ -101,15 +140,15 @@ private:
   //      52              7.59               ~ 379.50 Wh = 50 V * 7.59 A   // Voltage is limited by PUS to 50 V and the current will be limited by the inverter input
   //      58             11.72               ~ 586.00 Wh = 50 V * 11.72 A  // Voltage is limited by PUS to 50 V and the current will be limited by the inverter input
   //
-  float ftNominalVoltageMinP; // 41.00 V
-  float ftNominalVoltageMaxP; // 58.40 V
-  float ftNominalCurrentMinP; //  0.01 A
-  float ftNominalCurrentMaxP; // 12.00 A
+  // float ftNominalVoltageMinP; // 41.00 V
+  // float ftNominalVoltageMaxP; // 58.40 V
+  // float ftNominalCurrentMinP; //  0.01 A
+  // float ftNominalCurrentMaxP; // 12.00 A
 
-  float ftScaleGainP;
-  float ftScaleOffsetP;
+  // float ftScaleGainP;
+  // float ftScaleOffsetP;
 
-  int32_t slRecoverVoltageP;
+  // int32_t slRecoverVoltageP;
 
   uint32_t ulMinimumChargingTimeP;
 
@@ -121,11 +160,23 @@ private:
 
   bool btEnabledP;
 
+  State_te teStateP;
+
+  EventHandler_fn pfnEventHandlerP;
+  SaveTimeHandler_fn pfnSaveTimeHandlerP;
+
+  // actual unix time given in [sec] since 01.01.1970
+  uint64_t uqTimeP;
+  // unix time in [sec] since 01.01.1970 when the battery was last fully charged
+  uint64_t uqFullyChargedTimeP;
+
 public:
   BatteryGuard();
   ~BatteryGuard();
 
   void enable(bool btStateV) { btEnabledP = btStateV; }
+
+  State_te state() { return teStateP; }
 
   /**
    * @brief Initialisation of Control Algorithm
@@ -141,7 +192,10 @@ public:
    * In order for the discharge alarm to be reset, the operating voltage must be present for the minimum charging time.
    * The charging time only runs if the actual voltage is greater than or equal to the provided operating voltage.
    */
-  void init(float ftRecoverVoltageV, uint32_t ulRecoverTimeV);
+  // void init(float ftRecoverVoltageV, uint32_t ulRecoverTimeV);
+  // uqTimeV  Unix time given in [sec] since 01.01.1970
+  void init(uint64_t uqTimeV, SaveTimeHandler_fn pfnStoreTimeHandlerV);
+  void installEventHandler(EventHandler_fn pfnEventHandlerV) { pfnEventHandlerP = pfnEventHandlerV; };
 
   /**
    * @brief Process actual battery voltage and update the state the battery guard is true or false
@@ -151,25 +205,27 @@ public:
   void process();
 
   /**
-   * @brief update actual Feed In values for Voltage and Current
-   *
-   * @param[in] ftVoltageV actual pending feed-in DC voltage given in [V]
-   * @return 0 in case of success or a negative value in case of an error
+   * @brief update actual charge voltage
+   * The charge voltage is the voltage that is typically pending at the battery
    */
   void updateVoltage(float ftVoltageV);
+  void updateCurrent(float ftCurrentV);
 
-  float limitedCurrent(float ftFeedTargetInCurrentV);
+  // uqTimeV  Unix time given in [sec] since 01.01.1970
+  void updateTime(uint64_t uqTimeV) { uqTimeP = uqTimeV; };
+
+  float limitedCurrent(float ftTargetCurrentV);
   //---------------------------------------------------------------------------------------------------
   // getter methods
   //
   float maximalVoltage()
   {
-    return ((float)(slMaxVoltageP) / 10.0);
+    return ((float)(slBatteryVoltageMaximalP) / 10.0);
   }
 
   float minimalVoltage()
   {
-    return ((float)(slMinVoltageP) / 10.0);
+    return ((float)(slBatteryVoltageMinimalP) / 10.0);
   }
 
   bool alarm()
@@ -183,7 +239,7 @@ public:
   }
   float alarmRecoverVoltage()
   {
-    return ((float)(slRecoverVoltageP) / 10.0);
+    // return ((float)(slRecoverVoltageP) / 10.0);
   }
   uint32_t alarmPendingTime()
   {
