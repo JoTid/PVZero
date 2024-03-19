@@ -6,17 +6,14 @@
 //                                                                                                                    //
 //====================================================================================================================//
 
-
 #ifndef PVZ_LCD_HPP
 #define PVZ_LCD_HPP
-
 
 /*--------------------------------------------------------------------------------------------------------------------*\
 ** Include files                                                                                                      **
 **                                                                                                                    **
-\*--------------------------------------------------------------------------------------------------------------------*/ 
+\*--------------------------------------------------------------------------------------------------------------------*/
 #include <Arduino.h>
-
 
 /*--------------------------------------------------------------------------------------------------------------------*\
 ** Definitions and Enums                                                                                              **
@@ -24,8 +21,8 @@
 \*--------------------------------------------------------------------------------------------------------------------*/
 
 /**
- * @brief 
- * 
+ * @brief
+ *
  */
 class PvzLcd
 {
@@ -34,12 +31,14 @@ public:
   PvzLcd(void);
   ~PvzLcd(void);
 
-  typedef struct WifiConfig_s{
+  typedef struct WifiConfig_s
+  {
     String clSsid;
     IPAddress clIp;
   } WifiConfig_ts;
 
-  typedef struct Screen_s{
+  typedef struct Screen_s
+  {
     String aclLine[3];
   } Screen_ts;
 
@@ -81,7 +80,7 @@ public:
   void updateWifiRssi(int32_t ulValueV);
   void updateWifiInfo(WifiConfig_ts *ptsInfoV);
 
-  void setScreen(Screen_ts *pclScreenV, int32_t slCountV=1);
+  void setScreen(Screen_ts *pclScreenV, int32_t slCountV = 1);
 
 private:
   /**
@@ -112,7 +111,7 @@ private:
   WifiConfig_ts clWifiInfoP;
 
   Screen_ts *pclScreenP;
-  int32_t    slScreenCountP;
+  int32_t slScreenCountP;
 
 /**
  * @brief Refresh time of LCD given in milliseconds
