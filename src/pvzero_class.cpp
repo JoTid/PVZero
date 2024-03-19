@@ -34,6 +34,42 @@ using namespace PVZ;
 #define MY_SHELLY_PIN 6
 #endif
 
+// void mpptCallback(uint16_t id, int32_t value);
+// VEDirect mppt(Serial2, mpptCallback);
+
+// uint16_t panelVoltage = 0;
+// uint16_t chargeCurrent = 0;
+
+// void setup() {
+//   Serial.begin(19200);
+//   mppt.begin();
+// }
+
+// void loop() {
+//   static unsigned long secondsTimer = 0;
+//   mppt.update();
+//   unsigned long m = millis();
+//   if(m - secondsTimer > 1000L){
+//     secondsTimer = m;
+//     mppt.ping();  // send oing every second
+//   }
+// }
+// void mpptCallback(uint16_t id, int32_t value)
+// {
+//   if (id == VEDirect_kPanelVoltage)
+//   {
+//     panelVoltage = value;
+//     Serial.print(F("Vpv : "));
+//     Serial.println(value * 0.01);
+//   }
+//   if (id == VEDirect_kChargeCurrent)
+//   {
+//     chargeCurrent = value;
+//     Serial.print(F("Ich : "));
+//     Serial.println(value * 0.1);
+//   }
+// }
+
 PVZeroClass::PVZeroClass()
     : _shelly3emConnector(MY_SHELLY_PIN) // pinPot=D6
 {
@@ -47,6 +83,14 @@ PVZeroClass::PVZeroClass()
 }
 
 PVZeroClass::~PVZeroClass()
+{
+}
+
+void BatteryGuard_TimeStorageCallback(uint64_t uqTimeV)
+{
+}
+
+void BatteryGuard_EventCallback(BatteryGuard::State_te teSStateV)
 {
 }
 
@@ -84,15 +128,41 @@ void PVZeroClass::setup()
   _config.setCalibrationHighCallback(std::bind(&PVZeroClass::handleCalibrationHigh, this, std::placeholders::_1));
 
   //---------------------------------------------------------------------------------------------------
+  // setup multiplexer
+  //
+  // pinMode(5, OUTPUT);     // INH
+  // pinMode(18, OUTPUT);    // B
+  // pinMode(19, OUTPUT);    // A
+  // digitalWrite(5, LOW);   // INH
+  // digitalWrite(18, LOW);  // B
+  // digitalWrite(19, HIGH); // A
+
+  // pinMode(16, OUTPUT); // RX
+  // pinMode(17, OUTPUT); // TX
+
+  // digitalWrite(16, LOW);
+  // digitalWrite(17, LOW);
+
+  // Serial2.begin(19200);
+  // Serial2.println("Starting setup...");
+  // Serial2.flush();
+
+  //---------------------------------------------------------------------------------------------------
   // initialize the PSU
   //
   uint8_t ubStringCountT = 1;
-  aclPsuP[1].init(Serial2);
-  if (_config.isEnabledSecondPsu())
-  {
-    aclPsuP[0].init(Serial);
-    ubStringCountT = 2;
-  }
+
+  // digitalWrite(5, LOW);
+  // digitalWrite(18, LOW);
+  // digitalWrite(19, LOW);
+  // aclPsuP[1].init(Serial2);
+  // if (_config.isEnabledSecondPsu())
+  // {
+  //   aclPsuP[0].init(Serial);
+  //   ubStringCountT = 2;
+  // }
+
+  // mppt.begin();
 
   //---------------------------------------------------------------------------------------------------
   // setup the control algorithm
@@ -136,10 +206,11 @@ void PVZeroClass::setup()
   //
   // add here demo value so, the application runs
   //
-  clBatGuardP.init(44.0, 60);
+  // clBatGuardP.init(44.0, BatteryGuard_TimeStorageCallback);
+  // clBatGuardP.installEventHandler(BatteryGuard_EventCallback);
 
   // \todo disable the guarding only while debug
-  clBatGuardP.enable(false);
+  // clBatGuardP.enable(false);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -197,24 +268,35 @@ void PVZeroClass::loop()
   //---------------------------------------------------------------------------------------------------
   // Calculate PSU Vcc
   //
-  if (McOvsSample(&atsOvsInputsP[0], analogRead(34)) == true)
+  if (McOvsSample(&atsOvsInputsP[0], analogRead(33)) == true)
   {
     ftPsuVccT = (float)McOvsGetResult(&atsOvsInputsP[0]);
     ftPsuVccT *= ftPsuSupplyGainP;
     ftPsuVccT += ftPsuSupplyOffsetP;
 
-    I::get().logger() << F("PSU Vcc: : ") << ftPsuVccT << F(" V") << endl;
+    I::get().logger() << F("PSU Vcc: : ") << McOvsGetResult(&atsOvsInputsP[0]) << F(" V") << endl;
 
+    // digitalWrite(5, LOW);
+    // digitalWrite(18, LOW);
+    // digitalWrite(19, HIGH);
+    // Serial2.println("Hello... IF 2");
+    // Serial2.flush();
+
+    // digitalWrite(5, LOW);
+    // digitalWrite(18, HIGH);
+    // digitalWrite(19, LOW);
+    // Serial2.println("Hello... IF 3");
+    // Serial2.flush();
     //-------------------------------------------------------------------------------------------
     // update value for battery guard
     //
-    clBatGuardP.updateVoltage(ftPsuVccT);
+    // clBatGuardP.updateVoltage(ftPsuVccT);
   }
 
   //---------------------------------------------------------------------------------------------------
   // process battery guard
   //
-  clBatGuardP.process();
+  // clBatGuardP.process();
 
   //---------------------------------------------------------------------------------------------------
   // Trigger 3EM loop and NTP time each second
@@ -222,6 +304,9 @@ void PVZeroClass::loop()
   if ((ts_now - _tsMeasLoopStart) > 1000)
   {
     _tsMeasLoopStart = ts_now;
+
+    I::get().logger() << F("Time: ") << I::get().time().str() << endl;
+    I::get().logger() << F("Current Time: ") << I::get().time().currentTime() << endl;
 
     //-------------------------------------------------------------------------------------------
     // proceed only if WiFi connection is established
@@ -252,17 +337,20 @@ void PVZeroClass::loop()
       _shelly3emConnector.loop();
     }
 
+    // digitalWrite(5, LOW);
+    // digitalWrite(18, LOW);
+    // digitalWrite(19, LOW);
     //-------------------------------------------------------------------------------------------
     // Update target data of the PSU only one time in second
     //
     if (clBatGuardP.alarm() == false)
     {
-      aclPsuP[0].set(clCaP.feedInTargetDcVoltage(), clBatGuardP.limitedCurrent(clCaP.feedInTargetDcCurrent()));
+      // aclPsuP[0].set(clCaP.feedInTargetDcVoltage(), clBatGuardP.limitedCurrent(clCaP.feedInTargetDcCurrent()));
       aclPsuP[1].set(clCaP.feedInTargetDcVoltage(), clBatGuardP.limitedCurrent(clCaP.feedInTargetDcCurrent()));
     }
     else
     {
-      aclPsuP[0].enable(false);
+      // aclPsuP[0].enable(false);
       aclPsuP[1].enable(false);
     }
   }
@@ -271,6 +359,9 @@ void PVZeroClass::loop()
   // process PSUs, read of actual data is performed each 500 ms
   //
   aclPsuP[0].process();
+  // digitalWrite(5, LOW);
+  // digitalWrite(18, LOW);
+  // digitalWrite(19, LOW);
   aclPsuP[1].process();
 
   //---------------------------------------------------------------------------------------------------
@@ -284,7 +375,7 @@ void PVZeroClass::loop()
   //---------------------------------------------------------------------------------------------------
   // Prepare informations for the LCD screens, when WiFi is connected
   //
-  if ((WiFi.isConnected() == true) && (clBatGuardP.alarm() == false))
+  if ((WiFi.isConnected() == true)) // && (clBatGuardP.alarm() == false))
   {
     tsWifiT.clIp = WiFi.localIP();
     tsWifiT.clSsid = WiFi.SSID();
@@ -366,9 +457,9 @@ void PVZeroClass::loop()
     _lcd.updateTime("");
     _lcd.updateWifiRssi(0);
 
-    if (I::get().config().paramWifiDisabled)
+    if (I::get().server().isAP())
     {
-      _lcd.busy("Connect to AP:", "Name of AP");
+      _lcd.busy(String("Connect to AP:").c_str(), I::get().server().config().paramAPName.c_str());
     }
     else
     {
@@ -410,18 +501,18 @@ void PVZeroClass::loop()
   //---------------------------------------------------------------------------------------------------
   // handle the case the battery has been discharged
   //
-  else if (clBatGuardP.alarm() == true)
-  {
-    tsWifiT.clIp = WiFi.localIP();
-    tsWifiT.clSsid = WiFi.SSID();
+  // else if (clBatGuardP.alarm() == true)
+  // {
+  //   tsWifiT.clIp = WiFi.localIP();
+  //   tsWifiT.clSsid = WiFi.SSID();
 
-    _lcd.updateWifiInfo(&tsWifiT);
-    _lcd.updateWifiRssi(WiFi.RSSI());
+  //   _lcd.updateWifiInfo(&tsWifiT);
+  //   _lcd.updateWifiRssi(WiFi.RSSI());
 
-    _lcd.warning("Bat. discharge alarm!",
-                 String("Vbat: " + String(ftPsuVccT, 1) + " / " + String(clBatGuardP.alarmRecoverVoltage(), 1)),
-                 String("Time: " + String(clBatGuardP.alarmPendingTime()) + " / " + String(clBatGuardP.alarmRecoverTime())));
-  }
+  //   _lcd.warning("Bat. discharge alarm!",
+  //                String("Vbat: " + String(ftPsuVccT, 1) + " / " + String(clBatGuardP.alarmRecoverVoltage(), 1)),
+  //                String("Time: " + String(clBatGuardP.alarmPendingTime()) + " / " + String(clBatGuardP.alarmRecoverTime())));
+  // }
 
   //---------------------------------------------------------------------------------------------------
   // Trigger the LCD application

@@ -34,13 +34,15 @@ limitations under the License.
 #include "pvz_ca.hpp"
 #include "pvz_lcd.hpp"
 #include "pvz_psu.hpp"
+#include "pvz_mppt.hpp"
 #include "sw_ovs.h"
 #include "battery_guard.hpp"
+#include "uart_mux.hpp"
 
 namespace PVZ
 {
 
-#define FIRMWARE_VERSION "0.81.01"
+#define FIRMWARE_VERSION "0.81.02"
 
   class PVZeroClass
   {
@@ -69,7 +71,9 @@ namespace PVZ
     Shelly3emConnector _shelly3emConnector;
     PvzLcd _lcd;
     PvzPsu aclPsuP[2]; // support up to 2 PSUs
+    PvzMppt clMpptP;
     BatteryGuard clBatGuardP;
+    UartMux clUartMuxP;
     float ftPsuVccT = 0.0;
     int32_t consumptionPower = -1;
     bool isConsumptionPowerValid = false;
