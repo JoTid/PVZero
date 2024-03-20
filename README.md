@@ -82,7 +82,7 @@ Beschreibung der Zustandsübergänge:
 
 3. **Battery Voltage** <= DISCHARGE_VOLTAGE (40.0 V)
 
-4. **Battery Voltage** > DISCHARGE_VOLTAGE (40.0 V)
+4. **Battery Voltage** > (DISCHARGE_VOLTAGE + DISCHARGE_VOLTAGE_OFFSET) (40.0 V + 2.0 V)
 
 5. (**Battery Current** == 0.0 A) && (Zeitstempel < 2 Wochen)
 

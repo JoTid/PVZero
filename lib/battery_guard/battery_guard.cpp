@@ -13,6 +13,8 @@
 #include "Arduino.h"
 #include "battery_guard.hpp"
 
+#include <unity.h>
+
 /*--------------------------------------------------------------------------------------------------------------------*\
 ** Definitions and variables of module                                                                                **
 **                                                                                                                    **
@@ -24,15 +26,17 @@
 //--------------------------------------------------------------------------------------------------------------------//
 BatteryGuard::BatteryGuard()
 {
-  btDischargeAlarmP = true;
   btEnabledP = true;
   slBatteryVoltageP = 0.0;
   slBatteryVoltageMinimalP = 0.0;
   slBatteryVoltageMaximalP = 0.0;
-  ulAlarmPendingTimeP = 0;
 
-  pfnEventHandlerP = (EventHandler_fn)NULL;
-  pfnSaveTimeHandlerP = (SaveTimeHandler_fn)NULL;
+  slBatteryCurrentP = 0.0;
+  slBatteryCurrentMinimalP = 0.0;
+  slBatteryCurrentMaximalP = 0.0;
+
+  pfnEventHandlerP = nullptr;
+  pfnSaveTimeHandlerP = nullptr;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -49,52 +53,11 @@ BatteryGuard::~BatteryGuard()
 //--------------------------------------------------------------------------------------------------------------------//
 void BatteryGuard::init(uint64_t uqTimeV, SaveTimeHandler_fn pfnSaveTimeHandlerV)
 {
-
+  //---------------------------------------------------------------------------------------------------
+  // take parameters
+  //
   pfnSaveTimeHandlerP = pfnSaveTimeHandlerV;
-  // btDischargeAlarmP = false;
-  // slBatteryVoltageP = 0.0;
-  // slBatteryVoltageMinimalP = BG_CHARGE_CUTOFF_VOLTAGE;
-  // slBatteryVoltageMaximalP = BG_DISCHARGE_VOLTAGE;
-
-  // //---------------------------------------------------------------------------------------------------
-  // // prepare parameters for scaling: y = m * x + b
-  // //
-
-  // // setup minimal voltage value, provided by user
-  // ftNominalVoltageMinP = ftMinimalOperatingVoltageV;
-
-  // // setup maximal voltage value, provided by battery
-  // ftNominalVoltageMaxP = BG_CHARGE_CUTOFF_VOLTAGE; // 58.40 V
-  // ftNominalVoltageMaxP /= 10.0;
-
-  // // setup minimal current that corresponds to the minimal voltage value
-  // ftNominalCurrentMinP = 0.01; //  0.01 A
-  // // setup maximal current that corresponds to the maximal voltage value
-  // ftNominalCurrentMaxP = 12.0; // 12.00 A
-
-  // // m = (y2-y1) / (x2-x1)
-  // ftScaleGainP = (ftNominalCurrentMaxP - ftNominalCurrentMinP) / (ftNominalVoltageMaxP - ftNominalVoltageMinP);
-
-  // // b = y1 - (m * x1)
-  // ftScaleOffsetP = (ftNominalCurrentMinP - (ftScaleGainP * ftNominalVoltageMinP));
-
-  // //---------------------------------------------------------------------------------------------------
-  // // take operating value and limit it to plausible range
-  // //
-  // slRecoverVoltageP = (int32_t)(ftMinimalOperatingVoltageV * 10);
-  // if ((slRecoverVoltageP <= BG_DISCHARGE_VOLTAGE) || (slRecoverVoltageP >= BG_CHARGE_CUTOFF_VOLTAGE))
-  // {
-  //   slRecoverVoltageP = BG_ABSORPTION_VOLTAGE;
-  // }
-
-  // //---------------------------------------------------------------------------------------------------
-  // // do not check time value, as it depends on application
-  // //
-  // ulMinimumChargingTimeP = ulMinimumChargingTimeV;
-
-  // // assume that the battery is charged
-  // ulChargingTimeP = 0;
-  // ulAlarmPendingTimeP = 0;
+  uqTimeP = uqTimeV;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -138,6 +101,14 @@ float BatteryGuard::limitedCurrent(float ftTargetCurrentV)
   return ftLimitCurrentT;
 }
 
+void BatteryGuard::installEventHandler(EventHandler_fn pfnEventHandlerV)
+{
+  pfnEventHandlerP = pfnEventHandlerV;
+  if (pfnEventHandlerP != nullptr)
+  {
+    pfnEventHandlerP(teStateP);
+  }
+}
 //--------------------------------------------------------------------------------------------------------------------//
 //                                                                                                                    //
 //                                                                                                                    //
@@ -218,6 +189,18 @@ void BatteryGuard::process(void)
         if (slBatteryVoltageP >= BG_CHARGE_CUTOFF_VOLTAGE)
         {
           teStateP = eCharged;
+          //---------------------------------------------------------------------------
+          // save time when the battery has been fully charged
+          //
+          if (pfnSaveTimeHandlerP != nullptr)
+          {
+            pfnSaveTimeHandlerP(uqTimeP);
+          }
+
+          if (pfnEventHandlerP != nullptr)
+          {
+            pfnEventHandlerP(teStateP);
+          }
         }
         //---------------------------------------------------------------------------
         // (**Battery Current** == 0.0 A) && (Zeitstempel < 2 Wochen)
@@ -231,6 +214,10 @@ void BatteryGuard::process(void)
           if ((uqTimeP - uqFullyChargedTimeP) < (uint64_t)BG_FULL_CHARGE_REPETITION_TIME)
           {
             teStateP = eDischarging;
+            if (pfnEventHandlerP != nullptr)
+            {
+              pfnEventHandlerP(teStateP);
+            }
           }
         }
 
@@ -246,13 +233,11 @@ void BatteryGuard::process(void)
         // The current is not limited, time stamp is saved
         //
       case eCharged:
+
         //---------------------------------------------------------------------------
-        // save time when the battery has been fully charged
+        // while we are charged, update the time
         //
-        if (pfnSaveTimeHandlerP != nullptr)
-        {
-          pfnSaveTimeHandlerP(uqTimeP);
-        }
+        uqFullyChargedTimeP = uqTimeP;
 
         //---------------------------------------------------------------------------
         // Check condition for one possible transition to discharging:
@@ -261,6 +246,10 @@ void BatteryGuard::process(void)
         if (slBatteryVoltageP < BG_CHARGE_CUTOFF_VOLTAGE)
         {
           teStateP = eDischarging;
+          if (pfnEventHandlerP != nullptr)
+          {
+            pfnEventHandlerP(teStateP);
+          }
         }
 
         //---------------------------------------------------------------------------
@@ -283,6 +272,10 @@ void BatteryGuard::process(void)
         if (slBatteryVoltageP <= BG_DISCHARGE_VOLTAGE)
         {
           teStateP = eDischarged;
+          if (pfnEventHandlerP != nullptr)
+          {
+            pfnEventHandlerP(teStateP);
+          }
         }
 
         //---------------------------------------------------------------------------
@@ -291,6 +284,10 @@ void BatteryGuard::process(void)
         else if (slBatteryCurrentP > 0)
         {
           teStateP = eCharging;
+          if (pfnEventHandlerP != nullptr)
+          {
+            pfnEventHandlerP(teStateP);
+          }
         }
 
         //---------------------------------------------------------------------------
@@ -308,11 +305,15 @@ void BatteryGuard::process(void)
 
         //---------------------------------------------------------------------------
         // Check condition for possible transition to charging:
-        // Battery Voltage > DISCHARGE_VOLTAGE (40.0 V)
+        // Battery Voltage > (DISCHARGE_VOLTAGE + DISCHARGE_VOLTAGE_OFFSET) (40.0 V + 2.0V)
         //
-        if (slBatteryVoltageP > BG_DISCHARGE_VOLTAGE)
+        if (slBatteryVoltageP > (BG_DISCHARGE_VOLTAGE + BG_DISCHARGE_VOLTAGE_OFFSET))
         {
           teStateP = eCharging;
+          if (pfnEventHandlerP != nullptr)
+          {
+            pfnEventHandlerP(teStateP);
+          }
         }
 
         //---------------------------------------------------------------------------
@@ -339,7 +340,19 @@ void BatteryGuard::process(void)
 //--------------------------------------------------------------------------------------------------------------------//
 void BatteryGuard::updateCurrent(float ftCurrentV)
 {
-  slBatteryCurrentP = (int32_t)(ftCurrentV * 10.0); // for fast comparison
+  //---------------------------------------------------------------------------------------------------
+  // take and scale value for comparison
+  //
+  slBatteryCurrentP = (int32_t)(ftCurrentV * 100.0); // for fast comparison
+
+  //---------------------------------------------------------------------------------------------------
+  // if this is the initial set of voltage, than update minimal and maximal value
+  //
+  if ((slBatteryCurrentMaximalP == 0) && (slBatteryCurrentMinimalP == 0))
+  {
+    slBatteryCurrentMaximalP = slBatteryCurrentP;
+    slBatteryCurrentMinimalP = slBatteryCurrentP;
+  }
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -348,52 +361,18 @@ void BatteryGuard::updateCurrent(float ftCurrentV)
 //--------------------------------------------------------------------------------------------------------------------//
 void BatteryGuard::updateVoltage(float ftVoltageV)
 {
+  //---------------------------------------------------------------------------------------------------
+  // take new value and scale another one for comparison
+  //
   ftBatteryVoltageP = ftVoltageV;
   slBatteryVoltageP = (int32_t)(ftBatteryVoltageP * 10.0); // for fast comparison
+
+  //---------------------------------------------------------------------------------------------------
+  // if this is the initial set of voltage, than update minimal and maximal value
+  //
+  if ((slBatteryVoltageMinimalP == 0) && (slBatteryVoltageMaximalP == 0))
+  {
+    slBatteryVoltageMaximalP = slBatteryVoltageP;
+    slBatteryVoltageMinimalP = slBatteryVoltageP;
+  }
 }
-
-// //--------------------------------------------------------------------------------------------------------------------//
-// //                                                                                                                    //
-// //                                                                                                                    //
-// //--------------------------------------------------------------------------------------------------------------------//
-// float BatteryGuard::limitedCurrent(float ftFeedTargetInCurrentV)
-// {
-//   float ftLimitedCurrentT;
-//   int32_t slLimitedCurrentT;
-//   int32_t slFeedInCurrent = (int32_t)(ftFeedTargetInCurrentV * 100);
-
-//   //---------------------------------------------------------------------------------------------------
-//   // consider the limit calculation only if battery guard is enabled
-//   //
-//   if (btEnabledP == true)
-//   {
-//     //-------------------------------------------------------------------------------------------
-//     // calculate the current limit depending on the actual voltage
-//     //
-//     ftLimitedCurrentT = ftScaleGainP * ftBatteryVoltageP;
-//     ftLimitedCurrentT += ftScaleOffsetP;
-//     slLimitedCurrentT = (int32_t)(ftLimitedCurrentT * 100);
-
-//     //-------------------------------------------------------------------------------------------
-//     // avoid negative values
-//     //
-//     if (slLimitedCurrentT < 10)
-//     {
-//       slLimitedCurrentT = 10;
-//       ftLimitedCurrentT = 0.10;
-//     }
-
-//     //-------------------------------------------------------------------------------------------
-//     // limit the provide current if required
-//     //
-//     if (slFeedInCurrent > slLimitedCurrentT)
-//     {
-//       return ftLimitedCurrentT;
-//     }
-//   }
-
-//   //---------------------------------------------------------------------------------------------------
-//   // feed in current is within valid range do not change it
-//   //
-//   return ftFeedTargetInCurrentV;
-// }

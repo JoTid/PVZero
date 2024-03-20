@@ -1,6 +1,6 @@
-<mxfile host="Electron" modified="2024-03-16T22:36:09.762Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.0.4 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="Lasm0B2cCUZuM9H-xyUa" version="24.0.4" type="device" pages="3">
+<mxfile host="Electron" modified="2024-03-20T22:07:42.033Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.0.4 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="BXlh0WeAfEFcbHaMoAGE" version="24.0.4" type="device" pages="3">
   <diagram id="GDF2bqVlT_cqfWEFH5KE" name="battery guard">
-    <mxGraphModel dx="988" dy="570" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="2074" dy="1196" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -223,8 +223,8 @@
         <mxCell id="O16gCxfHV4XE0OwBhvlR-40" value="[out] = 0.0 A" style="text;whiteSpace=wrap;spacing=0;fontSize=10;align=center;verticalAlign=middle;" parent="1" vertex="1">
           <mxGeometry x="1470" y="650" width="60" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="O16gCxfHV4XE0OwBhvlR-41" value="[out] = Battery Current" style="text;whiteSpace=wrap;spacing=0;fontSize=10;align=center;verticalAlign=middle;" parent="1" vertex="1">
-          <mxGeometry x="980" y="360" width="110" height="30" as="geometry" />
+        <mxCell id="O16gCxfHV4XE0OwBhvlR-41" value="[out] = Battery Current" style="text;whiteSpace=wrap;spacing=0;fontSize=10;align=center;verticalAlign=middle;" parent="1" vertex="1">
+          <mxGeometry x="1000" y="440" width="110" height="30" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
