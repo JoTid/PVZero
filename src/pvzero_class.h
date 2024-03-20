@@ -44,6 +44,8 @@ namespace PVZ
 
 #define FIRMWARE_VERSION "0.81.02"
 
+#define BATTERY_GUARD_FILE "/battery.guard"
+
   class PVZeroClass
   {
 
@@ -88,7 +90,11 @@ namespace PVZ
     float handleCalibrationLow(float value);
     float handleCalibrationHigh(float value);
     void updatePsuVccScaling(uint8_t ubSetupV);
+    String strBatteryState = "-";
+    void batteryGuard_TimeStorageCallback(uint64_t uqTimeV);
+    void batteryGuard_EventCallback(BatteryGuard::State_te teSStateV);
   };
+
 }; // namespace
 
 #endif

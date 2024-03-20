@@ -193,7 +193,12 @@ public:
    * The charging time only runs if the actual voltage is greater than or equal to the provided operating voltage.
    */
   // void init(float ftRecoverVoltageV, uint32_t ulRecoverTimeV);
-  // uqTimeV  Unix time given in [sec] since 01.01.1970
+
+  /**
+   * @brief Initialisation of Control Algorithm
+   * @param[in] uqTimeV Stored unix time given in [sec] since 01.01.1970
+   * @param[in] pfnStoreTimeHandlerV The callback to store time when the battery has been fully charged
+   */
   void init(uint64_t uqTimeV, SaveTimeHandler_fn pfnStoreTimeHandlerV);
   void installEventHandler(EventHandler_fn pfnEventHandlerV) { pfnEventHandlerP = pfnEventHandlerV; };
 

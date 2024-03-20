@@ -104,6 +104,8 @@ function fillPVZeroState(data, url) {
     "Prüfintervall: " + data["check_interval"] + "s";
   document.getElementById("psu_vcc").innerText =
     "PSU Vcc: " + data["psu_vcc"] + " V";
+  document.getElementById("battery_state").innerText =
+    "Status: " + data["battery_state"];
   document.getElementById("info_check_info").innerText = data["check_info"];
 
   if (data["consumption_power"] == 0) {

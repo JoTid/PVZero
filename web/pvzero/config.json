@@ -6,6 +6,7 @@
     "enable_lcd": true,
     "max_voltage": 36,
     "max_amperage": 7,
+    "max_power_if_unknown": 260,
     "filter_order": 1,
     "calibration_low": 24,
     "calibration_low_mes": -1,

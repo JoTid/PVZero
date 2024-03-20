@@ -86,14 +86,6 @@ PVZeroClass::~PVZeroClass()
 {
 }
 
-void BatteryGuard_TimeStorageCallback(uint64_t uqTimeV)
-{
-}
-
-void BatteryGuard_EventCallback(BatteryGuard::State_te teSStateV)
-{
-}
-
 void PVZeroClass::setup()
 {
   //---------------------------------------------------------------------------------------------------
@@ -201,13 +193,13 @@ void PVZeroClass::setup()
 
   //---------------------------------------------------------------------------------------------------
   // initialise the battery guard to avoid discharging of the battery
+  // Read the last time from file system.
+  // 
   //
-  // \todo provide the recover voltage and minimal recover time from web gui
-  //
-  // add here demo value so, the application runs
-  //
-  // clBatGuardP.init(44.0, BatteryGuard_TimeStorageCallback);
-  // clBatGuardP.installEventHandler(BatteryGuard_EventCallback);
+  uint64_t bgTime = I::get().configFS().readFrom(BATTERY_GUARD_FILE).toInt();
+  EWC::I::get().logger() << F("Battery guard load time: ") << bgTime << endl;
+  clBatGuardP.init(bgTime, std::bind(&PVZeroClass::batteryGuard_TimeStorageCallback, this, std::placeholders::_1));
+  clBatGuardP.installEventHandler(std::bind(&PVZeroClass::batteryGuard_EventCallback, this, std::placeholders::_1));
 
   // \todo disable the guarding only while debug
   // clBatGuardP.enable(false);
@@ -536,6 +528,7 @@ void PVZeroClass::_onPVZeroState(WebServer *webServer)
   json["feed_in_power"] = String(clCaP.feedInTargetPower(), 0);
   json["psu_vcc"] = String(ftPsuVccT, 2);
   json["enable_second_psu"] = consumptionPower;
+  json["battery_state"] = strBatteryState;
   json["check_info"] = _shelly3emConnector.info();
   json["check_interval"] = PZI::get().config().getCheckInterval();
   json["next_check"] = _shelly3emConnector.infoSleepUntil();
@@ -628,4 +621,34 @@ void PVZeroClass::updatePsuVccScaling(uint8_t ubSetupV)
   //
   ftPsuSupplyGainP = ((_config.getCalibrationNominalHigh() - _config.getCalibrationNominalLow()) / (ftRawHighT - ftRawLowT));
   ftPsuSupplyOffsetP = (_config.getCalibrationNominalLow() - (ftRawLowT * ftPsuSupplyGainP));
+}
+
+void PVZeroClass::batteryGuard_TimeStorageCallback(uint64_t uqTimeV)
+{
+  EWC::I::get().logger() << F("Battery guard save time: ") << uqTimeV << endl;
+  I::get().configFS().saveTo(BATTERY_GUARD_FILE, String(uqTimeV));
+}
+
+void PVZeroClass::batteryGuard_EventCallback(BatteryGuard::State_te teSStateV)
+{
+  switch (teSStateV) {
+    case BatteryGuard::State_te::eCharging:
+      strBatteryState = "charging";
+      break;
+    case BatteryGuard::State_te::eCharged:
+      strBatteryState = "charged";
+      break;
+    case BatteryGuard::State_te::eDischarging:
+      strBatteryState = "discharging";
+      break;
+    case BatteryGuard::State_te::eDischarged:
+      strBatteryState = "discharged";
+      break;
+    case BatteryGuard::State_te::eError:
+      strBatteryState = "error";
+      break;
+    default:
+      strBatteryState = "-";
+  }
+  EWC::I::get().logger() << F("Battery status: ") << strBatteryState << endl;
 }

@@ -6,6 +6,7 @@
     "psu_vcc": 0.0,
     "enable_second_psu": false,
     "enable_lcd": true,
+    "battery_state": "charging",
     "check_interval": -1,
     "check_info": "No value",
     "next_check": "2020.08.17|17:08"
