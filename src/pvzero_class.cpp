@@ -24,6 +24,7 @@ limitations under the License.
 #include "generated/webShelly_3em_connectorJS.h"
 #include "pvzero_class.h"
 #include "pvzero_interface.h"
+#include <mutex>
 
 using namespace EWC;
 using namespace PVZ;
@@ -54,8 +55,12 @@ using namespace PVZ;
 //     mppt.ping();  // send oing every second
 //   }
 // }
+
 // void mpptCallback(uint16_t id, int32_t value)
 // {
+//   Serial.print(F("------------------------------- > mpptCallback id: "));
+//   Serial.println(value);
+
 //   if (id == VEDirect_kPanelVoltage)
 //   {
 //     panelVoltage = value;
@@ -85,6 +90,27 @@ PVZeroClass::PVZeroClass()
 PVZeroClass::~PVZeroClass()
 {
 }
+
+// unsigned long time_interval;
+// unsigned long time_interval_stamp;
+// unsigned long ts_after = millis();
+
+// Serial.printf("Time reinit the USART: %i ", ts_after - ts_before);
+
+// void onReceiveFunction()
+// {
+//   time_interval = millis() - time_interval_stamp;
+//   time_interval_stamp = millis();
+
+//   size_t available = Serial2.available();
+//   while (available--)
+//   {
+//     Serial.print((char)Serial2.read());
+//   }
+//   Serial.println();
+
+//   Serial.printf("onReceive Callback:: Interval %i: ", time_interval);
+// }
 
 void PVZeroClass::setup()
 {
@@ -194,7 +220,7 @@ void PVZeroClass::setup()
   //---------------------------------------------------------------------------------------------------
   // initialise the battery guard to avoid discharging of the battery
   // Read the last time from file system.
-  // 
+  //
   //
   uint64_t bgTime = I::get().configFS().readFrom(BATTERY_GUARD_FILE).toInt();
   EWC::I::get().logger() << F("Battery guard load time: ") << bgTime << endl;
@@ -203,6 +229,135 @@ void PVZeroClass::setup()
 
   // \todo disable the guarding only while debug
   // clBatGuardP.enable(false);
+
+  clUartMuxP.init();
+  clUartMuxP.enable(UartMux::eIF_1);
+
+  // PID	0xA058
+  // FW	163
+  // SER#	HQ2302M4XVJ
+  // V	56020
+  // I	8300
+  // VPV	101780
+  // PPV	475
+  // CS	3
+  // MPPT	2
+  // OR	0x00000000
+  // ERR	0
+  // LOAD	OFF
+  // H19	3357
+  // H20	385
+  // H21	2003
+  // H22	523
+  // H23	1802
+  // HSDS	12
+  // Checksum	[19]
+
+  // 0d 0a 50 49 44 09 30 78 41 30 35 38 0d 0a 46 57
+  // 09 31 36 33 0d 0a 53 45 52 23 09 48 51 32 33 30
+  // 32 4d 34 58 56 4a 0d 0a 56 09 35 36 33 32 30 0d
+  // 0a 49 09 35 34 30 30 0d 0a 56 50 56 09 31 31 32
+  // 39 39 30 0d 0a 50 50 56 09 33 32 30 0d 0a 43 53
+  // 09 33 0d 0a 4d 50 50 54 09 31 0d 0a 4f 52 09 30
+  // 78 30 30 30 30 30 30 30 30 0d 0a 45 52 52 09 30
+  // 0d 0a 4c 4f 41 44 09 4f 46 46 0d 0a 48 31 39 09
+  // 33 33 35 37 0d 0a 48 32 30 09 33 38 35 0d 0a 48
+  // 32 31 09 32 30 30 33 0d 0a 48 32 32 09 35 32 33
+  // 0d 0a 48 32 33 09 31 38 30 32 0d 0a 48 53 44 53
+  // 09 31 32 0d 0a 43 68 65 63 6b 73 75 6d 09 1f
+
+  // 16*12 = ca. 192 bytes
+
+  // Serial2.begin(19200);
+  // Serial2.setRxFIFOFull(5);
+  // Serial2.onReceive(onReceiveFunction, false);
+  // mppt.begin();
+
+  Serial.print("setup() running on core ");
+  Serial.println(xPortGetCoreID());
+
+  //---------------------------------------------------------------------------------------------------
+  // Configure a task for UART application that handles Serial2 communication with both PSUs and the
+  // Victron SmartSolar charger.
+  //
+  xTaskCreatePinnedToCore(
+      this->taskUartApp, /* Function to implement the task */
+      "UartApp",         /* Name of the task */
+      2048,              /* Stack size in words */
+      NULL,              /* Task input parameter */
+      0,                 /* Priority of the task */
+      &clTaskUartAppP,   /* Task handle. */
+      0);                /* Core where the task should run */
+}
+
+std::mutex serial_mtx;
+// #include "vedirect_parser.h"
+static uint32_t uqTimeLastReadT = 0;
+static bool btVictronReceptionPendingT = true;
+static int32_t slReadBytesT = 0;
+static char aszReadDataT[256];
+static uint8_t ulChecksumT;
+
+void PVZeroClass::taskUartApp(void *pvParameters)
+{
+
+  //---------------------------------------------------------------------------------------------------
+  // perform configuration of serial 2
+  //
+  Serial2.begin(19200);
+
+  while (true)
+  {
+    // Serial.print("Task UART APP running on core ");
+    // Serial.println(xPortGetCoreID());
+    // delay(700);
+    if (btVictronReceptionPendingT == true)
+    {
+      while (Serial2.available())
+      {
+        std::lock_guard<std::mutex> lck(serial_mtx);
+        aszReadDataT[slReadBytesT] = Serial2.read();
+        slReadBytesT++;
+
+        uqTimeLastReadT = millis();
+      }
+
+      //-------------------------------------------------------------------------------------------
+      // assume that after 20 ms of silence all data has been received from victron
+      //
+      if ((millis() > (uqTimeLastReadT + 20)) && (slReadBytesT > 0))
+      {
+        EWC::I::get().logger() << "Core of taskUartApp " << xPortGetCoreID() << endl;
+
+        EWC::I::get().logger() << "VE.Direct chars receive " << slReadBytesT << endl;
+
+        // Serial.println(slReadBytesT);
+        // std::lock_guard<std::mutex> lck(serial_mtx);
+        aszReadDataT[slReadBytesT] = '\0'; // Append a null
+        // Serial.print(aszReadDataT);
+        EWC::I::get().logger() << "Data " << aszReadDataT << endl;
+
+        uint32_t ulChecksumT = 0;
+        for (int i = 0; i < slReadBytesT; i++)
+        {
+          ulChecksumT = ((ulChecksumT + aszReadDataT[i]) & 0xFF); /* Take modulo 256 in account */
+        }
+
+        if (ulChecksumT == 0)
+        {
+          /* Checksum is valid => process message */
+          EWC::I::get().logger() << " -- CRC: is OK ;-) " << endl;
+        }
+        slReadBytesT = 0;
+
+        btVictronReceptionPendingT = true;
+      }
+    }
+    // else if (millis() > uqTimeLastReadT + 900)
+    // {
+    //   btVictronReceptionPendingT = true;
+    // }
+  }
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -268,6 +423,17 @@ void PVZeroClass::loop()
 
     I::get().logger() << F("PSU Vcc: : ") << McOvsGetResult(&atsOvsInputsP[0]) << F(" V") << endl;
 
+    Serial.print("loop() running on core ");
+    Serial.println(xPortGetCoreID());
+
+    // Serial.print("Task1: core ");
+    // Serial.println(xPortGetCoreID());
+
+    // Serial.print("Task1: chars receive ");
+    // std::lock_guard<std::mutex> lck(serial_mtx);
+    // Serial.println(slReadBytesT);
+    // Serial.print(aszReadDataT);
+
     // digitalWrite(5, LOW);
     // digitalWrite(18, LOW);
     // digitalWrite(19, HIGH);
@@ -299,6 +465,8 @@ void PVZeroClass::loop()
 
     I::get().logger() << F("Time: ") << I::get().time().str() << endl;
     I::get().logger() << F("Current Time: ") << I::get().time().currentTime() << endl;
+
+    // mppt.ping(); // send oing every second
 
     //-------------------------------------------------------------------------------------------
     // proceed only if WiFi connection is established
@@ -335,16 +503,16 @@ void PVZeroClass::loop()
     //-------------------------------------------------------------------------------------------
     // Update target data of the PSU only one time in second
     //
-    if (clBatGuardP.alarm() == false)
-    {
-      // aclPsuP[0].set(clCaP.feedInTargetDcVoltage(), clBatGuardP.limitedCurrent(clCaP.feedInTargetDcCurrent()));
-      aclPsuP[1].set(clCaP.feedInTargetDcVoltage(), clBatGuardP.limitedCurrent(clCaP.feedInTargetDcCurrent()));
-    }
-    else
-    {
-      // aclPsuP[0].enable(false);
-      aclPsuP[1].enable(false);
-    }
+    // if (clBatGuardP.alarm() == false)
+    // {
+    //   // aclPsuP[0].set(clCaP.feedInTargetDcVoltage(), clBatGuardP.limitedCurrent(clCaP.feedInTargetDcCurrent()));
+    //   aclPsuP[1].set(clCaP.feedInTargetDcVoltage(), clBatGuardP.limitedCurrent(clCaP.feedInTargetDcCurrent()));
+    // }
+    // else
+    // {
+    //   // aclPsuP[0].enable(false);
+    //   aclPsuP[1].enable(false);
+    // }
   }
 
   //---------------------------------------------------------------------------------------------------
@@ -444,7 +612,7 @@ void PVZeroClass::loop()
   //---------------------------------------------------------------------------------------------------
   // Show failure info, when WiFi is not connected
   //
-  else if ((clBatGuardP.alarm() == false))
+  else // if ((clBatGuardP.alarm() == false))
   {
     _lcd.updateTime("");
     _lcd.updateWifiRssi(0);
@@ -631,24 +799,25 @@ void PVZeroClass::batteryGuard_TimeStorageCallback(uint64_t uqTimeV)
 
 void PVZeroClass::batteryGuard_EventCallback(BatteryGuard::State_te teSStateV)
 {
-  switch (teSStateV) {
-    case BatteryGuard::State_te::eCharging:
-      strBatteryState = "charging";
-      break;
-    case BatteryGuard::State_te::eCharged:
-      strBatteryState = "charged";
-      break;
-    case BatteryGuard::State_te::eDischarging:
-      strBatteryState = "discharging";
-      break;
-    case BatteryGuard::State_te::eDischarged:
-      strBatteryState = "discharged";
-      break;
-    case BatteryGuard::State_te::eError:
-      strBatteryState = "error";
-      break;
-    default:
-      strBatteryState = "-";
+  switch (teSStateV)
+  {
+  case BatteryGuard::State_te::eCharging:
+    strBatteryState = "charging";
+    break;
+  case BatteryGuard::State_te::eCharged:
+    strBatteryState = "charged";
+    break;
+  case BatteryGuard::State_te::eDischarging:
+    strBatteryState = "discharging";
+    break;
+  case BatteryGuard::State_te::eDischarged:
+    strBatteryState = "discharged";
+    break;
+  case BatteryGuard::State_te::eError:
+    strBatteryState = "error";
+    break;
+  default:
+    strBatteryState = "-";
   }
   EWC::I::get().logger() << F("Battery status: ") << strBatteryState << endl;
 }

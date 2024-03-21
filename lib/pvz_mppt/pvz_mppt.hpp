@@ -14,7 +14,7 @@
 **                                                                                                                    **
 \*--------------------------------------------------------------------------------------------------------------------*/
 #include <Arduino.h>
-#include "VEDirect.h"
+// #include "VEDirect.h"
 
 /*--------------------------------------------------------------------------------------------------------------------*\
 ** Definitions and Enums                                                                                              **
@@ -51,7 +51,7 @@ public:
 private:
 #define MPPT_REFRESH_TIME 1000
 
-  VEDirect *pclMpptP;
+  // VEDirect *pclMpptP;
 
   // static float ftPanelVoltageP;
   // static float ftBatteryVoltageP;

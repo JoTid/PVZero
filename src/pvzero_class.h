@@ -42,7 +42,7 @@ limitations under the License.
 namespace PVZ
 {
 
-#define FIRMWARE_VERSION "0.81.02"
+#define FIRMWARE_VERSION "0.81.03"
 
 #define BATTERY_GUARD_FILE "/battery.guard"
 
@@ -59,6 +59,9 @@ namespace PVZ
     PvzCa clCaP;
 
   protected:
+    TaskHandle_t clTaskUartAppP;
+    static void taskUartApp(void *pvParameters);
+
     unsigned long _tsStarted = 0;
     unsigned long _tsStartWaitForConnection = 0;
     unsigned long _tsMeasLoopStart = 0;

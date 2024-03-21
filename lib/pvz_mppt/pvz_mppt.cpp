@@ -23,7 +23,7 @@
 //--------------------------------------------------------------------------------------------------------------------//
 PvzMppt::PvzMppt()
 {
-  pclMpptP = NULL;
+  // pclMpptP = NULL;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -66,7 +66,7 @@ int32_t PvzMppt::init(HardwareSerial &clSerialR)
   // init serial interface and PSU
   //
   // slModelNumberP = clPsuP.begin(clSerialR, 1);
-  pclMpptP = new VEDirect(Serial2, mpptCallback);
+  // pclMpptP = new VEDirect(Serial2, mpptCallback);
 
   return 0;
 }
@@ -104,9 +104,9 @@ void PvzMppt::process(bool btForceV)
   {
     ulRefreshTimeT = 0;
 
-    if (pclMpptP != NULL)
-    {
-      pclMpptP->ping(); // send ping every MPPT_REFRESH_TIME
-    }
+    // if (pclMpptP != NULL)
+    // {
+    //   pclMpptP->ping(); // send ping every MPPT_REFRESH_TIME
+    // }
   }
 }
