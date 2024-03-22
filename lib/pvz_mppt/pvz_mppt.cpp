@@ -34,168 +34,101 @@ PvzMppt::~PvzMppt()
 {
 }
 
-static void mpptCallback(uint16_t id, int32_t value)
-{
-  // if (id == VEDirect_kPanelVoltage)
-  // {
-  //   ftPanelVoltageP = value;
-  //   // Serial.print(F("Vpv : "));
-  //   // Serial.println(value * 0.01);
-  // }
-  // if (id == VEDirect_kChargeVoltage)
-  // {
-  //   ftBatteryVoltageP = value;
-  //   // Serial.print(F("Vpv : "));
-  //   // Serial.println(value * 0.01);
-  // }
-  // if (id == VEDirect_kChargeCurrent)
-  // {
-  //   ftBatteryCurrentP = value;
-  //   // Serial.print(F("Ich : "));
-  //   // Serial.println(value * 0.1);
-  // }
-}
-
 //--------------------------------------------------------------------------------------------------------------------//
 //                                                                                                                    //
 //                                                                                                                    //
 //--------------------------------------------------------------------------------------------------------------------//
-int32_t PvzMppt::init(HardwareSerial &clSerialR)
+void PvzMppt::updateFrame(const char *pszFrameV, const int32_t slLengthV)
 {
   //---------------------------------------------------------------------------------------------------
-  // init serial interface and PSU
+  // copy provided data to object memory
   //
-  // slModelNumberP = clPsuP.begin(clSerialR, 1);
-  // pclMpptP = new VEDirect(Serial2, mpptCallback);
-
-  return 0;
-}
-
-void PvzMppt::updateFrame(const char *pszFrameV, const int32_t slByteNumberV)
-{
   // std::lock_guard<std::mutex> lck(mppt_mutex);
-  strcpy(aszFrameP, pszFrameV);
-  slByteNumberP = slByteNumberV;
+  strcpy(ascFrameP, pszFrameV);
+  slLengthP = slLengthV;
   btNewFrameP = true;
 }
 
-// Definieren Sie einen struct, um die Daten aus der Tabelle zu speichern
-struct MpptData
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
+void PvzMppt::parseTable(char *pscTextFrameV)
 {
-  char *parameterName;
-  char *value;
-};
-
-// Deklarieren Sie ein Array von SensorData-Elementen
-MpptData MpptData[20]; // Anpassen Sie die Größe an die Anzahl der Zeilen in der Tabelle
-
-void PvzMppt::parseTable(char *tableData)
-{
-  // Definieren Sie die Trennzeichen
-  const char *EOL = "\r\n"; // Zeilentrauf
-  const char *SEP = "\t";   // Spaltenbegrenzer
-  // char str[256];
-  // strcpy(str, tableData);
-  // // int i = 0;
-  // // while (i < 256)
-  // // {
-  // //   str[i] = tableData[i];
-
-  // // }
-  // char *line = strtok(str, EOL); // Zeile für Zeile parsen
-  // EWC::I::get().logger() << " str : " << str << endl;
-  // char *token;
-  int i = 0;
-
-  // while (line != NULL)
-  // {
-  //   EWC::I::get().logger() << " Line : " << line << endl;
-  //   token = strtok(line, SEP); // Spalten parsen
-  //   sensorData[i].parameterName = token;
-  //   EWC::I::get().logger() << " token A : " << token << endl;
-  //   token = strtok(NULL, SEP);
-  //   sensorData[i].value = token;
-  //   EWC::I::get().logger() << " token B : " << token << endl;
-
-  //   i++;
-  //   line = strtok(NULL, EOL);
-  // }
+  const char *EOL = "\r\n"; // Trennzeichen für parametersatz
+  const char *SEP = "\t";   // Trennzeichen zwischen parameter name und parameter wert
+  int32_t slParamSetIndexT = 0;
   char *ptr, *savePtr, *p, *saveP;
-  // const char delim[] = "|";
 
-  ptr = strtok_r(tableData, EOL, &savePtr);
+  //---------------------------------------------------------------------------------------------------
+  // Teile die Tabelle in Parametersätze auf und verarbeite jeden
+  //
+  ptr = strtok_r(pscTextFrameV, EOL, &savePtr);
   while (ptr != NULL)
   {
-    // EWC::I::get().logger() << " Line : " << ptr << endl;
-    // hier haben wir alles zwischen | (außen)
-    // Serial.println(ptr);
+    //-------------------------------------------------------------------------------------------
+    // Hole alles was lins von dem Parametertrennzeichen steht
+    //
     p = strtok_r(ptr, SEP, &saveP);
-    // while (p != NULL)
-    // {
-    MpptData[i].parameterName = p;
-    // EWC::I::get().logger() << " token : " << p << endl;
+    atsMpptDataP[slParamSetIndexT].pscName = p;
 
-    // // alles zwischen : (innen)
-    // Serial.print("____");
-    // Serial.println(p);
+    //-------------------------------------------------------------------------------------------
+    // Hole das was rechts von dem Parametertrennzeichen steht
+    //
     p = strtok_r(NULL, SEP, &saveP);
-    MpptData[i].value = p;
+    atsMpptDataP[slParamSetIndexT].pscValue = p;
 
-    if (String("V").equals(MpptData[i].parameterName))
+    //---------------------------------------------------------------------------------------------------
+    // kopiere die einzelnen Zeichenketten direkt in die entsprechende Werte
+    //
+    if (String("V").equals(atsMpptDataP[slParamSetIndexT].pscName))
     {
-      ftBatteryVoltageP = (float)atoi(MpptData[i].value);
+      ftBatteryVoltageP = (float)atoi(atsMpptDataP[slParamSetIndexT].pscValue);
       ftBatteryVoltageP *= 0.001; // scale from mV to V
     }
 
-    if (String("I").equals(MpptData[i].parameterName))
+    if (String("I").equals(atsMpptDataP[slParamSetIndexT].pscName))
     {
-      ftBatteryCurrentP = (float)atoi(MpptData[i].value);
+      ftBatteryCurrentP = (float)atoi(atsMpptDataP[slParamSetIndexT].pscValue);
       ftBatteryCurrentP *= 0.001; // scale from mA to A
     }
-    // }
-    i++;
-    // außen neu testen
+
+    //-------------------------------------------------------------------------------------------
+    // iteriere zum nächsten Parametersatz
+    //
+    slParamSetIndexT++;
+
+    //-------------------------------------------------------------------------------------------
+    // Verarbeite jeden Parametersatz
+    //
     ptr = strtok_r(NULL, EOL, &savePtr);
   }
 
-  slNumberOfParsedValuesP = i;
+  slNumberOfParsedValuesP = slParamSetIndexT;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
 //                                                                                                                    //
 //                                                                                                                    //
 //--------------------------------------------------------------------------------------------------------------------//
-void PvzMppt::process(bool btForceV)
+void PvzMppt::parse()
 {
-  static unsigned long ulOldTimeS;
-  static uint32_t ulRefreshTimeT;
-
   //---------------------------------------------------------------------------------------------------
-  // count the millisecond ticks and avoid overflow
+  // check there is a new frame for parsing available
   //
-  unsigned long ulNewTimeT = millis();
-  if (ulNewTimeT != ulOldTimeS)
-  {
-    if (ulNewTimeT > ulOldTimeS)
-    {
-      ulRefreshTimeT += (uint32_t)(ulNewTimeT - ulOldTimeS);
-    }
-    else
-    {
-      ulRefreshTimeT += (uint32_t)(ulOldTimeS - ulNewTimeT);
-    }
-    ulOldTimeS = ulNewTimeT;
-  }
 
   // std::lock_guard<std::mutex> lck(mppt_mutex);
   if (btNewFrameP == true)
   {
     btNewFrameP = false;
 
+    //-------------------------------------------------------------------------------------------
+    // calculate the checksum at first
+    //
     uint32_t ulChecksumT = 0;
-    for (int i = 0; i < slByteNumberP; i++)
+    for (int i = 0; i < slLengthP; i++)
     {
-      ulChecksumT = ((ulChecksumT + aszFrameP[i]) & 0xFF); /* Take modulo 256 in account */
+      ulChecksumT = ((ulChecksumT + ascFrameP[i]) & 0xFF);
     }
 
     //-------------------------------------------------------------------------------------------
@@ -209,11 +142,12 @@ void PvzMppt::process(bool btForceV)
     // Serial.println();
     // Serial.println();
 
+    //-------------------------------------------------------------------------------------------
+    // parse only if checksum is valid
+    //
     // if (ulChecksumT == 0)
     // {
-    /* Checksum is valid => process message */
-    // Parsen Sie die Tabellendaten
-    parseTable(aszFrameP);
+    parseTable(ascFrameP);
     // }
 
     //-------------------------------------------------------------------------------------------
@@ -221,22 +155,9 @@ void PvzMppt::process(bool btForceV)
     //
     // for (int i = 0; i < slNumberOfParsedValuesP; i++)
     // {
-    //   Serial.print(MpptData[i].parameterName);
+    //   Serial.print(atsMpptDataP[i].pscName);
     //   Serial.print(": ");
-    //   Serial.println(MpptData[i].value);
+    //   Serial.println(atsMpptDataP[i].pscValue);
     // }
   }
-
-  //---------------------------------------------------------------------------------------------------
-  // refresh the PSU only within define time
-  //
-  // if (ulRefreshTimeT > MPPT_REFRESH_TIME)
-  // {
-  //   ulRefreshTimeT = 0;
-
-  //   // if (pclMpptP != NULL)
-  //   // {
-  //   //   pclMpptP->ping(); // send ping every MPPT_REFRESH_TIME
-  //   // }
-  // }
 }
