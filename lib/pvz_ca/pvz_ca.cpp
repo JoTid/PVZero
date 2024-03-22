@@ -95,20 +95,11 @@ void PvzCa::CalculateGainOffset(void)
 //                                                                                                                    //
 //                                                                                                                    //
 //--------------------------------------------------------------------------------------------------------------------//
-void PvzCa::init(uint8_t ubStringNumberV)
+void PvzCa::init()
 {
   //---------------------------------------------------------------------------------------------------
   // just reset all values to default, make sure this values do not damage the device
   //
-  if (ubStringNumberV <= 1)
-  {
-    ubStringCountP = 1;
-  }
-  else
-  {
-    ubStringCountP = 2;
-  }
-
   ftConsumptionPowerP = 0.0;
 
   ftFeedInActualPowerP = 0.0;
@@ -213,23 +204,6 @@ void PvzCa::process(void)
     //
     ftCalcT = (ftCalcT * ftCurrentGainP);
     ftCalcT += ftCurrentOffsetP;
-
-    //---------------------------------------------------------------------------------------------------
-    // consider number of strings that should be controlled by CA
-    //
-    ftCalcT /= ubStringCountP;
-
-    //---------------------------------------------------------------------------------------------------
-    // limit feed-in DC Current value
-    //
-    if (ftCalcT < aftFeedInTargetDcCurrentLimitP[0])
-    {
-      ftCalcT = aftFeedInTargetDcCurrentLimitP[0];
-    }
-    else if (ftCalcT > aftFeedInTargetDcCurrentLimitP[1])
-    {
-      ftCalcT = aftFeedInTargetDcCurrentLimitP[1];
-    }
 
     //---------------------------------------------------------------------------------------------------
     // store feed-in target current and calculate feed in power P = U * I

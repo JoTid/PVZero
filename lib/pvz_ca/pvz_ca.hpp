@@ -53,30 +53,28 @@ private:
   float aftConsumptionPowerLimitP[2];      // index 0 contains min. value and index 1 contains max. value
   float aftFeedInTargetDcCurrentLimitP[2]; // index 0 contains min. value and index 1 contains max. value
 
-  void CalculateGainOffset(void);
+  void CalculateGainOffset();
   float ftCurrentGainP;
   float ftCurrentOffsetP;
 
   MovAvFilter clConsPowerFilterP;
 
-  uint8_t ubStringCountP;
-
 public:
-  PvzCa(void);
-  ~PvzCa(void);
+  PvzCa();
+  ~PvzCa();
 
   /**
    * @brief Initialisation of Control Algorithm
    * @param[in] ubStringCountT Number of strings, that should be considered
    * This method should be called only once while setup.
    */
-  void init(uint8_t ubStringCountT);
+  void init();
 
   /**
    * @brief Process the Control Algorithm.
    * This method must be called from main loop.
    */
-  void process(void);
+  void process();
 
   /**
    * @brief Set the Filter Order object
@@ -144,7 +142,6 @@ public:
   float feedInActualDcVoltage(void) { return ftFeedInActualDcVoltageP; }
   float feedInActualPower(void) { return ftFeedInActualPowerP; }
   uint8_t filterOrder(void) { return ubFilterOrderP; }
-  uint8_t stringCount(void) { return ubStringCountP; }
 };
 
 #endif // PVZ_CA_HPP
