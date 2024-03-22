@@ -66,8 +66,71 @@ int32_t PvzPsu::init(HardwareSerial &clSerialR)
   {
     clPsuP.power(false);
   }
+  else
+  {
+    // reset actual values
+    ftActualVoltageP = 0.0;
+    ftActualCurrentP = 0.0;
+    ftActualTemperatureP = -7000.0; // invalid temperature
+  }
 
   return slModelNumberP;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
+int32_t PvzPsu::read()
+{
+  int32_t slReturnT = slModelNumberP;
+  float ftReadValueT;
+
+  //---------------------------------------------------------------------------------------------------
+  // read voltage only if PSU is available an no previous errors occur
+  //
+  if (slReturnT >= 0)
+  {
+    ftReadValueT = clPsuP.read('v');
+    slReturnT = (int32_t)ftReadValueT;
+    if (slReturnT >= 0)
+    {
+      ftActualVoltageP = ftReadValueT;
+    }
+  }
+
+  //---------------------------------------------------------------------------------------------------
+  // read current only if PSU is available an no previous errors occur
+  //
+  if (slReturnT >= 0)
+  {
+    ftReadValueT = clPsuP.read('c');
+    slReturnT = (int32_t)ftReadValueT;
+    if (slReturnT >= 0)
+    {
+      ftActualCurrentP = ftReadValueT;
+    }
+  }
+
+  //---------------------------------------------------------------------------------------------------
+  // read temperature only if PSU is available an no previous errors occur
+  //
+  if (slReturnT >= 0)
+  {
+    ftReadValueT = clPsuP.read('t');
+    slReturnT = (int32_t)ftReadValueT;
+    if (slReturnT >= 0)
+    {
+      ftActualTemperatureP = ftReadValueT;
+    }
+  }
+
+  if (slReturnT > 0)
+  {
+    slReturnT = 0;
+  }
+
+  return slReturnT;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -130,6 +193,20 @@ void PvzPsu::process(bool btForceV)
   }
 }
 
+int32_t PvzPsu::write()
+{
+  int32_t slReturnT;
+
+  slReturnT = clPsuP.writeVC(ftTargetVoltageP, ftTargetCurrentP);
+
+  if (slReturnT > 0)
+  {
+    slReturnT = 0;
+  }
+
+  return 0;
+}
+
 //--------------------------------------------------------------------------------------------------------------------//
 //                                                                                                                    //
 //                                                                                                                    //
@@ -138,10 +215,8 @@ int32_t PvzPsu::set(float ftVoltageV, float ftCurrentV)
 {
   int32_t slReturnT = slModelNumberP;
 
-  if (slModelNumberP > 0)
-  {
-    slReturnT = clPsuP.writeVC(ftVoltageV, ftCurrentV);
-  }
+  ftTargetVoltageP = ftVoltageV;
+  ftTargetCurrentP = ftCurrentV;
 
   return slReturnT;
 }

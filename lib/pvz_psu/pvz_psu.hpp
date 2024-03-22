@@ -38,6 +38,9 @@ public:
    */
   int32_t init(HardwareSerial &clSerialR);
 
+  int32_t read();
+  int32_t write();
+
   /**
    * @brief Process the PSU operation.
    * This method must be called from main loop.
@@ -46,20 +49,11 @@ public:
 
   int32_t set(float ftVoltageV, float ftCurrentV);
   int32_t enable(bool);
-  float actualVoltage()
-  {
-    return ftActualVoltageP;
-  }
+  float actualVoltage() { return ftActualVoltageP; }
 
-  float actualCurrent()
-  {
-    return ftActualCurrentP;
-  }
+  float actualCurrent() { return ftActualCurrentP; }
 
-  bool isEnabled()
-  {
-    return btIsEnabledP;
-  }
+  bool isEnabled() { return btIsEnabledP; }
 
   bool isAvailable()
   {
@@ -73,6 +67,10 @@ public:
     }
   }
 
+  float targetVoltage() { return ftTargetVoltageP; }
+
+  float targetCurrent() { return ftTargetCurrentP; }
+
   int32_t model() { return slModelNumberP; }
 
 private:
@@ -84,6 +82,10 @@ private:
   float ftActualVoltageP;
   float ftActualCurrentP;
   float ftActualTemperatureP;
+
+  float ftTargetVoltageP;
+  float ftTargetCurrentP;
+
   bool btIsEnabledP;
 };
 
