@@ -42,7 +42,7 @@ limitations under the License.
 namespace PVZ
 {
 
-#define FIRMWARE_VERSION "0.81.03"
+#define FIRMWARE_VERSION "0.81.04"
 
 #define BATTERY_GUARD_FILE "/battery.guard"
 

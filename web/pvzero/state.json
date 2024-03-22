@@ -1,13 +1,15 @@
 {
-    "name": "S1",
-    "version": "0.0.0",
-    "consumption_power": -999,
-    "feed_in_power": 0,
-    "psu_vcc": 0.0,
-    "enable_second_psu": false,
-    "enable_lcd": true,
-    "battery_state": "charging",
-    "check_interval": -1,
-    "check_info": "No value",
-    "next_check": "2020.08.17|17:08"
+  "name": "S1",
+  "version": "0.0.0",
+  "consumption_power": -999,
+  "feed_in_power": 0,
+  "psu_vcc": 0.0,
+  "enable_second_psu": false,
+  "enable_lcd": true,
+  "battery_state": "charging",
+  "charge_voltage": -1.0,
+  "charge_current": -1.0,
+  "check_interval": -1,
+  "check_info": "No value",
+  "next_check": "2020.08.17|17:08"
 }

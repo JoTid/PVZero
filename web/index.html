@@ -1,35 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
-
   <head>
-    <meta name="viewport" charset="utf-8" content="width=device-width, initial-scale=1, user-scalable=yes">
+    <meta
+      name="viewport"
+      charset="utf-8"
+      content="width=device-width, initial-scale=1, user-scalable=yes"
+    />
     <title>PVZero</title>
-    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/base.css" />
   </head>
 
-  <body style="padding-top:58px;">
+  <body style="padding-top: 58px">
     <div id="header"></div>
     <div class="base-panel">
-      <br>
-      <span id="pvzero_title" style="font-weight: bold; font-size: 2em;">PVZero</span>
+      <br />
+      <span id="pvzero_title" style="font-weight: bold; font-size: 2em"
+        >PVZero</span
+      >
       <span id="version">Unknown</span>
 
       <div id="shelly_3em" class="noorder">
-        <div class="line_named" >Shelly 3em</div>
-        <div id="consumption_power">warte auf die Daten vom Shelly 3em... </div>
+        <div class="line_named">Shelly 3em</div>
+        <div id="consumption_power">warte auf die Daten vom Shelly 3em...</div>
         <div id="check_interval"></div>
-        <div class="line_named" >Leistungssteuerung</div>
+        <div class="line_named">Leistungssteuerung</div>
         <div id="feed_in_power"></div>
         <div id="psu_vcc"></div>
-        <div class="line_named" >Speicher</div>
+        <div class="line_named">Speicher</div>
         <div id="battery_state"></div>
-        <br>
+        <div id="charge_voltage"></div>
+        <div id="charge_current"></div>
+        <br />
         <label id="info_check_info"></label>
       </div>
-      <br>
+      <br />
     </div>
     <script src="/js/postload.js"></script>
     <script src="/js/shelly_3em_connector.js"></script>
   </body>
-
 </html>

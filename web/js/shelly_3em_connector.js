@@ -106,6 +106,11 @@ function fillPVZeroState(data, url) {
     "PSU Vcc: " + data["psu_vcc"] + " V";
   document.getElementById("battery_state").innerText =
     "Status: " + data["battery_state"];
+  document.getElementById("charge_voltage").innerText =
+    "Charge Voltage: " + data["charge_voltage"];
+  document.getElementById("charge_current").innerText =
+    "Charge Current: " + data["charge_current"];
+
   document.getElementById("info_check_info").innerText = data["check_info"];
 
   if (data["consumption_power"] == 0) {
