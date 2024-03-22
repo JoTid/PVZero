@@ -14,6 +14,7 @@
 **                                                                                                                    **
 \*--------------------------------------------------------------------------------------------------------------------*/
 #include <Arduino.h>
+#include <mutex>
 // #include "VEDirect.h"
 
 /*--------------------------------------------------------------------------------------------------------------------*\
@@ -21,8 +22,11 @@
 **                                                                                                                    **
 \*--------------------------------------------------------------------------------------------------------------------*/
 
-static void mpptCallback(uint16_t id, int32_t value);
+// static void mpptCallback(uint16_t id, int32_t value);
 
+// std::mutex mppt_mutex;
+
+#define MPPT_TEXT_FRAME_LENGTH 256
 /**
  * @brief
  *
@@ -48,8 +52,20 @@ public:
 
   int32_t set(float ftVoltageV, float ftCurrentV);
 
+  void updateFrame(const char *pszFrameV, int32_t slByteNumberV);
+  float batteryVoltage() { return ftBatteryVoltageP; }
+  float batteryCurrent() { return ftBatteryCurrentP; }
+
 private:
-#define MPPT_REFRESH_TIME 1000
+  char aszFrameP[MPPT_TEXT_FRAME_LENGTH];
+  int32_t slByteNumberP;
+  bool btNewFrameP;
+  int32_t slNumberOfParsedValuesP;
+  void parseTable(char *tableData);
+
+  float ftBatteryVoltageP;
+  float ftBatteryCurrentP;
+  // #define MPPT_REFRESH_TIME 1000
 
   // VEDirect *pclMpptP;
 

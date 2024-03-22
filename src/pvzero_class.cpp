@@ -290,16 +290,97 @@ void PVZeroClass::setup()
       0);                /* Core where the task should run */
 }
 
-std::mutex serial_mtx;
+// // Definieren Sie einen struct, um die Daten aus der Tabelle zu speichern
+// struct SensorData
+// {
+//   char *parameterName;
+//   char *value;
+// };
+
+// // Deklarieren Sie ein Array von SensorData-Elementen
+// SensorData sensorData[20]; // Anpassen Sie die Größe an die Anzahl der Zeilen in der Tabelle
+
+// // Definieren Sie die Trennzeichen
+// const char *EOL = "\r\n"; // Zeilentrauf
+// const char *SEP = "\t";   // Spaltenbegrenzer
+
+// void parseTable(char *tableData)
+// {
+//   // char str[256];
+//   // strcpy(str, tableData);
+//   // // int i = 0;
+//   // // while (i < 256)
+//   // // {
+//   // //   str[i] = tableData[i];
+
+//   // // }
+//   // char *line = strtok(str, EOL); // Zeile für Zeile parsen
+//   // EWC::I::get().logger() << " str : " << str << endl;
+//   // char *token;
+//   int i = 0;
+
+//   // while (line != NULL)
+//   // {
+//   //   EWC::I::get().logger() << " Line : " << line << endl;
+//   //   token = strtok(line, SEP); // Spalten parsen
+//   //   sensorData[i].parameterName = token;
+//   //   EWC::I::get().logger() << " token A : " << token << endl;
+//   //   token = strtok(NULL, SEP);
+//   //   sensorData[i].value = token;
+//   //   EWC::I::get().logger() << " token B : " << token << endl;
+
+//   //   i++;
+//   //   line = strtok(NULL, EOL);
+//   // }
+//   char *ptr, *savePtr, *p, *saveP;
+//   // const char delim[] = "|";
+
+//   ptr = strtok_r(tableData, EOL, &savePtr);
+//   while (ptr != NULL)
+//   {
+//     // EWC::I::get().logger() << " Line : " << ptr << endl;
+//     // hier haben wir alles zwischen | (außen)
+//     // Serial.println(ptr);
+//     p = strtok_r(ptr, SEP, &saveP);
+//     // while (p != NULL)
+//     // {
+//     sensorData[i].parameterName = p;
+//     // EWC::I::get().logger() << " token : " << p << endl;
+
+//     // // alles zwischen : (innen)
+//     // Serial.print("____");
+//     // Serial.println(p);
+//     p = strtok_r(NULL, SEP, &saveP);
+//     sensorData[i].value = p;
+//     // }
+//     i++;
+//     // außen neu testen
+//     ptr = strtok_r(NULL, EOL, &savePtr);
+//   }
+// }
+
+PvzMppt clMpptP;
+
+// std::mutex serial_mtx;
 // #include "vedirect_parser.h"
 static uint32_t uqTimeLastReadT = 0;
-static bool btVictronReceptionPendingT = true;
-static int32_t slReadBytesT = 0;
-static char aszReadDataT[256];
-static uint8_t ulChecksumT;
+// static bool btVictronReceptionPendingT = true;
+int32_t slReadBytesT = 0;
+char aszReadDataT[256];
+// static uint8_t ulChecksumT;
+
+//---------------------------------------------------------------------------------------------------------
+typedef enum UartAppSm_e
+{
+  eUART_APP_SM_MPPT_e = 0,
+  eUART_APP_SM_PSU1_e,
+  eUART_APP_SM_PSU2_e,
+} UartAppSm_te;
 
 void PVZeroClass::taskUartApp(void *pvParameters)
 {
+
+  static UartAppSm_te teUartAppStateG = eUART_APP_SM_MPPT_e;
 
   //---------------------------------------------------------------------------------------------------
   // perform configuration of serial 2
@@ -308,14 +389,17 @@ void PVZeroClass::taskUartApp(void *pvParameters)
 
   while (true)
   {
-    // Serial.print("Task UART APP running on core ");
-    // Serial.println(xPortGetCoreID());
-    // delay(700);
-    if (btVictronReceptionPendingT == true)
+    switch (teUartAppStateG)
     {
+    case eUART_APP_SM_MPPT_e:
+      // Serial.print("Task UART APP running on core ");
+      // Serial.println(xPortGetCoreID());
+      // delay(700);
+      // if (btVictronReceptionPendingT == true)
+      // {
       while (Serial2.available())
       {
-        std::lock_guard<std::mutex> lck(serial_mtx);
+        // std::lock_guard<std::mutex> lck(serial_mtx);
         aszReadDataT[slReadBytesT] = Serial2.read();
         slReadBytesT++;
 
@@ -327,36 +411,61 @@ void PVZeroClass::taskUartApp(void *pvParameters)
       //
       if ((millis() > (uqTimeLastReadT + 20)) && (slReadBytesT > 0))
       {
-        EWC::I::get().logger() << "Core of taskUartApp " << xPortGetCoreID() << endl;
+        // EWC::I::get().logger() << "Core of taskUartApp " << xPortGetCoreID() << endl;
 
-        EWC::I::get().logger() << "VE.Direct chars receive " << slReadBytesT << endl;
+        // EWC::I::get().logger() << "VE.Direct chars receive " << slReadBytesT << endl;
 
         // Serial.println(slReadBytesT);
         // std::lock_guard<std::mutex> lck(serial_mtx);
         aszReadDataT[slReadBytesT] = '\0'; // Append a null
         // Serial.print(aszReadDataT);
-        EWC::I::get().logger() << "Data " << aszReadDataT << endl;
+        // EWC::I::get().logger() << "Data " << aszReadDataT << endl;
 
-        uint32_t ulChecksumT = 0;
-        for (int i = 0; i < slReadBytesT; i++)
-        {
-          ulChecksumT = ((ulChecksumT + aszReadDataT[i]) & 0xFF); /* Take modulo 256 in account */
-        }
+        // std::lock_guard<std::mutex> lck(mppt_mutex);
+        clMpptP.updateFrame(aszReadDataT, slReadBytesT);
 
-        if (ulChecksumT == 0)
-        {
-          /* Checksum is valid => process message */
-          EWC::I::get().logger() << " -- CRC: is OK ;-) " << endl;
-        }
+        // uint32_t ulChecksumT = 0;
+        // for (int i = 0; i < slReadBytesT; i++)
+        // {
+        //   ulChecksumT = ((ulChecksumT + aszReadDataT[i]) & 0xFF); /* Take modulo 256 in account */
+        // }
+
+        // if (ulChecksumT == 0)
+        // {
+        //   /* Checksum is valid => process message */
+        //   EWC::I::get().logger() << " -- CRC: is OK ;-) " << endl;
+        // }
+        // Parsen Sie die Tabellendaten
+        // parseTable(aszReadDataT);
+
+        // Drucken Sie die Daten aus
+        // for (int i = 0; i < 10; i++)
+        // {
+        //   EWC::I::get().logger() << sensorData[i].parameterName << " : " << sensorData[i].value << endl;
+        //   // Serial.print(sensorData[i].parameterName);
+        //   // Serial.print(": ");
+        //   // Serial.println(sensorData[i].value);
+        // }
+        // }
+
         slReadBytesT = 0;
 
-        btVictronReceptionPendingT = true;
+        // btVictronReceptionPendingT = true;
+        // }
       }
+      // else if (millis() > uqTimeLastReadT + 900)
+      // {
+      //   btVictronReceptionPendingT = true;
+      // }
+      break;
+    case eUART_APP_SM_PSU1_e:
+      break;
+    case eUART_APP_SM_PSU2_e:
+      break;
+
+    default:
+      break;
     }
-    // else if (millis() > uqTimeLastReadT + 900)
-    // {
-    //   btVictronReceptionPendingT = true;
-    // }
   }
 }
 
@@ -412,6 +521,8 @@ void PVZeroClass::loop()
   _ewcMail.loop();
   _ewcUpdater.loop();
 
+  clMpptP.process();
+
   //---------------------------------------------------------------------------------------------------
   // Calculate PSU Vcc
   //
@@ -465,6 +576,8 @@ void PVZeroClass::loop()
 
     I::get().logger() << F("Time: ") << I::get().time().str() << endl;
     I::get().logger() << F("Current Time: ") << I::get().time().currentTime() << endl;
+
+    I::get().logger() << F("MPPT Values: ") << String(clMpptP.batteryVoltage(), 3) << " V, " << String(clMpptP.batteryCurrent(), 3) << " A" << endl;
 
     // mppt.ping(); // send oing every second
 

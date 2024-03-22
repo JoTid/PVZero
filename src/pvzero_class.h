@@ -76,7 +76,6 @@ namespace PVZ
     Shelly3emConnector _shelly3emConnector;
     PvzLcd _lcd;
     PvzPsu aclPsuP[2]; // support up to 2 PSUs
-    PvzMppt clMpptP;
     BatteryGuard clBatGuardP;
     UartMux clUartMuxP;
     float ftPsuVccT = 0.0;
