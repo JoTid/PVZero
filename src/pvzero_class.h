@@ -75,9 +75,9 @@ namespace PVZ
     EWC::Mail _ewcMail;
     Shelly3emConnector _shelly3emConnector;
     PvzLcd _lcd;
-    PvzPsu aclPsuP[2]; // support up to 2 PSUs
+
     BatteryGuard clBatGuardP;
-    UartMux clUartMuxP;
+
     float ftPsuVccT = 0.0;
     int32_t consumptionPower = -1;
     bool isConsumptionPowerValid = false;

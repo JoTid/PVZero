@@ -35,6 +35,10 @@ using namespace PVZ;
 #define MY_SHELLY_PIN 6
 #endif
 
+PvzMppt clMpptP;
+UartMux clUartMuxP;
+PvzPsu aclPsuP[2]; // support up to 2 PSUs
+
 // void mpptCallback(uint16_t id, int32_t value);
 // VEDirect mppt(Serial2, mpptCallback);
 
@@ -191,21 +195,21 @@ void PVZeroClass::setup()
   clCaP.setFeedInTargetDcCurrentLimits(0.0, PZI::get().config().getMaxAmperage());
   clCaP.setFilterOrder(_config.getFilterOrder());
 
-  int32_t slPsuCountT = 2;
-  while (slPsuCountT > 0)
-  {
-    slPsuCountT--;
-    if (aclPsuP[slPsuCountT].isAvailable())
-    {
-      aclPsuP[slPsuCountT].set(clCaP.feedInTargetDcVoltage(), clCaP.feedInTargetDcCurrent());
-      aclPsuP[slPsuCountT].enable(true);
-    }
-    else
-    {
-      EWC::I::get().logger() << F("No PSU has been found via Serial") << slPsuCountT + 1 << endl;
-    }
-  }
-  EWC::I::get().logger() << F("Setup ok") << endl;
+  // int32_t slPsuCountT = 2;
+  // while (slPsuCountT > 0)
+  // {
+  //   slPsuCountT--;
+  //   if (aclPsuP[slPsuCountT].isAvailable())
+  //   {
+  //     aclPsuP[slPsuCountT].set(clCaP.feedInTargetDcVoltage(), clCaP.feedInTargetDcCurrent());
+  //     aclPsuP[slPsuCountT].enable(true);
+  //   }
+  //   else
+  //   {
+  //     EWC::I::get().logger() << F("No PSU has been found via Serial") << slPsuCountT + 1 << endl;
+  //   }
+  // }
+  // EWC::I::get().logger() << F("Setup ok") << endl;
 
   //---------------------------------------------------------------------------------------------------
   // prepare software oversampling
@@ -229,9 +233,6 @@ void PVZeroClass::setup()
 
   // \todo disable the guarding only while debug
   // clBatGuardP.enable(false);
-
-  clUartMuxP.init();
-  clUartMuxP.enable(UartMux::eIF_1);
 
   // PID	0xA058
   // FW	163
@@ -359,11 +360,9 @@ void PVZeroClass::setup()
 //   }
 // }
 
-PvzMppt clMpptP;
-
 // std::mutex serial_mtx;
 // #include "vedirect_parser.h"
-static uint32_t uqTimeLastReadT = 0;
+
 // static bool btVictronReceptionPendingT = true;
 int32_t slReadBytesT = 0;
 char aszReadDataT[256];
@@ -377,10 +376,24 @@ typedef enum UartAppSm_e
   eUART_APP_SM_PSU2_e,
 } UartAppSm_te;
 
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
 void PVZeroClass::taskUartApp(void *pvParameters)
 {
-
+  static uint32_t uqTimeStampT = 0;
   static UartAppSm_te teUartAppStateG = eUART_APP_SM_MPPT_e;
+  static int32_t aslPsuStateT[] = {0, 0};
+  static int32_t aslPsuStateBeginT[] = {0, 0};
+  static bool abtPsuInitSuccessT[] = {false, false};
+  static int32_t slPsuReturnT;
+
+  //---------------------------------------------------------------------------------------------------
+  // intialise the multiplexer and enable IF 1 for victron
+  //
+  clUartMuxP.init();
+  clUartMuxP.enable(UartMux::eIF_1);
 
   //---------------------------------------------------------------------------------------------------
   // perform configuration of serial 2
@@ -389,78 +402,252 @@ void PVZeroClass::taskUartApp(void *pvParameters)
 
   while (true)
   {
+    //-------------------------------------------------------------------------------------------
+    // handle state and the corresponding transitions of the Serial2 state machine
+    //
     switch (teUartAppStateG)
     {
     case eUART_APP_SM_MPPT_e:
-      // Serial.print("Task UART APP running on core ");
-      // Serial.println(xPortGetCoreID());
-      // delay(700);
-      // if (btVictronReceptionPendingT == true)
-      // {
+
+      //-----------------------------------------------------------------------------------
+      // store all incoming chars, this requires about 95 ms
+      //
       while (Serial2.available())
       {
-        // std::lock_guard<std::mutex> lck(serial_mtx);
+        // copy and increase char counter
         aszReadDataT[slReadBytesT] = Serial2.read();
         slReadBytesT++;
 
-        uqTimeLastReadT = millis();
+        //---------------------------------------------------------------------------
+        // store time when read the last char for later evaluation
+        //
+        uqTimeStampT = millis();
       }
 
-      //-------------------------------------------------------------------------------------------
+      //-----------------------------------------------------------------------------------
       // assume that after 20 ms of silence all data has been received from victron
       //
-      if ((millis() > (uqTimeLastReadT + 20)) && (slReadBytesT > 0))
+      if ((millis() > (uqTimeStampT + 10)) && (slReadBytesT > 0))
       {
-        // EWC::I::get().logger() << "Core of taskUartApp " << xPortGetCoreID() << endl;
-
-        // EWC::I::get().logger() << "VE.Direct chars receive " << slReadBytesT << endl;
-
-        // Serial.println(slReadBytesT);
-        // std::lock_guard<std::mutex> lck(serial_mtx);
+        //---------------------------------------------------------------------------
+        // append the a null to terminate the string
+        //
         aszReadDataT[slReadBytesT] = '\0'; // Append a null
-        // Serial.print(aszReadDataT);
-        // EWC::I::get().logger() << "Data " << aszReadDataT << endl;
 
-        // std::lock_guard<std::mutex> lck(mppt_mutex);
+        //---------------------------------------------------------------------------
+        // provide the received frame from victron to the mppt class for processing
+        //
         clMpptP.updateFrame(aszReadDataT, slReadBytesT);
 
-        // uint32_t ulChecksumT = 0;
-        // for (int i = 0; i < slReadBytesT; i++)
-        // {
-        //   ulChecksumT = ((ulChecksumT + aszReadDataT[i]) & 0xFF); /* Take modulo 256 in account */
-        // }
-
-        // if (ulChecksumT == 0)
-        // {
-        //   /* Checksum is valid => process message */
-        //   EWC::I::get().logger() << " -- CRC: is OK ;-) " << endl;
-        // }
-        // Parsen Sie die Tabellendaten
-        // parseTable(aszReadDataT);
-
-        // Drucken Sie die Daten aus
-        // for (int i = 0; i < 10; i++)
-        // {
-        //   EWC::I::get().logger() << sensorData[i].parameterName << " : " << sensorData[i].value << endl;
-        //   // Serial.print(sensorData[i].parameterName);
-        //   // Serial.print(": ");
-        //   // Serial.println(sensorData[i].value);
-        // }
-        // }
-
+        //---------------------------------------------------------------------------
+        // pre pare next reception data
+        //
         slReadBytesT = 0;
 
-        // btVictronReceptionPendingT = true;
-        // }
+        ///---------------------------------------------------------------------------
+        ///---------------------------------------------------------------------------
+        // before next send of frame from victron we have at least 900ms time
+        // poll an set both PSUs
+        //
+
+        //---------------------------------------------------------------------------
+        // perform transition to the next state
+        //
+        clUartMuxP.enable(UartMux::eIF_2);
+        teUartAppStateG = eUART_APP_SM_PSU1_e;
       }
-      // else if (millis() > uqTimeLastReadT + 900)
-      // {
-      //   btVictronReceptionPendingT = true;
-      // }
       break;
+
     case eUART_APP_SM_PSU1_e:
+      //-----------------------------------------------------------------------------------
+      // make sure we leave this state 300ms after final char of Victron Text frame
+      // => 105 ms for reception and storage of MPPT Text Frame, than make uqTimeStampT
+      //    + 400 ms for PSU0
+      //
+      if (millis() > (uqTimeStampT + 400))
+      {
+        //---------------------------------------------------------------------------
+        // define where should we at new cycle
+        //
+        aslPsuStateT[0] = aslPsuStateBeginT[0];
+
+        //---------------------------------------------------------------------------
+        // perform transition to the next state
+        //
+        clUartMuxP.enable(UartMux::eIF_3);
+        teUartAppStateG = eUART_APP_SM_PSU2_e;
+      }
+
+      //-----------------------------------------------------------------------------------
+      // stay in this state and treat the PSU at MUX IF 2
+      //
+      else
+      {
+        switch (aslPsuStateT[0])
+        {
+          // init state of PSU
+          // - in case of error this state needs about 105 ms
+          // - in case success this state needs about 35 ms
+        case 0:
+          slPsuReturnT = aclPsuP[0].init(Serial2);
+
+          if (slPsuReturnT == 1)
+          {
+            aclPsuP[0].enable(true);
+            aslPsuStateBeginT[0] = 1;
+            aslPsuStateT[0] = 1;
+          }
+          else
+          {
+            aslPsuStateT[0] = 10; // fail to init, may be not connected
+          }
+          break;
+
+          // Write and Read
+          // - in case of error this state needs about 105 ms
+          // - in case of success this state needs about 55 ms
+        case 1:
+          slPsuReturnT = aclPsuP[0].write();
+          if (slPsuReturnT < 0)
+          {
+            aslPsuStateT[0] = 11; // fail to init, may be not connected
+          }
+          else
+          {
+            slPsuReturnT = aclPsuP[0].read();
+            if (slPsuReturnT < 0)
+            {
+              aslPsuStateT[0] = 12; // fail to init, may be not connected
+            }
+            else
+            {
+              aslPsuStateT[0] = 5;
+            }
+          }
+          break;
+
+        case 5: // Success, we are finish in this cycle, stay in here
+          break;
+
+        case 10: // Error State: Fail to init the PSU
+          EWC::I::get().logger() << "PSU0 Error at init: " << slPsuReturnT << endl;
+          aslPsuStateT[0] = 100;
+          break;
+
+        case 11: // Error State: while writing to PSU
+          EWC::I::get().logger() << "PSU0 Error at write: " << slPsuReturnT << endl;
+          aslPsuStateT[0] = 100;
+          break;
+
+        case 12: // Error State: while reading from PSU
+          EWC::I::get().logger() << "PSU0 Error at read: " << slPsuReturnT << endl;
+          aslPsuStateT[0] = 100;
+          break;
+
+        case 100: // Error State: prepare re-initialisation
+          aslPsuStateBeginT[0] = 0;
+        default:
+          break;
+        }
+      }
+
       break;
     case eUART_APP_SM_PSU2_e:
+
+      //-----------------------------------------------------------------------------------
+      // make sure we leave this state 800ms after final char of Victron Text frame
+      // => 105 ms for reception and storage of MPPT Text Frame, than make uqTimeStampT
+      //    + 400 ms for PSU0
+      //    + 400 ms for PSU1
+      //
+      if (millis() > (uqTimeStampT + 800))
+      {
+
+        //---------------------------------------------------------------------------
+        // define where should we at new cycle
+        //
+        aslPsuStateT[1] = aslPsuStateBeginT[1];
+
+        //---------------------------------------------------------------------------
+        // perform transition to the next state
+        //
+        clUartMuxP.enable(UartMux::eIF_1);
+        teUartAppStateG = eUART_APP_SM_MPPT_e;
+      }
+
+      //-----------------------------------------------------------------------------------
+      // stay in this state and treat the PSU at MUX IF 3
+      //
+      else
+      {
+        switch (aslPsuStateT[1])
+        {
+          // init state of PSU
+          // - in case of error this state needs about 105 ms
+          // - in case success this state needs about 35 ms
+        case 0:
+          slPsuReturnT = aclPsuP[1].init(Serial2);
+
+          if (slPsuReturnT == 1)
+          {
+            aclPsuP[1].enable(true);
+            aslPsuStateBeginT[1] = 1;
+            aslPsuStateT[1] = 1;
+          }
+          else
+          {
+            aslPsuStateT[1] = 10; // fail to init, may be not connected
+          }
+          break;
+
+          // Write and Read
+          // - in case of error this state needs about 105 ms
+          // - in case of success this state needs about 55 ms
+        case 1:
+          slPsuReturnT = aclPsuP[1].write();
+          if (slPsuReturnT < 0)
+          {
+            aslPsuStateT[1] = 11; // fail to init, may be not connected
+          }
+          else
+          {
+            slPsuReturnT = aclPsuP[1].read();
+            if (slPsuReturnT < 0)
+            {
+              aslPsuStateT[1] = 12; // fail to init, may be not connected
+            }
+            else
+            {
+              aslPsuStateT[1] = 5;
+            }
+          }
+
+          break;
+
+        case 5: // Success, we are finish in this cycle, stay in here
+          break;
+
+        case 10: // Error State: Fail to init the PSU
+          EWC::I::get().logger() << "PSU1 Error at init: " << slPsuReturnT << endl;
+          aslPsuStateT[1] = 100;
+          break;
+
+        case 11: // Error State: while writing to PSU
+          EWC::I::get().logger() << "PSU1 Error at write: " << slPsuReturnT << endl;
+          aslPsuStateT[1] = 100;
+          break;
+
+        case 12: // Error State: while reading from PSU
+          EWC::I::get().logger() << "PSU1 Error at read: " << slPsuReturnT << endl;
+          aslPsuStateT[1] = 100;
+          break;
+
+        case 100: // Error State: prepare re-initialisation
+          aslPsuStateBeginT[1] = 0;
+        default:
+          break;
+        }
+      }
       break;
 
     default:
@@ -477,6 +664,19 @@ void PVZeroClass::processControlAlgorithm(void)
 {
   float ftActualVoltageT;
   float ftActualCurrentT;
+  int32_t slNumberOfStringsT;
+
+  //---------------------------------------------------------------------------------------------------
+  // just show all data we handle with
+  //
+  I::get().logger() << F("Current Time: ") << I::get().time().currentTime() << endl;
+  I::get().logger() << F("loop() running on core ") << xPortGetCoreID() << "..." << endl;
+  I::get().logger() << F("MPPT Values: ") << String(clMpptP.batteryVoltage(), 3) << " V, " << String(clMpptP.batteryCurrent(), 3) << " A" << endl;
+  I::get().logger() << F("PSU0 actual values: ") << String(aclPsuP[0].actualVoltage(), 3) << " V, " << String(aclPsuP[0].actualCurrent(), 3) << " A, is available " << aclPsuP[0].isAvailable() << endl;
+  I::get().logger() << F("PSU0 target values: ") << String(aclPsuP[0].targetVoltage(), 3) << " V, " << String(aclPsuP[0].targetCurrent(), 3) << " A" << endl;
+  I::get().logger() << F("PSU1 actual values: ") << String(aclPsuP[1].actualVoltage(), 3) << " V, " << String(aclPsuP[1].actualCurrent(), 3) << " A, is available " << aclPsuP[1].isAvailable() << endl;
+  I::get().logger() << F("PSU1 target values: ") << String(aclPsuP[1].targetVoltage(), 3) << " V, " << String(aclPsuP[1].targetCurrent(), 3) << " A" << endl;
+
   //---------------------------------------------------------------------------------------------------
   // collect and provide data to the control algorithm
   //
@@ -488,16 +688,31 @@ void PVZeroClass::processControlAlgorithm(void)
   {
     //-------------------------------------------------------------------------------------------
     // \todo decide what to do, if the no consumption power is not available
+    //       provide this value from GUI
     //
-    // Set the power to 0 so that the current is also limited to 0.
-    clCaP.updateConsumptionPower(0.0);
+    // Set the power to 350Wh
+    //
+    clCaP.updateConsumptionPower(350.0);
   }
 
   //---------------------------------------------------------------------------------------------------
-  // \todo consider feed in of both PSUs
+  // consider feed in of both PSUs and provide values to the control algorithm
   //
-  ftActualVoltageT = aclPsuP[1].actualVoltage();
-  ftActualCurrentT = (aclPsuP[0].actualCurrent() + aclPsuP[1].actualCurrent());
+  ftActualVoltageT = 0.0;
+  ftActualCurrentT = 0.0;
+  slNumberOfStringsT = 0;
+  if (aclPsuP[0].isAvailable())
+  {
+    ftActualVoltageT = aclPsuP[0].actualVoltage();
+    ftActualCurrentT += aclPsuP[0].actualVoltage();
+    slNumberOfStringsT++;
+  }
+  else if (aclPsuP[1].isAvailable())
+  {
+    ftActualVoltageT = aclPsuP[1].actualVoltage();
+    ftActualCurrentT += aclPsuP[1].actualVoltage();
+    slNumberOfStringsT++;
+  }
 
   clCaP.updateFeedInActualDcValues(ftActualVoltageT, ftActualCurrentT);
 
@@ -505,6 +720,61 @@ void PVZeroClass::processControlAlgorithm(void)
   // finally trigger the processing of data
   //
   clCaP.process();
+
+  //---------------------------------------------------------------------------------------------------
+  // update value for battery guard
+  //
+  clBatGuardP.updateVoltage(clMpptP.batteryVoltage());
+  clBatGuardP.updateCurrent(clMpptP.batteryCurrent());
+  clBatGuardP.updateTime(I::get().time().currentTime());
+
+  //---------------------------------------------------------------------------------------------------
+  // Update target data of the PSU only one time in second
+  //
+  if (slNumberOfStringsT > 0)
+  {
+    //-------------------------------------------------------------------------------------------
+    // Consider current limit and adjust it corresponding to the number of connected PSUs
+    //
+    ftActualCurrentT = clBatGuardP.limitedCurrent(clCaP.feedInTargetDcCurrent());
+    if (slNumberOfStringsT > 1)
+    {
+      ftActualCurrentT /= 2.0;
+    }
+
+    //-------------------------------------------------------------------------------------------
+    // make sure current do not exceeds the limit provided by user
+    //
+    if (ftActualCurrentT > PZI::get().config().getMaxAmperage())
+    {
+      ftActualCurrentT = PZI::get().config().getMaxAmperage();
+    }
+  }
+
+  //---------------------------------------------------------------------------------------------------
+  // update PSU0 if available
+  //
+  if (aclPsuP[0].isAvailable())
+  {
+    aclPsuP[0].set(clCaP.feedInTargetDcVoltage(), clBatGuardP.limitedCurrent(ftActualCurrentT));
+  }
+  else
+  {
+    aclPsuP[0].set(0.0, 0.0);
+  }
+
+  //---------------------------------------------------------------------------------------------------
+  // update PSU1 if available
+  //
+  //
+  if (aclPsuP[1].isAvailable())
+  {
+    aclPsuP[1].set(clCaP.feedInTargetDcVoltage(), clBatGuardP.limitedCurrent(ftActualCurrentT));
+  }
+  else
+  {
+    aclPsuP[1].set(0.0, 0.0);
+  }
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -521,10 +791,8 @@ void PVZeroClass::loop()
   _ewcMail.loop();
   _ewcUpdater.loop();
 
-  clMpptP.process();
-
   //---------------------------------------------------------------------------------------------------
-  // Calculate PSU Vcc
+  // Measure and calculate the charge voltage (input voltage PSUs)
   //
   if (McOvsSample(&atsOvsInputsP[0], analogRead(33)) == true)
   {
@@ -532,40 +800,8 @@ void PVZeroClass::loop()
     ftPsuVccT *= ftPsuSupplyGainP;
     ftPsuVccT += ftPsuSupplyOffsetP;
 
-    I::get().logger() << F("PSU Vcc: : ") << McOvsGetResult(&atsOvsInputsP[0]) << F(" V") << endl;
-
-    Serial.print("loop() running on core ");
-    Serial.println(xPortGetCoreID());
-
-    // Serial.print("Task1: core ");
-    // Serial.println(xPortGetCoreID());
-
-    // Serial.print("Task1: chars receive ");
-    // std::lock_guard<std::mutex> lck(serial_mtx);
-    // Serial.println(slReadBytesT);
-    // Serial.print(aszReadDataT);
-
-    // digitalWrite(5, LOW);
-    // digitalWrite(18, LOW);
-    // digitalWrite(19, HIGH);
-    // Serial2.println("Hello... IF 2");
-    // Serial2.flush();
-
-    // digitalWrite(5, LOW);
-    // digitalWrite(18, HIGH);
-    // digitalWrite(19, LOW);
-    // Serial2.println("Hello... IF 3");
-    // Serial2.flush();
-    //-------------------------------------------------------------------------------------------
-    // update value for battery guard
-    //
-    // clBatGuardP.updateVoltage(ftPsuVccT);
+    I::get().logger() << F("Measured Charge Voltage: ") << McOvsGetResult(&atsOvsInputsP[0]) << F(" V") << endl;
   }
-
-  //---------------------------------------------------------------------------------------------------
-  // process battery guard
-  //
-  // clBatGuardP.process();
 
   //---------------------------------------------------------------------------------------------------
   // Trigger 3EM loop and NTP time each second
@@ -573,13 +809,6 @@ void PVZeroClass::loop()
   if ((ts_now - _tsMeasLoopStart) > 1000)
   {
     _tsMeasLoopStart = ts_now;
-
-    I::get().logger() << F("Time: ") << I::get().time().str() << endl;
-    I::get().logger() << F("Current Time: ") << I::get().time().currentTime() << endl;
-
-    I::get().logger() << F("MPPT Values: ") << String(clMpptP.batteryVoltage(), 3) << " V, " << String(clMpptP.batteryCurrent(), 3) << " A" << endl;
-
-    // mppt.ping(); // send oing every second
 
     //-------------------------------------------------------------------------------------------
     // proceed only if WiFi connection is established
@@ -610,40 +839,13 @@ void PVZeroClass::loop()
       _shelly3emConnector.loop();
     }
 
-    // digitalWrite(5, LOW);
-    // digitalWrite(18, LOW);
-    // digitalWrite(19, LOW);
-    //-------------------------------------------------------------------------------------------
-    // Update target data of the PSU only one time in second
-    //
-    // if (clBatGuardP.alarm() == false)
-    // {
-    //   // aclPsuP[0].set(clCaP.feedInTargetDcVoltage(), clBatGuardP.limitedCurrent(clCaP.feedInTargetDcCurrent()));
-    //   aclPsuP[1].set(clCaP.feedInTargetDcVoltage(), clBatGuardP.limitedCurrent(clCaP.feedInTargetDcCurrent()));
-    // }
-    // else
-    // {
-    //   // aclPsuP[0].enable(false);
-    //   aclPsuP[1].enable(false);
-    // }
-  }
-
-  //---------------------------------------------------------------------------------------------------
-  // process PSUs, read of actual data is performed each 500 ms
-  //
-  aclPsuP[0].process();
-  // digitalWrite(5, LOW);
-  // digitalWrite(18, LOW);
-  // digitalWrite(19, LOW);
-  aclPsuP[1].process();
-
-  //---------------------------------------------------------------------------------------------------
-  // process algorithm
-  //
-  if ((aclPsuP[0].isAvailable() == true) || (aclPsuP[1].isAvailable() == true))
-  {
     processControlAlgorithm();
   }
+
+  //---------------------------------------------------------------------------------------------------
+  // parse frame from MPPT device
+  //
+  clMpptP.parse();
 
   //---------------------------------------------------------------------------------------------------
   // Prepare informations for the LCD screens, when WiFi is connected
@@ -725,7 +927,7 @@ void PVZeroClass::loop()
   //---------------------------------------------------------------------------------------------------
   // Show failure info, when WiFi is not connected
   //
-  else // if ((clBatGuardP.alarm() == false))
+  else
   {
     _lcd.updateTime("");
     _lcd.updateWifiRssi(0);
@@ -770,22 +972,6 @@ void PVZeroClass::loop()
       _lcd.warning("WiFi connection lost:", String("WiFi status: " + String(WiFi.status())), clStringT);
     }
   }
-
-  //---------------------------------------------------------------------------------------------------
-  // handle the case the battery has been discharged
-  //
-  // else if (clBatGuardP.alarm() == true)
-  // {
-  //   tsWifiT.clIp = WiFi.localIP();
-  //   tsWifiT.clSsid = WiFi.SSID();
-
-  //   _lcd.updateWifiInfo(&tsWifiT);
-  //   _lcd.updateWifiRssi(WiFi.RSSI());
-
-  //   _lcd.warning("Bat. discharge alarm!",
-  //                String("Vbat: " + String(ftPsuVccT, 1) + " / " + String(clBatGuardP.alarmRecoverVoltage(), 1)),
-  //                String("Time: " + String(clBatGuardP.alarmPendingTime()) + " / " + String(clBatGuardP.alarmRecoverTime())));
-  // }
 
   //---------------------------------------------------------------------------------------------------
   // Trigger the LCD application
