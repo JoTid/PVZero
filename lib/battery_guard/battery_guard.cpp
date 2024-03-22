@@ -35,6 +35,8 @@ BatteryGuard::BatteryGuard()
   slBatteryCurrentMinimalP = 0.0;
   slBatteryCurrentMaximalP = 0.0;
 
+  clAddStateInfoP = "";
+
   pfnEventHandlerP = nullptr;
   pfnSaveTimeHandlerP = nullptr;
 }
@@ -173,7 +175,6 @@ void BatteryGuard::process(void)
     //
     if (btEnabledP == true)
     {
-
       //-----------------------------------------------------------------------------------
       // handle state machine transitions
       //
@@ -219,6 +220,14 @@ void BatteryGuard::process(void)
               pfnEventHandlerP(teStateP);
             }
           }
+          else
+          {
+            clAddStateInfoP = String(": full battery charge every 2 weeks, charging till Charge Voltage reaches " + String(((float)BG_CHARGE_CUTOFF_VOLTAGE) * 0.1, 1) + " V, discharging is blocked!");
+          }
+        }
+        else
+        {
+          clAddStateInfoP = String(": the feed in current is limited to the Charge Current value.");
         }
 
         //---------------------------------------------------------------------------
@@ -250,6 +259,10 @@ void BatteryGuard::process(void)
           {
             pfnEventHandlerP(teStateP);
           }
+        }
+        else
+        {
+          clAddStateInfoP = String(": the feed in current is not limited, time stamp has been saved.");
         }
 
         //---------------------------------------------------------------------------
@@ -289,6 +302,10 @@ void BatteryGuard::process(void)
             pfnEventHandlerP(teStateP);
           }
         }
+        else
+        {
+          clAddStateInfoP = String(": the feed in current is not limited.");
+        }
 
         //---------------------------------------------------------------------------
         //---------------------------------------------------------------------------
@@ -315,6 +332,10 @@ void BatteryGuard::process(void)
             pfnEventHandlerP(teStateP);
           }
         }
+        else
+        {
+          clAddStateInfoP = String(": the feed in current is limited to the value 0.0 A, feed-in is stopped.");
+        }
 
         //---------------------------------------------------------------------------
         //---------------------------------------------------------------------------
@@ -330,6 +351,11 @@ void BatteryGuard::process(void)
       default:
         break;
       }
+    }
+
+    if (pfnEventHandlerP != nullptr)
+    {
+      pfnEventHandlerP(teStateP);
     }
   }
 }

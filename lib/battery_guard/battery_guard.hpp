@@ -134,6 +134,7 @@ private:
   EventHandler_fn pfnEventHandlerP;
   SaveTimeHandler_fn pfnSaveTimeHandlerP;
 
+  String clAddStateInfoP;
   // actual unix time given in [sec] since 01.01.1970
   uint64_t uqTimeP;
   // unix time in [sec] since 01.01.1970 when the battery was last fully charged
@@ -203,30 +204,17 @@ public:
   //---------------------------------------------------------------------------------------------------
   // getter methods
   //
-  float maximalVoltage()
-  {
-    return ((float)(slBatteryVoltageMaximalP) / 10.0);
-  }
+  float maximalVoltage() { return ((float)(slBatteryVoltageMaximalP) / 10.0); }
 
-  float minimalVoltage()
-  {
-    return ((float)(slBatteryVoltageMinimalP) / 10.0);
-  }
+  float minimalVoltage() { return ((float)(slBatteryVoltageMinimalP) / 10.0); }
 
-  float maximalCurrent()
-  {
-    return ((float)(slBatteryCurrentMaximalP) / 100.0);
-  }
+  float maximalCurrent() { return ((float)(slBatteryCurrentMaximalP) / 100.0); }
 
-  float minimalCurrent()
-  {
-    return ((float)(slBatteryCurrentMinimalP) / 100.0);
-  }
+  float minimalCurrent() { return ((float)(slBatteryCurrentMinimalP) / 100.0); }
 
-  bool isEnabled()
-  {
-    return btEnabledP;
-  }
+  bool isEnabled() { return btEnabledP; }
+
+  String stateInfo() { return clAddStateInfoP; }
 };
 
 #endif // BATTERY_GUARD_HPP_

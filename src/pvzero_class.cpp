@@ -674,6 +674,7 @@ void PVZeroClass::processControlAlgorithm(void)
   clBatGuardP.updateVoltage(clMpptP.batteryVoltage());
   clBatGuardP.updateCurrent(clMpptP.batteryCurrent());
   clBatGuardP.updateTime(I::get().time().currentTime());
+  clBatGuardP.process();
 
   //---------------------------------------------------------------------------------------------------
   // Update target data of the PSU only one time in second
@@ -1050,19 +1051,19 @@ void PVZeroClass::batteryGuard_EventCallback(BatteryGuard::State_te teSStateV)
   switch (teSStateV)
   {
   case BatteryGuard::State_te::eCharging:
-    strBatteryState = "charging";
+    strBatteryState = String("charging" + clBatGuardP.stateInfo());
     break;
   case BatteryGuard::State_te::eCharged:
-    strBatteryState = "charged";
+    strBatteryState = String("charged" + clBatGuardP.stateInfo());
     break;
   case BatteryGuard::State_te::eDischarging:
-    strBatteryState = "discharging";
+    strBatteryState = String("discharging" + clBatGuardP.stateInfo());
     break;
   case BatteryGuard::State_te::eDischarged:
-    strBatteryState = "discharged";
+    strBatteryState = String("discharged" + clBatGuardP.stateInfo());
     break;
   case BatteryGuard::State_te::eError:
-    strBatteryState = "error";
+    strBatteryState = String("error" + clBatGuardP.stateInfo());
     break;
   default:
     strBatteryState = "-";
