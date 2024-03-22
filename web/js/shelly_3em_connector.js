@@ -107,9 +107,9 @@ function fillPVZeroState(data, url) {
   document.getElementById("battery_state").innerText =
     "Status: " + data["battery_state"];
   document.getElementById("charge_voltage").innerText =
-    "Charge Voltage: " + data["charge_voltage"];
+    "Charge Voltage: " + data["charge_voltage"] + " V";
   document.getElementById("charge_current").innerText =
-    "Charge Current: " + data["charge_current"];
+    "Charge Current: " + data["charge_current"] + " A";
 
   document.getElementById("info_check_info").innerText = data["check_info"];
 

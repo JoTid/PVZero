@@ -941,11 +941,11 @@ void PVZeroClass::_onPVZeroState(WebServer *webServer)
   json["version"] = I::get().server().version();
   json["consumption_power"] = consumptionPower;
   json["feed_in_power"] = String(clCaP.feedInTargetPower(), 0);
-  json["psu_vcc"] = String(ftPsuVccT, 2);
+  json["psu_vcc"] = String(0.0, 2);
   json["enable_second_psu"] = consumptionPower;
   json["battery_state"] = strBatteryState;
-  json["charge_voltage"] = clMpptP.batteryVoltage();
-  json["charge_current"] = clMpptP.batteryCurrent();
+  json["charge_voltage"] = String(clMpptP.batteryVoltage(), 2);
+  json["charge_current"] = String(clMpptP.batteryCurrent(), 2);
   json["check_info"] = _shelly3emConnector.info();
   json["check_interval"] = PZI::get().config().getCheckInterval();
   json["next_check"] = _shelly3emConnector.infoSleepUntil();
