@@ -150,66 +150,13 @@ void PVZeroClass::setup()
   _config.setCalibrationHighCallback(std::bind(&PVZeroClass::handleCalibrationHigh, this, std::placeholders::_1));
 
   //---------------------------------------------------------------------------------------------------
-  // setup multiplexer
-  //
-  // pinMode(5, OUTPUT);     // INH
-  // pinMode(18, OUTPUT);    // B
-  // pinMode(19, OUTPUT);    // A
-  // digitalWrite(5, LOW);   // INH
-  // digitalWrite(18, LOW);  // B
-  // digitalWrite(19, HIGH); // A
-
-  // pinMode(16, OUTPUT); // RX
-  // pinMode(17, OUTPUT); // TX
-
-  // digitalWrite(16, LOW);
-  // digitalWrite(17, LOW);
-
-  // Serial2.begin(19200);
-  // Serial2.println("Starting setup...");
-  // Serial2.flush();
-
-  //---------------------------------------------------------------------------------------------------
-  // initialize the PSU
-  //
-  uint8_t ubStringCountT = 1;
-
-  // digitalWrite(5, LOW);
-  // digitalWrite(18, LOW);
-  // digitalWrite(19, LOW);
-  // aclPsuP[1].init(Serial2);
-  // if (_config.isEnabledSecondPsu())
-  // {
-  //   aclPsuP[0].init(Serial);
-  //   ubStringCountT = 2;
-  // }
-
-  // mppt.begin();
-
-  //---------------------------------------------------------------------------------------------------
   // setup the control algorithm
   //
-  clCaP.init(ubStringCountT);
+  clCaP.init();
   EWC::I::get().logger() << F("set maxVoltage: ") << PZI::get().config().getMaxVoltage() << ", maxCurrent: " << PZI::get().config().getMaxAmperage() << endl;
   clCaP.setFeedInTargetDcVoltage(PZI::get().config().getMaxVoltage());
   clCaP.setFeedInTargetDcCurrentLimits(0.0, PZI::get().config().getMaxAmperage());
   clCaP.setFilterOrder(_config.getFilterOrder());
-
-  // int32_t slPsuCountT = 2;
-  // while (slPsuCountT > 0)
-  // {
-  //   slPsuCountT--;
-  //   if (aclPsuP[slPsuCountT].isAvailable())
-  //   {
-  //     aclPsuP[slPsuCountT].set(clCaP.feedInTargetDcVoltage(), clCaP.feedInTargetDcCurrent());
-  //     aclPsuP[slPsuCountT].enable(true);
-  //   }
-  //   else
-  //   {
-  //     EWC::I::get().logger() << F("No PSU has been found via Serial") << slPsuCountT + 1 << endl;
-  //   }
-  // }
-  // EWC::I::get().logger() << F("Setup ok") << endl;
 
   //---------------------------------------------------------------------------------------------------
   // prepare software oversampling
