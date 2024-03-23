@@ -97,20 +97,21 @@ function fillPVZeroState(data, url) {
   document.getElementById("pvzero_title").innerText = data["name"];
   document.getElementById("version").innerText = "v" + data["version"];
   document.getElementById("consumption_power").innerText =
-    "Aktueller Verbrauch: " + data["consumption_power"] + " W";
+    "Aktueller Verbrauch: " + data["consumption_power"].toFixed(0) + " W";
   document.getElementById("feed_in_power").innerText =
-    "Einspeisung: " + data["feed_in_power"] + " W";
+    "Einspeisung: " + data["feed_in_power"].toFixed(0) + " W";
   document.getElementById("check_interval").innerText =
     "Prüfintervall: " + data["check_interval"] + "s";
   document.getElementById("psu_vcc").innerText =
-    "PSU Vcc: " + data["psu_vcc"] + " V";
+    "PSU Vcc: " + data["psu_vcc"].toFixed(0) + " V";
   document.getElementById("battery_state").innerText =
     "Status: " + data["battery_state"];
+  document.getElementById("info_battery_state").innerText =
+    data["battery_state_info"];
   document.getElementById("charge_voltage").innerText =
-    "Charge Voltage: " + data["charge_voltage"] + " V";
+    "Charge Voltage: " + data["charge_voltage"].toFixed(2) + " V";
   document.getElementById("charge_current").innerText =
-    "Charge Current: " + data["charge_current"] + " A";
-
+    "Charge Current: " + data["charge_current"].toFixed(2) + " A";
   document.getElementById("info_check_info").innerText = data["check_info"];
 
   if (data["consumption_power"] == 0) {

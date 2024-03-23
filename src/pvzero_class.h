@@ -93,6 +93,7 @@ namespace PVZ
     float handleCalibrationHigh(float value);
     void updatePsuVccScaling(uint8_t ubSetupV);
     String strBatteryState = "-";
+    String strBatteryStateInfo = "";
     void batteryGuard_TimeStorageCallback(uint64_t uqTimeV);
     void batteryGuard_EventCallback(BatteryGuard::State_te teSStateV);
   };

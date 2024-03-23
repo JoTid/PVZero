@@ -940,12 +940,13 @@ void PVZeroClass::_onPVZeroState(WebServer *webServer)
   json["name"] = I::get().config().paramDeviceName;
   json["version"] = I::get().server().version();
   json["consumption_power"] = consumptionPower;
-  json["feed_in_power"] = String(clCaP.feedInTargetPower(), 0);
-  json["psu_vcc"] = String(0.0, 2);
+  json["feed_in_power"] = clCaP.feedInTargetPower();
+  json["psu_vcc"] = 0.0;
   json["enable_second_psu"] = consumptionPower;
   json["battery_state"] = strBatteryState;
-  json["charge_voltage"] = String(clMpptP.batteryVoltage(), 2);
-  json["charge_current"] = String(clMpptP.batteryCurrent(), 2);
+  json["battery_state_info"] = strBatteryStateInfo;
+  json["charge_voltage"] = clMpptP.batteryVoltage();
+  json["charge_current"] = clMpptP.batteryCurrent();
   json["check_info"] = _shelly3emConnector.info();
   json["check_interval"] = PZI::get().config().getCheckInterval();
   json["next_check"] = _shelly3emConnector.infoSleepUntil();
@@ -1051,22 +1052,24 @@ void PVZeroClass::batteryGuard_EventCallback(BatteryGuard::State_te teSStateV)
   switch (teSStateV)
   {
   case BatteryGuard::State_te::eCharging:
-    strBatteryState = String("charging" + clBatGuardP.stateInfo());
+    strBatteryState = String("charging");
     break;
   case BatteryGuard::State_te::eCharged:
-    strBatteryState = String("charged" + clBatGuardP.stateInfo());
+    strBatteryState = String("charged");
     break;
   case BatteryGuard::State_te::eDischarging:
-    strBatteryState = String("discharging" + clBatGuardP.stateInfo());
+    strBatteryState = String("discharging");
     break;
   case BatteryGuard::State_te::eDischarged:
-    strBatteryState = String("discharged" + clBatGuardP.stateInfo());
+    strBatteryState = String("discharged");
     break;
   case BatteryGuard::State_te::eError:
-    strBatteryState = String("error" + clBatGuardP.stateInfo());
+    strBatteryState = String("error");
     break;
   default:
     strBatteryState = "-";
   }
+  strBatteryStateInfo = clBatGuardP.stateInfo();
   EWC::I::get().logger() << F("Battery status: ") << strBatteryState << endl;
+  EWC::I::get().logger() << F("Battery info: ") << strBatteryStateInfo << endl;
 }

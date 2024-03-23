@@ -222,12 +222,12 @@ void BatteryGuard::process(void)
           }
           else
           {
-            clAddStateInfoP = String(": full battery charge every 2 weeks, charging till Charge Voltage reaches " + String(((float)BG_CHARGE_CUTOFF_VOLTAGE) * 0.1, 1) + " V, discharging is blocked!");
+            clAddStateInfoP = String("full battery charge every 2 weeks, charging till Charge Voltage reaches " + String(((float)BG_CHARGE_CUTOFF_VOLTAGE) * 0.1, 1) + " V, discharging is blocked!");
           }
         }
         else
         {
-          clAddStateInfoP = String(": the feed in current is limited to the Charge Current value.");
+          clAddStateInfoP = String("the feed in current is limited to the Charge Current value.");
         }
 
         //---------------------------------------------------------------------------
@@ -262,7 +262,7 @@ void BatteryGuard::process(void)
         }
         else
         {
-          clAddStateInfoP = String(": the feed in current is not limited, time stamp has been saved.");
+          clAddStateInfoP = String("the feed in current is not limited, time stamp has been saved.");
         }
 
         //---------------------------------------------------------------------------
@@ -304,7 +304,7 @@ void BatteryGuard::process(void)
         }
         else
         {
-          clAddStateInfoP = String(": the feed in current is not limited.");
+          clAddStateInfoP = String("the feed in current is not limited.");
         }
 
         //---------------------------------------------------------------------------
@@ -334,7 +334,7 @@ void BatteryGuard::process(void)
         }
         else
         {
-          clAddStateInfoP = String(": the feed in current is limited to the value 0.0 A, feed-in is stopped.");
+          clAddStateInfoP = String("the feed in current is limited to the value 0.0 A, feed-in is stopped.");
         }
 
         //---------------------------------------------------------------------------
