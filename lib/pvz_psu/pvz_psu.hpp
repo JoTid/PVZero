@@ -14,6 +14,7 @@
 **                                                                                                                    **
 \*--------------------------------------------------------------------------------------------------------------------*/
 #include <Arduino.h>
+#include <mutex>
 #include "DPM8600.h"
 
 /*--------------------------------------------------------------------------------------------------------------------*\
@@ -37,6 +38,7 @@ public:
    * This method should be called only once while setup.
    */
   int32_t init(HardwareSerial &clSerialR);
+  int32_t enable(bool);
 
   int32_t read();
   int32_t write();
@@ -48,30 +50,20 @@ public:
   void process(bool btForceV = false);
 
   int32_t set(float ftVoltageV, float ftCurrentV);
-  int32_t enable(bool);
-  float actualVoltage() { return ftActualVoltageP; }
 
-  float actualCurrent() { return ftActualCurrentP; }
+  float actualVoltage();
 
-  bool isEnabled() { return btIsEnabledP; }
+  float actualCurrent();
 
-  bool isAvailable()
-  {
-    if (slModelNumberP > 0)
-    {
-      return true;
-    }
-    else
-    {
-      return false;
-    }
-  }
+  bool isEnabled();
 
-  float targetVoltage() { return ftTargetVoltageP; }
+  bool isAvailable();
 
-  float targetCurrent() { return ftTargetCurrentP; }
+  float targetVoltage();
 
-  int32_t model() { return slModelNumberP; }
+  float targetCurrent();
+
+  int32_t model();
 
 private:
 #define PSU_REFRESH_TIME 1000
@@ -87,6 +79,8 @@ private:
   float ftTargetCurrentP;
 
   bool btIsEnabledP;
+
+  std::mutex uartMutexP;
 };
 
 #endif // PVZ_PSU_HPP

@@ -38,6 +38,7 @@ PvzPsu::~PvzPsu()
 
 int32_t PvzPsu::enable(bool btEnableV)
 {
+  std::lock_guard<std::mutex> lck(uartMutexP);
   int32_t slReturnT = slModelNumberP;
 
   if (slModelNumberP > 0)
@@ -54,6 +55,7 @@ int32_t PvzPsu::enable(bool btEnableV)
 //--------------------------------------------------------------------------------------------------------------------//
 int32_t PvzPsu::init(HardwareSerial &clSerialR)
 {
+  std::lock_guard<std::mutex> lck(uartMutexP);
   //---------------------------------------------------------------------------------------------------
   // init serial interface and PSU
   //
@@ -83,6 +85,7 @@ int32_t PvzPsu::init(HardwareSerial &clSerialR)
 //--------------------------------------------------------------------------------------------------------------------//
 int32_t PvzPsu::read()
 {
+  std::lock_guard<std::mutex> lck(uartMutexP);
   int32_t slReturnT = slModelNumberP;
   float ftReadValueT;
 
@@ -137,8 +140,28 @@ int32_t PvzPsu::read()
 //                                                                                                                    //
 //                                                                                                                    //
 //--------------------------------------------------------------------------------------------------------------------//
+int32_t PvzPsu::write()
+{
+  std::lock_guard<std::mutex> lck(uartMutexP);
+  int32_t slReturnT;
+
+  slReturnT = clPsuP.writeVC(ftTargetVoltageP, ftTargetCurrentP);
+
+  if (slReturnT > 0)
+  {
+    slReturnT = 0;
+  }
+
+  return 0;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
 void PvzPsu::process(bool btForceV)
 {
+  std::lock_guard<std::mutex> lck(uartMutexP);
   static unsigned long ulOldTimeS;
   static uint32_t ulRefreshTimeT;
 
@@ -193,30 +216,94 @@ void PvzPsu::process(bool btForceV)
   }
 }
 
-int32_t PvzPsu::write()
-{
-  int32_t slReturnT;
-
-  slReturnT = clPsuP.writeVC(ftTargetVoltageP, ftTargetCurrentP);
-
-  if (slReturnT > 0)
-  {
-    slReturnT = 0;
-  }
-
-  return 0;
-}
-
 //--------------------------------------------------------------------------------------------------------------------//
 //                                                                                                                    //
 //                                                                                                                    //
 //--------------------------------------------------------------------------------------------------------------------//
 int32_t PvzPsu::set(float ftVoltageV, float ftCurrentV)
 {
+  std::lock_guard<std::mutex> lck(uartMutexP);
   int32_t slReturnT = slModelNumberP;
 
   ftTargetVoltageP = ftVoltageV;
   ftTargetCurrentP = ftCurrentV;
 
   return slReturnT;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
+float PvzPsu::actualVoltage()
+{
+  std::lock_guard<std::mutex> lck(uartMutexP);
+  return ftActualVoltageP;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
+float PvzPsu::actualCurrent()
+{
+  std::lock_guard<std::mutex> lck(uartMutexP);
+  return ftActualCurrentP;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
+bool PvzPsu::isEnabled()
+{
+  std::lock_guard<std::mutex> lck(uartMutexP);
+  return btIsEnabledP;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
+bool PvzPsu::isAvailable()
+{
+  std::lock_guard<std::mutex> lck(uartMutexP);
+  if (slModelNumberP > 0)
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
+float PvzPsu::targetVoltage()
+{
+  std::lock_guard<std::mutex> lck(uartMutexP);
+  return ftTargetVoltageP;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
+float PvzPsu::targetCurrent()
+{
+  std::lock_guard<std::mutex> lck(uartMutexP);
+  return ftTargetCurrentP;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
+int32_t PvzPsu::model()
+{
+  std::lock_guard<std::mutex> lck(uartMutexP);
+  return slModelNumberP;
 }

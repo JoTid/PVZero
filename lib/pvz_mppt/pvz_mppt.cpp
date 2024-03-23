@@ -43,10 +43,66 @@ void PvzMppt::updateFrame(const char *pszFrameV, const int32_t slLengthV)
   //---------------------------------------------------------------------------------------------------
   // copy provided data to object memory
   //
-  // std::lock_guard<std::mutex> lck(mppt_mutex);
+  std::lock_guard<std::mutex> lck(mpptMutexP);
   strcpy(ascFrameP, pszFrameV);
   slLengthP = slLengthV;
-  btNewFrameP = true;
+  //-------------------------------------------------------------------------------------------
+  // calculate the checksum at first
+  //
+  uint32_t ulChecksumT = 0;
+  for (int i = 0; i < slLengthP; i++)
+  {
+    ulChecksumT = ((ulChecksumT + ascFrameP[i]) & 0xFF);
+  }
+
+  //-------------------------------------------------------------------------------------------
+  // print the frame for debugging
+  //
+  // Serial.println();
+  // Serial.println();
+  // Serial.println();
+  // Serial.print(aszFrameP);
+  // Serial.println();
+  // Serial.println();
+  // Serial.println();
+
+  //-------------------------------------------------------------------------------------------
+  // parse only if checksum is valid
+  //
+  // if (ulChecksumT == 0)
+  // {
+  parseTable(ascFrameP);
+  // }
+
+  //-------------------------------------------------------------------------------------------
+  // print the parsed data for debugging
+  //
+  // for (int i = 0; i < slNumberOfParsedValuesP; i++)
+  // {
+  //   Serial.print(atsMpptDataP[i].pscName);
+  //   Serial.print(": ");
+  //   Serial.println(atsMpptDataP[i].pscValue);
+  // }
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
+
+float PvzMppt::batteryVoltage()
+{
+  std::lock_guard<std::mutex> lck(mpptMutexP);
+  return ftBatteryVoltageP;
+}
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
+float PvzMppt::batteryCurrent()
+{
+  std::lock_guard<std::mutex> lck(mpptMutexP);
+  return ftBatteryCurrentP;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -105,59 +161,4 @@ void PvzMppt::parseTable(char *pscTextFrameV)
   }
 
   slNumberOfParsedValuesP = slParamSetIndexT;
-}
-
-//--------------------------------------------------------------------------------------------------------------------//
-//                                                                                                                    //
-//                                                                                                                    //
-//--------------------------------------------------------------------------------------------------------------------//
-void PvzMppt::parse()
-{
-  //---------------------------------------------------------------------------------------------------
-  // check there is a new frame for parsing available
-  //
-
-  // std::lock_guard<std::mutex> lck(mppt_mutex);
-  if (btNewFrameP == true)
-  {
-    btNewFrameP = false;
-
-    //-------------------------------------------------------------------------------------------
-    // calculate the checksum at first
-    //
-    uint32_t ulChecksumT = 0;
-    for (int i = 0; i < slLengthP; i++)
-    {
-      ulChecksumT = ((ulChecksumT + ascFrameP[i]) & 0xFF);
-    }
-
-    //-------------------------------------------------------------------------------------------
-    // print the frame for debugging
-    //
-    // Serial.println();
-    // Serial.println();
-    // Serial.println();
-    // Serial.print(aszFrameP);
-    // Serial.println();
-    // Serial.println();
-    // Serial.println();
-
-    //-------------------------------------------------------------------------------------------
-    // parse only if checksum is valid
-    //
-    // if (ulChecksumT == 0)
-    // {
-    parseTable(ascFrameP);
-    // }
-
-    //-------------------------------------------------------------------------------------------
-    // print the parsed data for debugging
-    //
-    // for (int i = 0; i < slNumberOfParsedValuesP; i++)
-    // {
-    //   Serial.print(atsMpptDataP[i].pscName);
-    //   Serial.print(": ");
-    //   Serial.println(atsMpptDataP[i].pscValue);
-    // }
-  }
 }

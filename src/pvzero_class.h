@@ -38,6 +38,7 @@ limitations under the License.
 #include "sw_ovs.h"
 #include "battery_guard.hpp"
 #include "uart_mux.hpp"
+#include "uart.h"
 
 namespace PVZ
 {
@@ -59,9 +60,6 @@ namespace PVZ
     PvzCa clCaP;
 
   protected:
-    TaskHandle_t clTaskUartAppP;
-    static void taskUartApp(void *pvParameters);
-
     unsigned long _tsStarted = 0;
     unsigned long _tsStartWaitForConnection = 0;
     unsigned long _tsMeasLoopStart = 0;
@@ -75,6 +73,9 @@ namespace PVZ
     EWC::Mail _ewcMail;
     Shelly3emConnector _shelly3emConnector;
     PvzLcd _lcd;
+    PvzMppt clMpptP;
+    PvzPsu aclPsuP[2]; // support up to 2 PSUs
+    Uart uartP;
 
     BatteryGuard clBatGuardP;
 

@@ -21,8 +21,6 @@
 **                                                                                                                    **
 \*--------------------------------------------------------------------------------------------------------------------*/
 
-// std::mutex mppt_mutex;
-
 #define MPPT_TEXT_FRAME_LENGTH 256
 /**
  * @brief
@@ -39,17 +37,12 @@ public:
    * @brief Initialisation of PSU
    * This method should be called only once while setup.
    */
-  int32_t init(HardwareSerial &clSerialR);
+  // int32_t init(HardwareSerial &clSerialR);
 
   /**
-   * @brief Parse received Text Frame from Victron SmartSolar.
-   * This method must be called from main loop.
-   */
-  void parse();
-
-  /**
-   * @brief Provide new received Frame to the MPPT class
-   *
+   * @brief Provide new received Frame to the MPPT class.
+   * The frame is parsed and the values are then available
+   * protected by mutex via \c #batteryVoltage() and \c #batteryCurrent()
    * @param[in] pszFrameV Pointer to the frame
    * @param[in] slLengthV Length of the frame given in bytes
    */
@@ -60,15 +53,17 @@ public:
   //
 
   /**
-   * @brief Pending battery voltage
+   * @brief Pending battery voltage.
+   * Protected by mutex against competing calls in \c #updateFrame()
    * @return float value given in [V]
    */
-  float batteryVoltage() { return ftBatteryVoltageP; }
+  float batteryVoltage();
   /**
    * @brief Pending battery current
+   * Protected by mutex against competing calls in \c #updateFrame()
    * @return float value given in [A]
    */
-  float batteryCurrent() { return ftBatteryCurrentP; }
+  float batteryCurrent();
 
 private:
   /**
@@ -89,7 +84,7 @@ private:
 
   /**
    * @brief This char array is used to store the received data from the MPPT device.
-   *        An parse it later using \c #parseTable() method.
+   *        And parse it later using \c #parseTable() method.
    */
   char ascFrameP[MPPT_TEXT_FRAME_LENGTH];
 
@@ -97,12 +92,6 @@ private:
    * @brief holds number of valid bytes in \c #aszFrameP[]
    */
   int32_t slLengthP;
-
-  /**
-   * @brief This flag is set to true when \c #updateFrame() has been called.
-   * And it is cleared in \c #parse() when the data has been parsed
-   */
-  bool btNewFrameP;
 
   /**
    * @brief Hold number of parsed value, this value also provides number entries within \c #tsMpptDataP[] array.
@@ -130,6 +119,8 @@ private:
    * @brief Label 'I': Main or channel 1 battery current, given in [A]
    */
   float ftBatteryCurrentP;
+
+  std::mutex mpptMutexP;
 };
 
 #endif // PVZ_MPPT_HPP
