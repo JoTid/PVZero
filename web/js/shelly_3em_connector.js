@@ -99,8 +99,35 @@ function fillPVZeroState(data, url) {
     "Einspeisung: " + data["feed_in_power"].toFixed(0) + " W";
   document.getElementById("check_interval").innerText =
     "Prüfintervall: " + data["check_interval"] + "s";
-  document.getElementById("psu_vcc").innerText =
-    "PSU Vcc: " + data["psu_vcc"].toFixed(0) + " V";
+
+  if (data["mppt_available"]) {
+    document.getElementById("mppt_w").innerText = data["mppt_w"].toFixed(0) + " W";
+    document.getElementById("mppt_v").innerText = data["mppt_v"].toFixed(2) + " V";
+    document.getElementById("mppt_a").innerText = data["mppt_a"].toFixed(2) + " A";
+  }
+
+  if (data["psu1_available"]) {
+    document.getElementById("psu1_w").innerText = data["psu1_w"].toFixed(0) + " W";
+    document.getElementById("psu1_v").innerText = data["psu1_v"].toFixed(2) + " V";
+    document.getElementById("psu1_a").innerText = data["psu1_a"].toFixed(2) + " A";
+    document.getElementById("psu1_target_w").innerText = data["psu1_target_w"].toFixed(0) + " W";
+    document.getElementById("psu1_target_v").innerText = data["psu1_target_v"].toFixed(2) + " V";
+    document.getElementById("psu1_target_a").innerText = data["psu1_target_a"].toFixed(2) + " A";
+  }
+
+  if (data["psu2_available"]) {
+    document.getElementById("psu2_w").innerText = data["psu2_w"].toFixed(0) + " W";
+    document.getElementById("psu2_v").innerText = data["psu2_v"].toFixed(2) + " V";
+    document.getElementById("psu2_a").innerText = data["psu2_a"].toFixed(2) + " A";
+    document.getElementById("psu2_target_w").innerText = data["psu2_target_w"].toFixed(0) + " W";
+    document.getElementById("psu2_target_v").innerText = data["psu2_target_v"].toFixed(2) + " V";
+    document.getElementById("psu2_target_a").innerText = data["psu2_target_a"].toFixed(2) + " A";
+  }
+
+  if (data["analog_available"]) {
+    document.getElementById("analog_v").innerText = data["analog_v"].toFixed(2) + " V";
+  }
+
   document.getElementById("battery_state").innerText =
     "Status: " + data["battery_state"];
   document.getElementById("info_battery_state").innerText =

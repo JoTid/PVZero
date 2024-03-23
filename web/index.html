@@ -7,6 +7,19 @@
       content="width=device-width, initial-scale=1, user-scalable=yes"
     />
     <title>PVZero</title>
+    <style>
+      table {
+        border: 2px solid rgb(140 140 140);
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        border: 1px solid rgb(160 160 160);
+        border-collapse: collapse;
+        text-align: center;
+        padding: 5px;
+      }
+  </style>
     <link rel="stylesheet" href="/css/base.css" />
   </head>
 
@@ -31,9 +44,66 @@
         <div class="line_named">Shelly 3em</div>
         <div id="consumption_power">warte auf die Daten vom Shelly 3em...</div>
         <div id="check_interval"></div>
+
         <div class="line_named">Leistungssteuerung</div>
         <div id="feed_in_power"></div>
         <div id="psu_vcc"></div>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col" rowspan="1"></th>
+              <th scope="col" colspan="3">actual</th>
+              <th scope="col" colspan="3">target</th>
+            </tr>
+            <!-- <tr>
+              <th scope="col">W</th>
+              <th scope="col">V</th>
+              <th scope="col">A</th>
+              <th scope="col">W</th>
+              <th scope="col">V</th>
+              <th scope="col">A</th>
+            </tr> -->
+          </thead>
+          <body>
+            <tr>
+              <th>MPPT</th>
+              <td id="mppt_w">-</td>
+              <td id="mppt_v">-</td>
+              <td id="mppt_a">-</td>
+              <td id="mppt_target_w">-</td>
+              <td id="mppt_target_v">-</td>
+              <td id="mppt_target_a">-</td>
+            </tr>
+            <tr>
+              <th>PSU1</th>
+              <td id="psu1_w">-</td>
+              <td id="psu1_v">-</td>
+              <td id="psu1_a">-</td>
+              <td id="psu1_target_w">-</td>
+              <td id="psu1_target_v">-</td>
+              <td id="psu1_target_a">-</td>
+            </tr>
+            <tr>
+              <th>PSU2</th>
+              <td id="psu2_w">-</td>
+              <td id="psu2_v">-</td>
+              <td id="psu2_a">-</td>
+              <td id="psu2_target_w">-</td>
+              <td id="psu2_target_v">-</td>
+              <td id="psu2_target_a">-</td>
+            </tr>
+            <tr>
+              <th>Analog</th>
+              <td id="analog_w">-</td>
+              <td id="analog_v">-</td>
+              <td id="analog_a">-</td>
+              <td id="analog_target_w">-</td>
+              <td id="analog_target_v">-</td>
+              <td id="analog_target_a">-</td>
+            </tr>
+        </body>
+        </table>
+
         <div class="line_named">Speicher</div>
         <div>
           <div id="battery_state" style="padding-bottom:0px"></div>
