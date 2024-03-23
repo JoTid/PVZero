@@ -24,7 +24,6 @@ PVZeroClass pvz;
 \*--------------------------------------------------------------------------------------------------------------------*/
 
 bool onceAfterConnect = false;
-bool onceTimeSet = false;
 
 //--------------------------------------------------------------------------------------------------------------------//
 //                                                                                                                    //
@@ -36,7 +35,6 @@ void setup()
   // initialise EspWebConfig
   //
   EWC::I::get().logger().setLogging(true);
-  EWC::I::get().logger().disableMutex();
   EWC::I::get().led().init(true, GREEN_LED_PIN, HIGH);
   EWC::I::get().config().paramDeviceName = String("pvz-") + EWC::I::get().config().getChipId();
   EWC::I::get().config().paramAPName = String("pvz-") + EWC::I::get().config().getChipId();
@@ -69,10 +67,6 @@ void loop()
       onceAfterConnect = true;
       I::get().logger() << "Send email about reboot" << endl;
       PZI::get().mail().sendChange("PVZ rebooted", I::get().time().str().c_str());
-    }
-    if (!onceTimeSet && I::get().time().timeAvailable())
-    {
-      onceTimeSet = true;
     }
   }
   else
