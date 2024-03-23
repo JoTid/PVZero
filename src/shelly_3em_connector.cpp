@@ -115,7 +115,7 @@ void Shelly3emConnector::loop()
           {
             _isRequesting = true;
             EWC::I::get().logger() << F("Shelly3emConnector: request consumption power from ") << getUri() << " actually task is " << _taskIsRunning << endl;
-            I::get().led().start(1000, 250);
+            I::get().led().start(LED_GREEN, 250, 150);
             vTaskResume(_httpTaskHandle);
             std::lock_guard<std::mutex> lck(httpTaskMutex);
             _taskIsRunning = true;
@@ -123,8 +123,8 @@ void Shelly3emConnector::loop()
           else
           {
             // our request is active -> task was finished, check the results
+            I::get().led().start(LED_GREEN, 2000, 2000, 1);
             _isRequesting = false;
-            I::get().led().stop();
             if (isValidConsumptionPower())
             {
               // update time
@@ -151,7 +151,7 @@ void Shelly3emConnector::loop()
             else
             {
               // failed request
-              I::get().led().start(3000, 3000);
+              I::get().led().start(LED_RED, 2000, 2000, 1);
               _countRequestsFailed += 1;
               if (_callbackState != NULL)
               {
