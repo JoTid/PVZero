@@ -1,5 +1,4 @@
 var timerRefresh;
-var countNA = 0;
 
 window.addEventListener("DOMContentLoaded", function (event) {
   // document.getElementById('check_now').addEventListener("mousedown", function(){
@@ -8,8 +7,7 @@ window.addEventListener("DOMContentLoaded", function (event) {
   //     timerRefresh = setTimeout(getJSON.bind(null, "/pvzero/state.json", "fillPVZeroState"), 1000);
   // }, false);
 
-  setTimeout(getJSON.bind(null, "/pvzero/state.json", "fillPVZeroState"), 1000);
-  // getJSON("/pvzero/state.json", "fillPVZeroState");
+  setTimeout(getJSON.bind(null, "/pvzero/state.json", "fillPVZeroState"), 500);
 });
 
 function call(url) {
@@ -93,7 +91,6 @@ function updateCycle(cycle, data) {
 }
 
 function fillPVZeroState(data, url) {
-  clearTimeout(timerRefresh);
   document.getElementById("pvzero_title").innerText = data["name"];
   document.getElementById("version").innerText = "v" + data["version"];
   document.getElementById("consumption_power").innerText =
@@ -114,22 +111,8 @@ function fillPVZeroState(data, url) {
     "Charge Current: " + data["charge_current"].toFixed(2) + " A";
   document.getElementById("info_check_info").innerText = data["check_info"];
 
-  if (data["consumption_power"] == 0) {
-    countNA = 0;
-    timerRefresh = setTimeout(
-      getJSON.bind(null, "/pvzero/state.json", "fillPVZeroState"),
-      1000
-    );
-  } else if (countNA < 3) {
-    countNA = countNA + 1;
-    timerRefresh = setTimeout(
-      getJSON.bind(null, "/pvzero/state.json", "fillPVZeroState"),
-      1000
-    );
-  } else {
-    timerRefresh = setTimeout(
-      getJSON.bind(null, "/pvzero/state.json", "fillPVZeroState"),
-      10000
-    );
+  if (document.getElementById("autoupdate").checked) {
+    console.log(`Set timer for update in 1 sec`);
+    timerRefresh = setTimeout(getJSON.bind(null, "/pvzero/state.json", "fillPVZeroState"), 1000);
   }
 }

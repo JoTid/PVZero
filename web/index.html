@@ -20,6 +20,14 @@
       <span id="version">Unknown</span>
 
       <div id="shelly_3em" class="noorder">
+        <form>
+          <div>
+            <input id="autoupdate" type="checkbox" name="autoupdate" value="true" checked onclick='handleClickAutoUpdate(this);'>
+              <label id="lbl_autoupdate">jede Sekunde aktualisieren</label>
+            </input>
+          </div>
+        </form>
+  
         <div class="line_named">Shelly 3em</div>
         <div id="consumption_power">warte auf die Daten vom Shelly 3em...</div>
         <div id="check_interval"></div>
@@ -40,5 +48,16 @@
     </div>
     <script src="/js/postload.js"></script>
     <script src="/js/shelly_3em_connector.js"></script>
+    <script type="text/javascript">
+      function handleClickAutoUpdate(cb) {
+        if (cb.checked) {
+          console.log(`enable auto update`);
+          timerRefresh = setTimeout(getJSON.bind(null, "/pvzero/state.json", "fillPVZeroState"), 1000);
+        } else {
+          console.log(`disable auto update`);
+          clearTimeout(timerRefresh);
+        }
+      }
+    </script>
   </body>
 </html>

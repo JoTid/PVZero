@@ -6,7 +6,7 @@
     <title>PVZ Setup</title>
     <link rel="stylesheet" href="/css/base.css">
   </head>
-  <body style="padding-top:58px;">
+  <body style="padding-top:58px">
     <div id="header"></div>
     <div class="base-panel">
         <form action="/pvzero/config/save" method="post">
