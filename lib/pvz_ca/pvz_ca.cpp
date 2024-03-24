@@ -210,7 +210,7 @@ void PvzCa::process(void)
     //
     ftFeedInTargetDcCurrentP = discreteApproximation(ftFeedInActualDcCurrentP, ftCalcT);
 
-    ftFeedInTargetPowerApproxP = (ftFeedInTargetDcVoltageP * ftFeedInTargetDcCurrentP);
+    ftFeedInTargetPowerApproxP = (ftFeedInTargetDcVoltageP * discreteApproximation(ftFeedInActualDcCurrentP, ftCalcT));
     ftFeedInTargetPowerP = (ftCalcT * ftFeedInTargetDcVoltageP);
     // TEST_MESSAGE(String("Actual Power: " + String(ftConsumptionPowerP, 1) + "Wh; Feed In measured: " + String(ftFeedInActualPowerP, 1) + "Wh = " + String(ftFeedInActualDcVoltageP, 1) + "V * " + String(ftFeedInActualDcCurrentP, 1) + "A " + " => Target : " + String(ftFeedInTargetPowerP, 1) + "Wh = " + String(ftFeedInTargetDcVoltageP, 1) + "V * " + String(ftCalcT, 1) + "A => APPROX: " + String(ftFeedInTargetPowerApproxP, 1) + "Wh = " + String(ftFeedInTargetDcVoltageP, 1) + "V * " + String(ftFeedInTargetDcCurrentP, 1) + "A").c_str()); // run as "Verbose Test" to see that
   }

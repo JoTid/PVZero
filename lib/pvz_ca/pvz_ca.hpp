@@ -19,7 +19,7 @@
 #include <mov_av_filter.hpp>
 
 #ifndef CA_APPROX_STEP
-#define CA_APPROX_STEP 0.2
+#define CA_APPROX_STEP 1.0
 #endif
 
 #ifndef CA_REFRESH_TIME
