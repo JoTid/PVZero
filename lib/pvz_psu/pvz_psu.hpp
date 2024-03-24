@@ -72,6 +72,13 @@ private:
   float ftTargetVoltageP;
   float ftTargetCurrentP;
 
+  // Fixed-point numbers with 3 decimal places
+  int32_t slTargetVoltageNewP;
+  int32_t slTargetCurrentNewP;
+
+  int32_t slTargetVoltageOldP;
+  int32_t slTargetCurrentOldP;
+
   bool btIsEnabledP;
 
   std::mutex uartMutexP;

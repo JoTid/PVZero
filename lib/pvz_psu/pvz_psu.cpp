@@ -26,6 +26,12 @@ PvzPsu::PvzPsu()
   slModelNumberP = -1; // not initialised
   ftActualVoltageP = 0.0;
   ftActualCurrentP = 0.0;
+
+  slTargetVoltageNewP = 0;
+  slTargetCurrentNewP = 0;
+
+  slTargetVoltageOldP = 0;
+  slTargetCurrentOldP = 0;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -143,9 +149,17 @@ int32_t PvzPsu::read()
 int32_t PvzPsu::write()
 {
   std::lock_guard<std::mutex> lck(uartMutexP);
-  int32_t slReturnT;
+  int32_t slReturnT = 0;
 
-  slReturnT = clPsuP.writeVC(ftTargetVoltageP, ftTargetCurrentP);
+  //---------------------------------------------------------------------------------------------------
+  // Do not write value each time if previous is the same one
+  //
+  if ((slTargetVoltageOldP != slTargetVoltageNewP) ||
+      (slTargetCurrentOldP != slTargetCurrentNewP) ||
+      (slTargetCurrentOldP == 0))
+  {
+    slReturnT = clPsuP.writeVC(ftTargetVoltageP, ftTargetCurrentP);
+  }
 
   if (slReturnT > 0)
   {
@@ -227,6 +241,10 @@ int32_t PvzPsu::set(float ftVoltageV, float ftCurrentV)
 
   ftTargetVoltageP = ftVoltageV;
   ftTargetCurrentP = ftCurrentV;
+
+  // set values for comparison
+  slTargetVoltageNewP = (int32_t)(ftTargetVoltageP * 1000);
+  slTargetCurrentNewP = (int32_t)(ftTargetVoltageP * 1000);
 
   return slReturnT;
 }
