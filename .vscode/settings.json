@@ -16,9 +16,10 @@
     "editor.formatOnSave": false
   },
   "extensions.ignoreRecommendations": false,
+  "html.suggest.html5": true,
   "workbench.colorCustomizations": {
-    "activityBar.activeBackground": "#064069",
+    "activityBar.background": "#064069",
     "statusBar.background": "#064069"
   },
-  "cSpell.words": ["FPSTR", "Mqtt", "PROGMEM", "PVZERO", "RSSI"]
+  "cSpell.words": ["FPSTR", "MPPT", "Mqtt", "PROGMEM", "PVZERO", "RSSI"]
 }
