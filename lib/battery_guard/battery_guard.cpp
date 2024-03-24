@@ -76,14 +76,35 @@ float BatteryGuard::limitedCurrent(float ftTargetCurrentV)
   //
   switch (teStateP)
   {
+  case eMpptNotBulk:
+    // current is not limited
+    break;
+
   case eCharging:
     //-------------------------------------------------------------------------------------------
     // The current is limited to the Battery Current value of the Victron SmartSolar
+    // nur wenn die Spannung einen gewissen wert unterschirtten hat. Im anderen Fall wird der Akku schon den
+    // sollwert abfangen.
     //
-    if (slTargeCurrentT > slBatteryCurrentP)
+    // Grund für diese Maßnahmen: Der Laderegler, regelet immer wieder den Strom gegen 0, was dazu führt, dass
+    // der Wechselrichter getrennt wird und sich wieder auf Netz synchronisieren muss.
+    // Dies kann bis zu einer Minute dauern, dass soll nicht so sein.
+    //
+    //
+    if (slBatteryVoltageP < 520) // \todo welcher Wert ist hier sinnvoll ?
     {
-      ftLimitCurrentT = (float)(slBatteryCurrentP);
-      ftLimitCurrentT *= 0.01;
+      if (slTargeCurrentT > slBatteryCurrentP)
+      {
+        ftLimitCurrentT = (float)(slBatteryCurrentP);
+        ftLimitCurrentT *= 0.01;
+
+        // check the MPPT is in absorbtion phase
+        //
+        // if (slBatteryVoltageP > (BG_CHARGE_CUTOFF_VOLTAGE - 14))
+        // {
+        // ftLimitCurrentT += 0.2;
+        // }
+      }
     }
 
     break;
@@ -183,6 +204,13 @@ void BatteryGuard::process(void)
         //---------------------------------------------------------------------------
         // The current is limited to the Charging Current value of the Victron SmartSolar
         //
+      case eMpptNotBulk:
+        clAddStateInfoP = String("MPPT is no in Bulk operation State : " + String(ubMpptStateOfOperationP));
+        break;
+
+        //---------------------------------------------------------------------------
+        // The current is limited to the Charging Current value of the Victron SmartSolar
+        //
       case eCharging:
         //---------------------------------------------------------------------------
         // Battery Voltage >= CHARGE_CUTOFF_VOLTAGE (58.4 V)
@@ -212,7 +240,7 @@ void BatteryGuard::process(void)
           // calculate time difference to perform full charge each two weeks
           // it is treu when the time difference is < 2 weeks
           //
-          if ((uqTimeP - uqFullyChargedTimeP) < (uint64_t)BG_FULL_CHARGE_REPETITION_TIME)
+          if (1) //(uqTimeP - uqFullyChargedTimeP) < (uint64_t)BG_FULL_CHARGE_REPETITION_TIME)
           {
             teStateP = eDischarging;
             if (pfnEventHandlerP != nullptr)
@@ -356,6 +384,24 @@ void BatteryGuard::process(void)
     if (pfnEventHandlerP != nullptr)
     {
       pfnEventHandlerP(teStateP);
+    }
+  }
+}
+
+void BatteryGuard::updateMpptState(uint8_t ubStateV)
+{
+  if (ubMpptStateOfOperationP != ubStateV)
+  {
+    ubMpptStateOfOperationP = ubStateV;
+
+    if ((ubMpptStateOfOperationP == 4) ||
+        (ubMpptStateOfOperationP == 5))
+    {
+      teStateP = eMpptNotBulk;
+    }
+    else
+    {
+      teStateP = eCharging;
     }
   }
 }

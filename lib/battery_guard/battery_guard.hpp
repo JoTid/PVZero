@@ -99,6 +99,7 @@ public:
     eCharged,
     eDischarging,
     eDischarged,
+    eMpptNotBulk,
     eError
 
   } State_te;
@@ -124,6 +125,7 @@ private:
   int32_t slBatteryCurrentMinimalP; // int value for comparison with 2 DD
   int32_t slBatteryCurrentMaximalP; // int value for comparison with 2 DD
 
+  uint8_t ubMpptStateOfOperationP;
   float ftTargetCurrentP;
   float ftLimitedCurrentP;
 
@@ -185,6 +187,7 @@ public:
    * The charge current is the current that is typically flow to the battery and consumer
    */
   void updateCurrent(float ftCurrentV);
+  void updateMpptState(uint8_t ubStateV);
 
   /**
    * @brief Update time
