@@ -43,12 +43,6 @@ public:
   int32_t read();
   int32_t write();
 
-  /**
-   * @brief Process the PSU operation.
-   * This method must be called from main loop.
-   */
-  void process(bool btForceV = false);
-
   int32_t set(float ftVoltageV, float ftCurrentV);
 
   float actualVoltage();

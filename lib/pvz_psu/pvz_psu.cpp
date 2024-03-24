@@ -159,62 +159,62 @@ int32_t PvzPsu::write()
 //                                                                                                                    //
 //                                                                                                                    //
 //--------------------------------------------------------------------------------------------------------------------//
-void PvzPsu::process(bool btForceV)
-{
-  std::lock_guard<std::mutex> lck(uartMutexP);
-  static unsigned long ulOldTimeS;
-  static uint32_t ulRefreshTimeT;
+// void PvzPsu::process(bool btForceV)
+// {
+//   std::lock_guard<std::mutex> lck(uartMutexP);
+//   static unsigned long ulOldTimeS;
+//   static uint32_t ulRefreshTimeT;
 
-  //---------------------------------------------------------------------------------------------------
-  // Model number is negative in case of failure at initialisation.
-  // In other case it contain the maximal A value (5, 8, 16 or 24)
-  //
-  if ((slModelNumberP < 0) && (btForceV == false))
-  {
-    return;
-  }
+//   //---------------------------------------------------------------------------------------------------
+//   // Model number is negative in case of failure at initialisation.
+//   // In other case it contain the maximal A value (5, 8, 16 or 24)
+//   //
+//   if ((slModelNumberP < 0) && (btForceV == false))
+//   {
+//     return;
+//   }
 
-  //---------------------------------------------------------------------------------------------------
-  // count the millisecond ticks and avoid overflow
-  //
-  unsigned long ulNewTimeT = millis();
-  if (ulNewTimeT != ulOldTimeS)
-  {
-    if (ulNewTimeT > ulOldTimeS)
-    {
-      ulRefreshTimeT += (uint32_t)(ulNewTimeT - ulOldTimeS);
-    }
-    else
-    {
-      ulRefreshTimeT += (uint32_t)(ulOldTimeS - ulNewTimeT);
-    }
-    ulOldTimeS = ulNewTimeT;
-  }
+//   //---------------------------------------------------------------------------------------------------
+//   // count the millisecond ticks and avoid overflow
+//   //
+//   unsigned long ulNewTimeT = millis();
+//   if (ulNewTimeT != ulOldTimeS)
+//   {
+//     if (ulNewTimeT > ulOldTimeS)
+//     {
+//       ulRefreshTimeT += (uint32_t)(ulNewTimeT - ulOldTimeS);
+//     }
+//     else
+//     {
+//       ulRefreshTimeT += (uint32_t)(ulOldTimeS - ulNewTimeT);
+//     }
+//     ulOldTimeS = ulNewTimeT;
+//   }
 
-  //---------------------------------------------------------------------------------------------------
-  // refresh the PSU only within define time
-  //
-  if (ulRefreshTimeT > PSU_REFRESH_TIME)
-  {
-    ulRefreshTimeT = 0;
+//   //---------------------------------------------------------------------------------------------------
+//   // refresh the PSU only within define time
+//   //
+//   if (ulRefreshTimeT > PSU_REFRESH_TIME)
+//   {
+//     ulRefreshTimeT = 0;
 
-    //-------------------------------------------------------------------------------------------
-    // simple poll actual values from PSU
-    //
-    if (clPsuP.read('p') > 0)
-    {
-      btIsEnabledP = true;
-    }
-    else
-    {
-      btIsEnabledP = false;
-    }
+//     //-------------------------------------------------------------------------------------------
+//     // simple poll actual values from PSU
+//     //
+//     if (clPsuP.read('p') > 0)
+//     {
+//       btIsEnabledP = true;
+//     }
+//     else
+//     {
+//       btIsEnabledP = false;
+//     }
 
-    ftActualVoltageP = clPsuP.read('v');
-    ftActualCurrentP = clPsuP.read('c');
-    ftActualTemperatureP = clPsuP.read('t');
-  }
-}
+//     ftActualVoltageP = clPsuP.read('v');
+//     ftActualCurrentP = clPsuP.read('c');
+//     ftActualTemperatureP = clPsuP.read('t');
+//   }
+// }
 
 //--------------------------------------------------------------------------------------------------------------------//
 //                                                                                                                    //
