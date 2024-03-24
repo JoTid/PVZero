@@ -39,6 +39,8 @@ BatteryGuard::BatteryGuard()
 
   pfnEventHandlerP = nullptr;
   pfnSaveTimeHandlerP = nullptr;
+
+  teStateP = eDischarged;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
