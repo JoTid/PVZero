@@ -86,40 +86,28 @@ function fillPVZeroState(data, url) {
   document.getElementById("pvzero_title").innerText = data["name"];
   document.getElementById("version").innerText = "v" + data["version"];
 
-  document.getElementById("total_consumption").innerText =
-    data["total_consumption"].toFixed(0) + " W";
-  document.getElementById("battery_current").innerText =
-    data["battery_current"].toFixed(1) + " A";
+  document.getElementById("total_consumption").innerText = data["total_consumption"].toFixed(0) + " W";
+  document.getElementById("battery_current").innerText = data["battery_current"].toFixed(1) + " A";
+  document.getElementById("battery_current_sum_in").innerText = "+ " + data["battery_current_sum_in"].toFixed(1) + " Ah";
+  document.getElementById("battery_current_sum_out").innerText = "- " + data["battery_current_sum_out"].toFixed(1) + " Ah";
 
-  document.getElementById("consumption_power").innerText =
-    data["consumption_power"].toFixed(0) + " W";
-  document.getElementById("feed_in_power").innerText =
-    data["feed_in_power"].toFixed(0) + " W";
-  document.getElementById("check_interval").innerText =
-    data["check_interval"] + "s";
+  document.getElementById("consumption_power").innerText = data["consumption_power"].toFixed(0) + " W";
+  document.getElementById("feed_in_power").innerText = data["feed_in_power"].toFixed(0) + " W";
+  document.getElementById("check_interval").innerText = data["check_interval"] + "s";
 
-  if (data["mppt_available"]) {
-    document.getElementById("mppt_w").innerText =
-      data["mppt_w"].toFixed(0) + " W";
-    document.getElementById("mppt_v").innerText =
-      data["mppt_v"].toFixed(1) + " V";
-    document.getElementById("mppt_a").innerText =
-      data["mppt_a"].toFixed(1) + " A";
+  if (data["mppt_available"]) { 
+    document.getElementById("mppt_w").innerText = data["mppt_w"].toFixed(0) + " W";
+    document.getElementById("mppt_v").innerText =data["mppt_v"].toFixed(1) + " V";
+    document.getElementById("mppt_a").innerText = data["mppt_a"].toFixed(1) + " A";
   }
 
   if (data["psu1_available"]) {
-    document.getElementById("psu1_w").innerText =
-      data["psu1_w"].toFixed(0) + " W";
-    document.getElementById("psu1_v").innerText =
-      data["psu1_v"].toFixed(1) + " V";
-    document.getElementById("psu1_a").innerText =
-      data["psu1_a"].toFixed(1) + " A";
-    document.getElementById("psu1_target_w").innerText =
-      data["psu1_target_w"].toFixed(0) + " W";
-    document.getElementById("psu1_target_v").innerText =
-      data["psu1_target_v"].toFixed(1) + " V";
-    document.getElementById("psu1_target_a").innerText =
-      data["psu1_target_a"].toFixed(1) + " A";
+    document.getElementById("psu1_w").innerText = data["psu1_w"].toFixed(0) + " W";
+    document.getElementById("psu1_v").innerText = data["psu1_v"].toFixed(1) + " V";
+    document.getElementById("psu1_a").innerText = data["psu1_a"].toFixed(1) + " A";
+    document.getElementById("psu1_target_w").innerText = data["psu1_target_w"].toFixed(0) + " W";
+    document.getElementById("psu1_target_v").innerText = data["psu1_target_v"].toFixed(1) + " V";
+    document.getElementById("psu1_target_a").innerText = data["psu1_target_a"].toFixed(1) + " A";
   }
 
   if (data["psu2_available"]) {

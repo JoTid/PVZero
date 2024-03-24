@@ -9,6 +9,8 @@
   "battery_state_info": "",
   "total_consumption": -1.0,
   "battery_current": -1.0,
+  "battery_current_sum_in": -1.0,
+  "battery_current_sum_out": -1.0,
   "check_interval": -1,
   "next_check": "2020.08.17|17:08",
   "mppt_available": false,

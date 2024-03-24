@@ -83,6 +83,10 @@ namespace PVZ
     float ftRealFeedInPowerP;
     float ftTotalConsumptionP;
     float ftBatteryCurrentP;
+    float ftBatteryCurrentSumInSecP;
+    float ftBatteryCurrentSumOutSecP;
+    float ftBatteryCurrentSumInP;
+    float ftBatteryCurrentSumOutP;
 
     BatteryGuard clBatGuardP;
 
