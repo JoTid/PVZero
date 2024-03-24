@@ -263,7 +263,7 @@ void BatteryGuard::process(void)
         //---------------------------------------------------------------------------
         // (**Battery Current** == 0.0 A) && (Zeitstempel < 2 Wochen)
         //
-        else if (slBatteryCurrentP == 0)
+        else if (slBatteryCurrentP <= 10)
         {
           //-------------------------------------------------------------------
           // calculate time difference to perform full charge each two weeks
@@ -351,7 +351,7 @@ void BatteryGuard::process(void)
         //---------------------------------------------------------------------------
         // Battery Current > 0.0 A
         //
-        else if (slBatteryCurrentP > 0)
+        else if (slBatteryCurrentP > 100)
         {
           teStateP = eCharging;
           if (pfnEventHandlerP != nullptr)
