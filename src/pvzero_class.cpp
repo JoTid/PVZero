@@ -643,7 +643,8 @@ void PVZeroClass::_onPVZeroState(WebServer *webServer)
   json["name"] = I::get().config().paramDeviceName;
   json["version"] = I::get().server().version();
   json["consumption_power"] = consumptionPower;
-  json["feed_in_power"] = clCaP.feedInTargetPower();
+  json["feed_in_power"] = ((aftActualVoltageOfPsuP[0] * aftActualCurrentOfPsuP[0]) +
+                           (aftActualVoltageOfPsuP[1] * aftActualCurrentOfPsuP[1]));
   json["enable_second_psu"] = consumptionPower;
   json["battery_state"] = strBatteryState;
   json["battery_state_info"] = strBatteryStateInfo;
@@ -664,7 +665,7 @@ void PVZeroClass::_onPVZeroState(WebServer *webServer)
   json["psu1_target_v"] = aclPsuP[0].targetVoltage();
   json["psu1_target_a"] = aclPsuP[0].targetCurrent();
   json["psu2_available"] = abtPsuIsAvailableP[1];
-  json["psu2_w"] = aftActualVoltageOfPsuP[1] * aftActualCurrentOfPsuP[1];
+  json["psu2_w"] = (aftActualVoltageOfPsuP[1] * aftActualCurrentOfPsuP[1]);
   json["psu2_v"] = aftActualVoltageOfPsuP[1];
   json["psu2_a"] = aftActualCurrentOfPsuP[1];
   json["psu2_target_w"] = aclPsuP[1].targetVoltage() * aclPsuP[1].targetCurrent();
