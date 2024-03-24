@@ -81,71 +81,77 @@ var color_full = "rgb(64, 203, 231)";
 var color_invisible = "rgb(0, 0, 0, 0.0)";
 var color_grey = "rgb(113, 113, 113)";
 var color_green = "rgb(34, 153, 7)";
-function updateCycle(cycle, data) {
-  co = data[cycle];
-  // document.getElementById("info_" + cycle).innerHTML = '<label id="info_check">' + data["check_info"] + "</label>";
-  document.getElementById("consumption_power").innerHTML =
-    '<label id="info_consumption_power">' +
-    data["consumption_power"] +
-    "</label>";
-}
 
 function fillPVZeroState(data, url) {
   document.getElementById("pvzero_title").innerText = data["name"];
   document.getElementById("version").innerText = "v" + data["version"];
 
   document.getElementById("total_consumption").innerText =
-    "Gesamtverbrauch: " + data["total_consumption"].toFixed(0) + " W";
+    data["total_consumption"].toFixed(0) + " W";
   document.getElementById("battery_current").innerText =
-    "Batteriestrom: " + data["battery_current"].toFixed(1) + " A";
+    data["battery_current"].toFixed(1) + " A";
 
   document.getElementById("consumption_power").innerText =
-    "Aktueller Verbrauch: " + data["consumption_power"].toFixed(0) + " W";
+    data["consumption_power"].toFixed(0) + " W";
   document.getElementById("feed_in_power").innerText =
-    "Einspeisung: " + data["feed_in_power"].toFixed(0) + " W";
+    data["feed_in_power"].toFixed(0) + " W";
   document.getElementById("check_interval").innerText =
-    "Prüfintervall: " + data["check_interval"] + "s";
+    data["check_interval"] + "s";
 
   if (data["mppt_available"]) {
-    document.getElementById("mppt_w").innerText = data["mppt_w"].toFixed(0) + " W";
-    document.getElementById("mppt_v").innerText = data["mppt_v"].toFixed(1) + " V";
-    document.getElementById("mppt_a").innerText = data["mppt_a"].toFixed(1) + " A";
+    document.getElementById("mppt_w").innerText =
+      data["mppt_w"].toFixed(0) + " W";
+    document.getElementById("mppt_v").innerText =
+      data["mppt_v"].toFixed(1) + " V";
+    document.getElementById("mppt_a").innerText =
+      data["mppt_a"].toFixed(1) + " A";
   }
 
   if (data["psu1_available"]) {
-    document.getElementById("psu1_w").innerText = data["psu1_w"].toFixed(0) + " W";
-    document.getElementById("psu1_v").innerText = data["psu1_v"].toFixed(1) + " V";
-    document.getElementById("psu1_a").innerText = data["psu1_a"].toFixed(1) + " A";
-    document.getElementById("psu1_target_w").innerText = data["psu1_target_w"].toFixed(0) + " W";
-    document.getElementById("psu1_target_v").innerText = data["psu1_target_v"].toFixed(1) + " V";
-    document.getElementById("psu1_target_a").innerText = data["psu1_target_a"].toFixed(1) + " A";
+    document.getElementById("psu1_w").innerText =
+      data["psu1_w"].toFixed(0) + " W";
+    document.getElementById("psu1_v").innerText =
+      data["psu1_v"].toFixed(1) + " V";
+    document.getElementById("psu1_a").innerText =
+      data["psu1_a"].toFixed(1) + " A";
+    document.getElementById("psu1_target_w").innerText =
+      data["psu1_target_w"].toFixed(0) + " W";
+    document.getElementById("psu1_target_v").innerText =
+      data["psu1_target_v"].toFixed(1) + " V";
+    document.getElementById("psu1_target_a").innerText =
+      data["psu1_target_a"].toFixed(1) + " A";
   }
 
   if (data["psu2_available"]) {
-    document.getElementById("psu2_w").innerText = data["psu2_w"].toFixed(0) + " W";
-    document.getElementById("psu2_v").innerText = data["psu2_v"].toFixed(1) + " V";
-    document.getElementById("psu2_a").innerText = data["psu2_a"].toFixed(1) + " A";
-    document.getElementById("psu2_target_w").innerText = data["psu2_target_w"].toFixed(0) + " W";
-    document.getElementById("psu2_target_v").innerText = data["psu2_target_v"].toFixed(1) + " V";
-    document.getElementById("psu2_target_a").innerText = data["psu2_target_a"].toFixed(1) + " A";
+    document.getElementById("psu2_w").innerText =
+      data["psu2_w"].toFixed(0) + " W";
+    document.getElementById("psu2_v").innerText =
+      data["psu2_v"].toFixed(1) + " V";
+    document.getElementById("psu2_a").innerText =
+      data["psu2_a"].toFixed(1) + " A";
+    document.getElementById("psu2_target_w").innerText =
+      data["psu2_target_w"].toFixed(0) + " W";
+    document.getElementById("psu2_target_v").innerText =
+      data["psu2_target_v"].toFixed(1) + " V";
+    document.getElementById("psu2_target_a").innerText =
+      data["psu2_target_a"].toFixed(1) + " A";
   }
 
   if (data["analog_available"]) {
-    document.getElementById("analog_v").innerText = data["analog_v"].toFixed(2) + " V";
+    document.getElementById("analog_v").innerText =
+      data["analog_v"].toFixed(2) + " V";
   }
 
   document.getElementById("battery_state").innerText =
     "Status: " + data["battery_state"];
   document.getElementById("info_battery_state").innerText =
     data["battery_state_info"];
-  document.getElementById("charge_voltage").innerText =
-    "Charge Voltage: " + data["charge_voltage"].toFixed(2) + " V";
-  document.getElementById("charge_current").innerText =
-    "Charge Current: " + data["charge_current"].toFixed(2) + " A";
-  document.getElementById("info_check_info").innerText = data["check_info"];
 
   if (document.getElementById("autoupdate").checked) {
     console.log(`Set timer for update in 1 sec`);
-    timerRefresh = setTimeout(getJSON.bind(null, "/pvzero/state.json", "fillPVZeroState"), 1000);
+    timerRefresh = setTimeout(
+      getJSON.bind(null, "/pvzero/state.json", "fillPVZeroState"),
+      1000
+    );
   }
 }
