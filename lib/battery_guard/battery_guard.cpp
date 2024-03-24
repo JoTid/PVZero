@@ -361,7 +361,7 @@ void BatteryGuard::process(void)
         }
         else
         {
-          clAddStateInfoP = String("the feed in current is not limited.");
+          clAddStateInfoP = String("the feed in current is not limited, till battery voltage is > " + String(((float)(BG_DISCHARGE_VOLTAGE)) * 0.1, 1) + " V");
         }
 
         //---------------------------------------------------------------------------
@@ -391,7 +391,7 @@ void BatteryGuard::process(void)
         }
         else
         {
-          clAddStateInfoP = String("the feed in current is limited to the value 0.0 A, feed-in is stopped.");
+          clAddStateInfoP = String("feed-in is stopped, while battery voltage is <= " + String(((float)(BG_DISCHARGE_VOLTAGE + BG_DISCHARGE_VOLTAGE_OFFSET)) * 0.1, 1) + " V");
         }
 
         //---------------------------------------------------------------------------

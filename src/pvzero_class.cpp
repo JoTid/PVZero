@@ -309,6 +309,7 @@ void PVZeroClass::processControlAlgorithm(void)
 {
   float ftActualCurrentTotalT = 0.0;
   float ftActualVoltageTotalT = 0.0;
+  float ftTargetVoltageT = 0.0;
   float ftLimitedTargetCurrentT;
   int32_t slNumberOfStringsT = 0;
 
@@ -417,12 +418,21 @@ void PVZeroClass::processControlAlgorithm(void)
 
   I::get().logger() << F("Target Current after BG: ") << String(ftLimitedTargetCurrentT, 3) << " A, considering " << slNumberOfStringsT << " PSUs" << endl;
 
+  if ((int32_t)(ftLimitedTargetCurrentT * 100) != 0)
+  {
+    ftTargetVoltageT = clCaP.feedInTargetDcVoltage();
+  }
+  else
+  {
+    ftTargetVoltageT = 0.0;
+  }
+
   //---------------------------------------------------------------------------------------------------
   // update PSU0 if available
   //
   if (abtPsuIsAvailableP[0])
   {
-    aclPsuP[0].set(clCaP.feedInTargetDcVoltage(), ftLimitedTargetCurrentT);
+    aclPsuP[0].set(ftTargetVoltageT, ftLimitedTargetCurrentT);
   }
   else
   {
@@ -435,7 +445,7 @@ void PVZeroClass::processControlAlgorithm(void)
   //
   if (abtPsuIsAvailableP[1])
   {
-    aclPsuP[1].set(clCaP.feedInTargetDcVoltage(), ftLimitedTargetCurrentT);
+    aclPsuP[1].set(ftTargetVoltageT, ftLimitedTargetCurrentT);
   }
   else
   {

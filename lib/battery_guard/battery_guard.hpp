@@ -50,13 +50,13 @@
  * Value in batter is defined to 40V.
  * Define a value that has an offset.
  */
-#define BG_DISCHARGE_VOLTAGE 480
+#define BG_DISCHARGE_VOLTAGE 450
 
 /**
  * [V] as fixed comma value with 1 DD
  * This is the offset required for the voltage to rise before the discharge state is exited.
  */
-#define BG_DISCHARGE_VOLTAGE_OFFSET 20
+#define BG_DISCHARGE_VOLTAGE_OFFSET 70
 
 /**
  * [A] as fixed comma value with 1 DD
