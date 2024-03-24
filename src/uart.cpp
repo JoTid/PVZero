@@ -70,8 +70,16 @@ void Uart::taskUartApp(void *_this)
       //
       while (Serial2.available())
       {
-        // copy and increase char counter
-        uart->aszReadDataT[uart->slReadBytesT] = Serial2.read();
+        // copy and increase char counter avoid invalid memory access
+        if (uart->slReadBytesT < 256)
+        {
+          uart->aszReadDataT[uart->slReadBytesT] = Serial2.read();
+        }
+        else
+        {
+          uart->aszReadDataT[254] = Serial2.read();
+        }
+
         uart->slReadBytesT++;
 
         //---------------------------------------------------------------------------
@@ -81,7 +89,7 @@ void Uart::taskUartApp(void *_this)
       }
 
       //-----------------------------------------------------------------------------------
-      // assume that after 20 ms of silence all data has been received from victron
+      // assume that after 10 ms of silence all data has been received from victron
       //
       if ((millis() > (uqTimeStampT + 10)) && (uart->slReadBytesT > 0))
       {
