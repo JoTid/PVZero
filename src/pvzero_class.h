@@ -43,7 +43,7 @@ limitations under the License.
 namespace PVZ
 {
 
-#define FIRMWARE_VERSION "0.81.04"
+#define FIRMWARE_VERSION "0.81.05"
 
 #define BATTERY_GUARD_FILE "/battery.guard"
 
@@ -76,6 +76,10 @@ namespace PVZ
     PvzMppt clMpptP;
     PvzPsu aclPsuP[2]; // support up to 2 PSUs
     Uart uartP;
+
+    float aftActualVoltageOfPsuP[2];
+    float aftActualCurrentOfPsuP[2];
+    bool abtPsuIsAvailableP[2];
 
     BatteryGuard clBatGuardP;
 

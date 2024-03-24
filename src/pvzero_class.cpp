@@ -77,7 +77,7 @@ using namespace PVZ;
 
 PVZeroClass::PVZeroClass()
     : _shelly3emConnector(MY_SHELLY_PIN), // pinPot=D6
-    uartP(clMpptP, aclPsuP[0], aclPsuP[1])
+      uartP(clMpptP, aclPsuP[0], aclPsuP[1])
 {
   PZI::get()._pvz = this;
   PZI::get()._config = &_config;
@@ -304,19 +304,27 @@ void PVZeroClass::setup()
 //--------------------------------------------------------------------------------------------------------------------//
 void PVZeroClass::processControlAlgorithm(void)
 {
-  float ftActualVoltageT;
-  float ftActualCurrentT;
-  int32_t slNumberOfStringsT;
+  float ftActualCurrentTotalT = 0.0;
+  float ftActualVoltageTotalT = 0.0;
+  float ftLimitedTargetCurrentT;
+  int32_t slNumberOfStringsT = 0;
+
+  aftActualVoltageOfPsuP[0] = aclPsuP[0].actualVoltage();
+  aftActualCurrentOfPsuP[0] = aclPsuP[0].actualCurrent();
+  aftActualVoltageOfPsuP[1] = aclPsuP[1].actualVoltage();
+  aftActualCurrentOfPsuP[1] = aclPsuP[1].actualCurrent();
+  abtPsuIsAvailableP[0] = aclPsuP[0].isAvailable();
+  abtPsuIsAvailableP[1] = aclPsuP[1].isAvailable();
 
   //---------------------------------------------------------------------------------------------------
   // just show all data we handle with
   //
   I::get().logger() << F("Current Time: ") << I::get().time().currentTime() << endl;
   I::get().logger() << F("loop() running on core ") << xPortGetCoreID() << "..." << endl;
-  I::get().logger() << F("MPPT Values: ") << String(clMpptP.batteryVoltage(), 3) << " V, " << String(clMpptP.batteryCurrent(), 3) << " A" << endl;
-  I::get().logger() << F("PSU0 actual values: ") << String(aclPsuP[0].actualVoltage(), 3) << " V, " << String(aclPsuP[0].actualCurrent(), 3) << " A, is available " << aclPsuP[0].isAvailable() << endl;
+  I::get().logger() << F("MPPT Values: ") << String(clMpptP.batteryVoltage(), 3) << " V, " << String(clMpptP.batteryCurrent(), 3) << " A, state " << clMpptP.stateOfOperation() << endl;
+  I::get().logger() << F("PSU0 actual values: ") << String(aftActualVoltageOfPsuP[0], 3) << " V, " << String(aftActualVoltageOfPsuP[0], 3) << " A, is available " << abtPsuIsAvailableP[0] << endl;
   I::get().logger() << F("PSU0 target values: ") << String(aclPsuP[0].targetVoltage(), 3) << " V, " << String(aclPsuP[0].targetCurrent(), 3) << " A" << endl;
-  I::get().logger() << F("PSU1 actual values: ") << String(aclPsuP[1].actualVoltage(), 3) << " V, " << String(aclPsuP[1].actualCurrent(), 3) << " A, is available " << aclPsuP[1].isAvailable() << endl;
+  I::get().logger() << F("PSU1 actual values: ") << String(aftActualVoltageOfPsuP[1], 3) << " V, " << String(aftActualCurrentOfPsuP[1], 3) << " A, is available " << abtPsuIsAvailableP[1] << endl;
   I::get().logger() << F("PSU1 target values: ") << String(aclPsuP[1].targetVoltage(), 3) << " V, " << String(aclPsuP[1].targetCurrent(), 3) << " A" << endl;
 
   //---------------------------------------------------------------------------------------------------
@@ -324,7 +332,7 @@ void PVZeroClass::processControlAlgorithm(void)
   //
   if (isConsumptionPowerValid)
   {
-    clCaP.updateConsumptionPower(consumptionPower);
+    clCaP.updateConsumptionPower((float)consumptionPower);
   }
   else
   {
@@ -340,28 +348,30 @@ void PVZeroClass::processControlAlgorithm(void)
   //---------------------------------------------------------------------------------------------------
   // consider feed in of both PSUs and provide values to the control algorithm
   //
-  ftActualVoltageT = 0.0;
-  ftActualCurrentT = 0.0;
-  slNumberOfStringsT = 0;
-  if (aclPsuP[0].isAvailable())
+  if (abtPsuIsAvailableP[0])
   {
-    ftActualVoltageT = aclPsuP[0].actualVoltage();
-    ftActualCurrentT += aclPsuP[0].actualVoltage();
-    slNumberOfStringsT++;
-  }
-  else if (aclPsuP[1].isAvailable())
-  {
-    ftActualVoltageT = aclPsuP[1].actualVoltage();
-    ftActualCurrentT += aclPsuP[1].actualVoltage();
+    ftActualVoltageTotalT = aftActualVoltageOfPsuP[0];
+    ftActualCurrentTotalT += aftActualCurrentOfPsuP[0];
     slNumberOfStringsT++;
   }
 
-  clCaP.updateFeedInActualDcValues(ftActualVoltageT, ftActualCurrentT);
+  if (abtPsuIsAvailableP[1])
+  {
+    ftActualVoltageTotalT = aftActualVoltageOfPsuP[0];
+    ftActualCurrentTotalT += aftActualCurrentOfPsuP[0];
+    slNumberOfStringsT++;
+  }
+
+  I::get().logger() << F("Actual Values for CA: Consumption ") << String((float)consumptionPower, 3) << " W " << String(PZI::get().config().getMaxVoltage(), 3) << " V, " << String(clBatGuardP.limitedCurrent(clCaP.feedInTargetDcCurrent()), 3) << " A" << endl;
+  // I::get().logger() << F("Actual Values for CA: Consumption ") << String((float)consumptionPower, 3) << " W " << String(ftActualVoltageTotalT, 3) << " V, " << String(ftActualCurrentTotalT, 3) << " A" << endl;
+  clCaP.updateFeedInActualDcValues(PZI::get().config().getMaxVoltage(), clBatGuardP.limitedCurrent(clCaP.feedInTargetDcCurrent()));
 
   //---------------------------------------------------------------------------------------------------
   // finally trigger the processing of data
   //
   clCaP.process();
+
+  I::get().logger() << F("Target Current after CA: ") << String(clCaP.feedInTargetDcCurrent(), 3) << " A" << endl;
 
   //---------------------------------------------------------------------------------------------------
   // update value for battery guard
@@ -369,6 +379,7 @@ void PVZeroClass::processControlAlgorithm(void)
   clBatGuardP.updateVoltage(clMpptP.batteryVoltage());
   clBatGuardP.updateCurrent(clMpptP.batteryCurrent());
   clBatGuardP.updateTime(I::get().time().currentTime());
+  clBatGuardP.updateMpptState(clMpptP.stateOfOperation());
   clBatGuardP.process();
 
   //---------------------------------------------------------------------------------------------------
@@ -379,27 +390,29 @@ void PVZeroClass::processControlAlgorithm(void)
     //-------------------------------------------------------------------------------------------
     // Consider current limit and adjust it corresponding to the number of connected PSUs
     //
-    ftActualCurrentT = clBatGuardP.limitedCurrent(clCaP.feedInTargetDcCurrent());
+    ftLimitedTargetCurrentT = clBatGuardP.limitedCurrent(clCaP.feedInTargetDcCurrent());
     if (slNumberOfStringsT > 1)
     {
-      ftActualCurrentT /= 2.0;
+      ftLimitedTargetCurrentT /= 2.0;
     }
 
     //-------------------------------------------------------------------------------------------
     // make sure current do not exceeds the limit provided by user
     //
-    if (ftActualCurrentT > PZI::get().config().getMaxAmperage())
+    if (ftLimitedTargetCurrentT > PZI::get().config().getMaxAmperage())
     {
-      ftActualCurrentT = PZI::get().config().getMaxAmperage();
+      ftLimitedTargetCurrentT = PZI::get().config().getMaxAmperage();
     }
   }
+
+  I::get().logger() << F("Target Current after BG: ") << String(ftLimitedTargetCurrentT, 3) << " A, considering " << slNumberOfStringsT << " PSUs" << endl;
 
   //---------------------------------------------------------------------------------------------------
   // update PSU0 if available
   //
-  if (aclPsuP[0].isAvailable())
+  if (abtPsuIsAvailableP[0])
   {
-    aclPsuP[0].set(clCaP.feedInTargetDcVoltage(), clBatGuardP.limitedCurrent(ftActualCurrentT));
+    aclPsuP[0].set(clCaP.feedInTargetDcVoltage(), ftLimitedTargetCurrentT);
   }
   else
   {
@@ -410,9 +423,9 @@ void PVZeroClass::processControlAlgorithm(void)
   // update PSU1 if available
   //
   //
-  if (aclPsuP[1].isAvailable())
+  if (abtPsuIsAvailableP[1])
   {
-    aclPsuP[1].set(clCaP.feedInTargetDcVoltage(), clBatGuardP.limitedCurrent(ftActualCurrentT));
+    aclPsuP[1].set(clCaP.feedInTargetDcVoltage(), ftLimitedTargetCurrentT);
   }
   else
   {
@@ -508,9 +521,9 @@ void PVZeroClass::loop()
       //-----------------------------------------------------------------------------------
       // display info that depends on PSU A
       //
-      if (aclPsuP[0].isAvailable())
+      if (abtPsuIsAvailableP[0])
       {
-        atsLcdScreenP[0].aclLine[1] = String("A[Wh]: " + String(clCaP.feedInTargetPower(), 0) + " | " + String(aclPsuP[1].actualVoltage() * aclPsuP[1].actualCurrent(), 0));
+        atsLcdScreenP[0].aclLine[1] = String("A[Wh]: " + String(clCaP.feedInTargetPower(), 0) + " | " + String(aftActualVoltageOfPsuP[0] * aftActualCurrentOfPsuP[0], 0));
         slLcdScreenNrT++;
 
         atsLcdScreenP[slLcdScreenNrT].aclLine[0] = String("Feed-in via PSU A");
@@ -518,9 +531,9 @@ void PVZeroClass::loop()
                                                           String(clCaP.feedInTargetDcVoltage(), 0) + "V+" +
                                                           String(clCaP.feedInTargetDcCurrent(), 1) + "A");
 
-        atsLcdScreenP[slLcdScreenNrT].aclLine[2] = String("" + String(aclPsuP[1].actualVoltage() * aclPsuP[1].actualCurrent(), 0) + " Wh = " +
-                                                          String(aclPsuP[1].actualVoltage(), 0) + "V + " +
-                                                          String(aclPsuP[1].actualCurrent(), 1) + "A");
+        atsLcdScreenP[slLcdScreenNrT].aclLine[2] = String("" + String(aftActualVoltageOfPsuP[0] * aftActualCurrentOfPsuP[0], 0) + " Wh = " +
+                                                          String(aftActualVoltageOfPsuP[0], 0) + "V + " +
+                                                          String(aftActualCurrentOfPsuP[0], 1) + "A");
       }
       else
       {
@@ -530,9 +543,9 @@ void PVZeroClass::loop()
       //-----------------------------------------------------------------------------------
       // display info that depends on PSU A
       //
-      if (aclPsuP[1].isAvailable())
+      if (abtPsuIsAvailableP[1])
       {
-        atsLcdScreenP[0].aclLine[2] = String("B[Wh]: " + String(clCaP.feedInTargetPower(), 0) + " | " + String(aclPsuP[1].actualVoltage() * aclPsuP[1].actualCurrent(), 0));
+        atsLcdScreenP[0].aclLine[2] = String("B[Wh]: " + String(clCaP.feedInTargetPower(), 0) + " | " + String(aftActualVoltageOfPsuP[1] * aftActualCurrentOfPsuP[1], 0));
 
         slLcdScreenNrT++;
 
@@ -541,9 +554,9 @@ void PVZeroClass::loop()
                                                           String(clCaP.feedInTargetDcVoltage(), 0) + "V+" +
                                                           String(clCaP.feedInTargetDcCurrent(), 1) + "A");
 
-        atsLcdScreenP[slLcdScreenNrT].aclLine[2] = String("" + String(aclPsuP[1].actualVoltage() * aclPsuP[1].actualCurrent(), 0) + " Wh = " +
-                                                          String(aclPsuP[1].actualVoltage(), 0) + "V + " +
-                                                          String(aclPsuP[1].actualCurrent(), 1) + "A");
+        atsLcdScreenP[slLcdScreenNrT].aclLine[2] = String("" + String(aftActualVoltageOfPsuP[1] * aftActualCurrentOfPsuP[1], 0) + " Wh = " +
+                                                          String(aftActualVoltageOfPsuP[1], 0) + "V + " +
+                                                          String(aftActualCurrentOfPsuP[1], 1) + "A");
       }
       else
       {
@@ -643,17 +656,17 @@ void PVZeroClass::_onPVZeroState(WebServer *webServer)
   json["mppt_w"] = clMpptP.batteryVoltage() * clMpptP.batteryCurrent();
   json["mppt_v"] = clMpptP.batteryVoltage();
   json["mppt_a"] = clMpptP.batteryCurrent();
-  json["psu1_available"] = aclPsuP[0].isAvailable();
-  json["psu1_w"] = aclPsuP[0].actualVoltage() * aclPsuP[0].actualCurrent();
-  json["psu1_v"] = aclPsuP[0].actualVoltage();
-  json["psu1_a"] = aclPsuP[0].actualCurrent();
+  json["psu1_available"] = abtPsuIsAvailableP[0];
+  json["psu1_w"] = (aftActualVoltageOfPsuP[0] * aftActualCurrentOfPsuP[0]);
+  json["psu1_v"] = aftActualVoltageOfPsuP[0];
+  json["psu1_a"] = aftActualCurrentOfPsuP[0];
   json["psu1_target_w"] = aclPsuP[0].targetVoltage() * aclPsuP[0].targetCurrent();
   json["psu1_target_v"] = aclPsuP[0].targetVoltage();
   json["psu1_target_a"] = aclPsuP[0].targetCurrent();
-  json["psu2_available"] = aclPsuP[1].isAvailable();
-  json["psu2_w"] = aclPsuP[1].actualVoltage() * aclPsuP[1].actualCurrent();
-  json["psu2_v"] = aclPsuP[1].actualVoltage();
-  json["psu2_a"] = aclPsuP[1].actualCurrent();
+  json["psu2_available"] = abtPsuIsAvailableP[1];
+  json["psu2_w"] = aftActualVoltageOfPsuP[1] * aftActualCurrentOfPsuP[1];
+  json["psu2_v"] = aftActualVoltageOfPsuP[1];
+  json["psu2_a"] = aftActualCurrentOfPsuP[1];
   json["psu2_target_w"] = aclPsuP[1].targetVoltage() * aclPsuP[1].targetCurrent();
   json["psu2_target_v"] = aclPsuP[1].targetVoltage();
   json["psu2_target_a"] = aclPsuP[1].targetCurrent();
@@ -774,6 +787,9 @@ void PVZeroClass::batteryGuard_EventCallback(BatteryGuard::State_te teSStateV)
     break;
   case BatteryGuard::State_te::eError:
     strBatteryState = String("error");
+    break;
+  case BatteryGuard::State_te::eMpptNotBulk:
+    strBatteryState = String("not bulk");
     break;
   default:
     strBatteryState = "-";
