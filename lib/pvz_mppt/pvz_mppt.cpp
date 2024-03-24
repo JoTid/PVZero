@@ -105,6 +105,12 @@ float PvzMppt::batteryCurrent()
   return ftBatteryCurrentP;
 }
 
+uint8_t PvzMppt::stateOfOperation()
+{
+  std::lock_guard<std::mutex> lck(mpptMutexP);
+  return ubStateOfOperationP;
+}
+
 //--------------------------------------------------------------------------------------------------------------------//
 //                                                                                                                    //
 //                                                                                                                    //
@@ -147,6 +153,11 @@ void PvzMppt::parseTable(char *pscTextFrameV)
     {
       ftBatteryCurrentP = (float)atoi(atsMpptDataP[slParamSetIndexT].pscValue);
       ftBatteryCurrentP *= 0.001; // scale from mA to A
+    }
+
+    if (String("CS").equals(atsMpptDataP[slParamSetIndexT].pscName))
+    {
+      ubStateOfOperationP = (uint8_t)atoi(atsMpptDataP[slParamSetIndexT].pscValue);
     }
 
     //-------------------------------------------------------------------------------------------

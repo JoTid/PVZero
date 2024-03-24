@@ -65,6 +65,8 @@ public:
    */
   float batteryCurrent();
 
+  uint8_t stateOfOperation();
+
 private:
   /**
    * @brief This struct is used to store parameter from the text frame
@@ -119,6 +121,8 @@ private:
    * @brief Label 'I': Main or channel 1 battery current, given in [A]
    */
   float ftBatteryCurrentP;
+
+  uint8_t ubStateOfOperationP;
 
   std::mutex mpptMutexP;
 };
