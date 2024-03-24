@@ -815,6 +815,9 @@ void PVZeroClass::batteryGuard_EventCallback(BatteryGuard::State_te teSStateV)
   case BatteryGuard::State_te::eMpptNotBulk:
     strBatteryState = String("not bulk");
     break;
+  case BatteryGuard::State_te::eChargingWithDischarge:
+    strBatteryState = String("charging with discharge");
+    break;
   default:
     strBatteryState = "-";
   }

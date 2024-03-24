@@ -98,6 +98,7 @@ public:
   {
 
     eCharging = 0,
+    eChargingWithDischarge,
     eCharged,
     eDischarging,
     eDischarged,

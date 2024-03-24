@@ -80,31 +80,27 @@ float BatteryGuard::limitedCurrent(float ftTargetCurrentV)
     // current is not limited
     break;
 
+  case eChargingWithDischarge:
+    // current is not limited
+    break;
+
   case eCharging:
     //-------------------------------------------------------------------------------------------
     // The current is limited to the Battery Current value of the Victron SmartSolar
     // nur wenn die Spannung einen gewissen wert unterschirtten hat. Im anderen Fall wird der Akku schon den
     // sollwert abfangen.
-    //
-    // Grund für diese Maßnahmen: Der Laderegler, regelet immer wieder den Strom gegen 0, was dazu führt, dass
-    // der Wechselrichter getrennt wird und sich wieder auf Netz synchronisieren muss.
-    // Dies kann bis zu einer Minute dauern, dass soll nicht so sein.
-    //
-    //
-    if (slBatteryVoltageP < 520) // \todo welcher Wert ist hier sinnvoll ?
-    {
-      if (slTargeCurrentT > slBatteryCurrentP)
-      {
-        ftLimitCurrentT = (float)(slBatteryCurrentP);
-        ftLimitCurrentT *= 0.01;
 
-        // check the MPPT is in absorbtion phase
-        //
-        // if (slBatteryVoltageP > (BG_CHARGE_CUTOFF_VOLTAGE - 14))
-        // {
-        // ftLimitCurrentT += 0.2;
-        // }
-      }
+    if (slTargeCurrentT > slBatteryCurrentP)
+    {
+      ftLimitCurrentT = (float)(slBatteryCurrentP);
+      ftLimitCurrentT *= 0.01;
+
+      // check the MPPT is in absorbtion phase
+      //
+      // if (slBatteryVoltageP > (BG_CHARGE_CUTOFF_VOLTAGE - 14))
+      // {
+      // ftLimitCurrentT += 0.2;
+      // }
     }
 
     break;
@@ -208,6 +204,31 @@ void BatteryGuard::process(void)
         clAddStateInfoP = String("MPPT is no in Bulk operation State : " + String(ubMpptStateOfOperationP));
         break;
 
+      case eChargingWithDischarge:
+        //
+        // Grund für diese Maßnahmen: Der Laderegler, regelet immer wieder den Strom gegen 0, was dazu führt, dass
+        // der Wechselrichter getrennt wird und sich wieder auf Netz synchronisieren muss.
+        // Dies kann bis zu einer Minute dauern, dass soll nicht so sein.
+        //
+        //
+        //---------------------------------------------------------------------------
+        // Battery Voltage < (52 V)
+        //
+        if (slBatteryVoltageP < 520)
+        {
+          teStateP = eCharging;
+
+          if (pfnEventHandlerP != nullptr)
+          {
+            pfnEventHandlerP(teStateP);
+          }
+        }
+        else
+        {
+          clAddStateInfoP = String("the feed in current is not limited while charge voltage is >= 52.0 V.");
+        }
+        break;
+
         //---------------------------------------------------------------------------
         // The current is limited to the Charging Current value of the Victron SmartSolar
         //
@@ -226,6 +247,14 @@ void BatteryGuard::process(void)
             pfnSaveTimeHandlerP(uqTimeP);
           }
 
+          if (pfnEventHandlerP != nullptr)
+          {
+            pfnEventHandlerP(teStateP);
+          }
+        }
+        else if ((slBatteryVoltageP >= 530) && (slBatteryCurrentP > 0))
+        {
+          teStateP = eChargingWithDischarge;
           if (pfnEventHandlerP != nullptr)
           {
             pfnEventHandlerP(teStateP);
@@ -255,7 +284,7 @@ void BatteryGuard::process(void)
         }
         else
         {
-          clAddStateInfoP = String("the feed in current is limited to the Charge Current value.");
+          clAddStateInfoP = String("the feed in current is limited to the Charge Current value while charge voltage is < 53.0 V. ");
         }
 
         //---------------------------------------------------------------------------
