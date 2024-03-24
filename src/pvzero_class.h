@@ -43,7 +43,7 @@ limitations under the License.
 namespace PVZ
 {
 
-#define FIRMWARE_VERSION "0.81.05"
+#define FIRMWARE_VERSION "0.81.06"
 
 #define BATTERY_GUARD_FILE "/battery.guard"
 
@@ -80,12 +80,16 @@ namespace PVZ
     float aftActualVoltageOfPsuP[2];
     float aftActualCurrentOfPsuP[2];
     bool abtPsuIsAvailableP[2];
+    float ftRealFeedInPowerP;
+    float ftTotalConsumptionP;
+    float ftBatteryCurrentP;
 
     BatteryGuard clBatGuardP;
 
     float ftPsuVccT = 0.0;
     int32_t consumptionPower = -1;
     bool isConsumptionPowerValid = false;
+    bool triggerMqttSend = false;
     McOvs_ts atsOvsInputsP[4]; // prepare software oversampling for up to 4 values
     float ftPsuSupplyGainP;
     float ftPsuSupplyOffsetP;

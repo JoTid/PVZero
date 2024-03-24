@@ -140,6 +140,9 @@ void PVZeroClass::setup()
   _ewcMqttHA.setup(_ewcMqtt, "pvz." + I::get().config().getChipId(), I::get().config().paramDeviceName, "pvz");
   _ewcMqttHA.addProperty("sensor", "consumption" + I::get().config().getChipId(), "Consumption", "power", "consumption", "W", false);
   _ewcMqttHA.addProperty("sensor", "feedIn" + I::get().config().getChipId(), "Feed-In", "power", "feedIn", "W", false);
+  _ewcMqttHA.addProperty("sensor", "totalConsumption" + I::get().config().getChipId(), "Total Consumption", "power", "totalConsumption", "W", false);
+  _ewcMqttHA.addProperty("sensor", "batteryCurrent" + I::get().config().getChipId(), "Battery Current", "current", "batteryCurrent", "A", false);
+
   _tsMeasLoopStart = millis();
   _shelly3emConnector.setCallbackState(std::bind(&PVZeroClass::_onTotalWatt, this, std::placeholders::_1, std::placeholders::_2));
 
@@ -316,6 +319,13 @@ void PVZeroClass::processControlAlgorithm(void)
   abtPsuIsAvailableP[0] = aclPsuP[0].isAvailable();
   abtPsuIsAvailableP[1] = aclPsuP[1].isAvailable();
 
+  ftRealFeedInPowerP = (((aftActualVoltageOfPsuP[0] * aftActualCurrentOfPsuP[0]) +
+                         (aftActualVoltageOfPsuP[1] * aftActualCurrentOfPsuP[1])) *
+                        0.95); // consider 95% efficiency of the inverter
+
+  ftTotalConsumptionP = ftRealFeedInPowerP + (float)consumptionPower;
+  ftBatteryCurrentP = (clMpptP.batteryCurrent() - (aftActualCurrentOfPsuP[0] + aftActualCurrentOfPsuP[1]));
+
   //---------------------------------------------------------------------------------------------------
   // just show all data we handle with
   //
@@ -340,9 +350,9 @@ void PVZeroClass::processControlAlgorithm(void)
     // \todo decide what to do, if the no consumption power is not available
     //       provide this value from GUI
     //
-    // Set the power to 350Wh
+    // Set the power to 250Wh
     //
-    clCaP.updateConsumptionPower(350.0);
+    clCaP.updateConsumptionPower(250.0);
   }
 
   //---------------------------------------------------------------------------------------------------
@@ -496,6 +506,18 @@ void PVZeroClass::loop()
     }
 
     processControlAlgorithm();
+
+    //-------------------------------------------------------------------------------------------
+    //
+    //
+    if (triggerMqttSend)
+    {
+      triggerMqttSend = false;
+      _ewcMqttHA.publishState("consumption" + I::get().config().getChipId(), String(consumptionPower));
+      _ewcMqttHA.publishState("feedIn" + I::get().config().getChipId(), String(ftRealFeedInPowerP, 0));
+      _ewcMqttHA.publishState("totalConsumption" + I::get().config().getChipId(), String(ftTotalConsumptionP, 0));
+      _ewcMqttHA.publishState("batteryCurrent" + I::get().config().getChipId(), String(ftBatteryCurrentP, 0));
+    }
   }
 
   //---------------------------------------------------------------------------------------------------
@@ -643,10 +665,11 @@ void PVZeroClass::_onPVZeroState(WebServer *webServer)
   json["name"] = I::get().config().paramDeviceName;
   json["version"] = I::get().server().version();
   json["consumption_power"] = consumptionPower;
-  json["feed_in_power"] = ((aftActualVoltageOfPsuP[0] * aftActualCurrentOfPsuP[0]) +
-                           (aftActualVoltageOfPsuP[1] * aftActualCurrentOfPsuP[1]));
+  json["feed_in_power"] = ftRealFeedInPowerP; // consider 95% efficiency of the inverter
   json["enable_second_psu"] = consumptionPower;
   json["battery_state"] = strBatteryState;
+  json["total_consumption"] = ftTotalConsumptionP;
+  json["battery_current"] = ftBatteryCurrentP;
   json["battery_state_info"] = strBatteryStateInfo;
   json["charge_voltage"] = clMpptP.batteryVoltage();
   json["charge_current"] = clMpptP.batteryCurrent();
@@ -694,13 +717,13 @@ void PVZeroClass::_onPVZeroCheck(WebServer *webServer)
 void PVZeroClass::_onTotalWatt(bool state, int32_t totalWatt)
 {
   I::get().logger() << F("[PVZ] callback with state: ") << state << F(", Verbrauch: ") << totalWatt << endl;
-  if (isConsumptionPowerValid)
-  {
-    _ewcMqttHA.publishState("consumption" + I::get().config().getChipId(), String(consumptionPower));
-    _ewcMqttHA.publishState("feedIn" + I::get().config().getChipId(), String(clCaP.feedInTargetPower(), 0));
-  }
+
   consumptionPower = totalWatt;
   isConsumptionPowerValid = state;
+  if (isConsumptionPowerValid)
+  {
+    triggerMqttSend = true;
+  }
 }
 
 float PVZeroClass::handleCalibrationLow(float value)

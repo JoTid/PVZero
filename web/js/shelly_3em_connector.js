@@ -93,6 +93,12 @@ function updateCycle(cycle, data) {
 function fillPVZeroState(data, url) {
   document.getElementById("pvzero_title").innerText = data["name"];
   document.getElementById("version").innerText = "v" + data["version"];
+
+  document.getElementById("total_consumption").innerText =
+    "Gesamtverbrauch: " + data["total_consumption"].toFixed(0) + " W";
+  document.getElementById("battery_current").innerText =
+    "Batteriestrom: " + data["battery_current"].toFixed(1) + " A";
+
   document.getElementById("consumption_power").innerText =
     "Aktueller Verbrauch: " + data["consumption_power"].toFixed(0) + " W";
   document.getElementById("feed_in_power").innerText =
@@ -102,26 +108,26 @@ function fillPVZeroState(data, url) {
 
   if (data["mppt_available"]) {
     document.getElementById("mppt_w").innerText = data["mppt_w"].toFixed(0) + " W";
-    document.getElementById("mppt_v").innerText = data["mppt_v"].toFixed(2) + " V";
-    document.getElementById("mppt_a").innerText = data["mppt_a"].toFixed(2) + " A";
+    document.getElementById("mppt_v").innerText = data["mppt_v"].toFixed(1) + " V";
+    document.getElementById("mppt_a").innerText = data["mppt_a"].toFixed(1) + " A";
   }
 
   if (data["psu1_available"]) {
     document.getElementById("psu1_w").innerText = data["psu1_w"].toFixed(0) + " W";
-    document.getElementById("psu1_v").innerText = data["psu1_v"].toFixed(2) + " V";
-    document.getElementById("psu1_a").innerText = data["psu1_a"].toFixed(2) + " A";
+    document.getElementById("psu1_v").innerText = data["psu1_v"].toFixed(1) + " V";
+    document.getElementById("psu1_a").innerText = data["psu1_a"].toFixed(1) + " A";
     document.getElementById("psu1_target_w").innerText = data["psu1_target_w"].toFixed(0) + " W";
-    document.getElementById("psu1_target_v").innerText = data["psu1_target_v"].toFixed(2) + " V";
-    document.getElementById("psu1_target_a").innerText = data["psu1_target_a"].toFixed(2) + " A";
+    document.getElementById("psu1_target_v").innerText = data["psu1_target_v"].toFixed(1) + " V";
+    document.getElementById("psu1_target_a").innerText = data["psu1_target_a"].toFixed(1) + " A";
   }
 
   if (data["psu2_available"]) {
     document.getElementById("psu2_w").innerText = data["psu2_w"].toFixed(0) + " W";
-    document.getElementById("psu2_v").innerText = data["psu2_v"].toFixed(2) + " V";
-    document.getElementById("psu2_a").innerText = data["psu2_a"].toFixed(2) + " A";
+    document.getElementById("psu2_v").innerText = data["psu2_v"].toFixed(1) + " V";
+    document.getElementById("psu2_a").innerText = data["psu2_a"].toFixed(1) + " A";
     document.getElementById("psu2_target_w").innerText = data["psu2_target_w"].toFixed(0) + " W";
-    document.getElementById("psu2_target_v").innerText = data["psu2_target_v"].toFixed(2) + " V";
-    document.getElementById("psu2_target_a").innerText = data["psu2_target_a"].toFixed(2) + " A";
+    document.getElementById("psu2_target_v").innerText = data["psu2_target_v"].toFixed(1) + " V";
+    document.getElementById("psu2_target_a").innerText = data["psu2_target_a"].toFixed(1) + " A";
   }
 
   if (data["analog_available"]) {

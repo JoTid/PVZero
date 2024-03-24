@@ -9,6 +9,8 @@
   "battery_state_info": "",
   "charge_voltage": -1.0,
   "charge_current": -1.0,
+  "total_consumption": -1.0,
+  "battery_current": -1.0,
   "check_interval": -1,
   "check_info": "No value",
   "next_check": "2020.08.17|17:08",
