@@ -223,6 +223,11 @@ void PVZeroClass::setup()
 
   EWC::I::get().logger() << F("setup() running on core ") << xPortGetCoreID() << endl;
   uartP.setup();
+
+  ftBatteryCurrentSumInSecP = 0.0;
+  ftBatteryCurrentSumOutSecP = 0.0;
+  ftBatteryCurrentSumInP = 0.0;
+  ftBatteryCurrentSumOutP = 0.0;
 }
 
 // // Definieren Sie einen struct, um die Daten aus der Tabelle zu speichern
@@ -331,8 +336,8 @@ void PVZeroClass::processControlAlgorithm(void)
   ftBatteryCurrentSumOutSecP += (aftActualCurrentOfPsuP[0] + aftActualCurrentOfPsuP[1]);
 
   // convert Asec value to Ah value:
-  ftBatteryCurrentSumInP = (ftBatteryCurrentSumInSecP / 3600.0);
-  ftBatteryCurrentSumOutP = (ftBatteryCurrentSumOutSecP / 3600.0);
+  ftBatteryCurrentSumInP += (ftBatteryCurrentSumInSecP / 3600.0);
+  ftBatteryCurrentSumOutP += (ftBatteryCurrentSumOutSecP / 3600.0);
 
   //---------------------------------------------------------------------------------------------------
   // just show all data we handle with
@@ -427,12 +432,12 @@ void PVZeroClass::processControlAlgorithm(void)
 
   if ((int32_t)(ftLimitedTargetCurrentT * 100) != 0)
   {
-    // reset value for Current in and Current out each time the discharged state has been reached before
-    if (((int32_t)(ftTargetVoltageT * 100)) == 0)
-    {
-      ftBatteryCurrentSumInSecP = 0.0;
-      ftBatteryCurrentSumOutSecP = 0.0;
-    }
+    // // reset value for Current in and Current out each time the discharged state has been reached before
+    // if (((int32_t)(ftTargetVoltageT * 100)) == 0)
+    // {
+    //   ftBatteryCurrentSumInSecP = 0.0;
+    //   ftBatteryCurrentSumOutSecP = 0.0;
+    // }
 
     ftTargetVoltageT = clCaP.feedInTargetDcVoltage();
   }
