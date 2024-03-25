@@ -221,8 +221,7 @@ void PVZeroClass::setup()
   // Serial2.onReceive(onReceiveFunction, false);
   // mppt.begin();
 
-  Serial.print("setup() running on core ");
-  Serial.println(xPortGetCoreID());
+  EWC::I::get().logger() << F("setup() running on core ") << xPortGetCoreID() << endl;
   uartP.setup();
 }
 
