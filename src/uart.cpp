@@ -115,9 +115,12 @@ void Uart::taskUartApp(void *_this)
         //
 
         //---------------------------------------------------------------------------
-        // perform transition to the next state
+        // perform transition to the next state,
+        // make sure the serial buffers are reset
         //
+        Serial2.flush();
         uart->clUartMuxP.enable(UartMux::eIF_2);
+        Serial2.flush();
         teUartAppStateG = eUART_APP_SM_PSU1_e;
       }
       break;
@@ -136,9 +139,12 @@ void Uart::taskUartApp(void *_this)
         aslPsuStateT[0] = aslPsuStateBeginT[0];
 
         //---------------------------------------------------------------------------
-        // perform transition to the next state
+        // perform transition to the next state,
+        // make sure the serial buffers are reset
         //
+        Serial2.flush();
         uart->clUartMuxP.enable(UartMux::eIF_3);
+        Serial2.flush();
         teUartAppStateG = eUART_APP_SM_PSU2_e;
       }
 
@@ -210,6 +216,7 @@ void Uart::taskUartApp(void *_this)
 
         case 100: // Error State: prepare re-initialisation
           aslPsuStateBeginT[0] = 0;
+          Serial2.flush();
         default:
           break;
         }
@@ -233,9 +240,12 @@ void Uart::taskUartApp(void *_this)
         aslPsuStateT[1] = aslPsuStateBeginT[1];
 
         //---------------------------------------------------------------------------
-        // perform transition to the next state
+        // perform transition to the next state,
+        // make sure the serial buffers are reset
         //
+        Serial2.flush();
         uart->clUartMuxP.enable(UartMux::eIF_1);
+        Serial2.flush();
         teUartAppStateG = eUART_APP_SM_MPPT_e;
       }
 
@@ -308,6 +318,7 @@ void Uart::taskUartApp(void *_this)
 
         case 100: // Error State: prepare re-initialisation
           aslPsuStateBeginT[1] = 0;
+          Serial2.flush();
         default:
           break;
         }
