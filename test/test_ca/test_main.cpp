@@ -42,7 +42,6 @@ void test_ca_init_parameter(void)
   TEST_ASSERT_EQUAL(0.0, clCaG.feedInActualDcVoltage());
 
   TEST_ASSERT_EQUAL(1, clCaG.filterOrder());
-  TEST_ASSERT_EQUAL(1, clCaG.stringCount());
 
   //---------------------------------------------------------------------------------------------------
   // perform setup and check value have been set
@@ -151,6 +150,9 @@ void test_ca_set_power_to_max_at_start(void)
   int32_t slPCyclesT = millis() + CA_REFRESH_TIME * 10 + 1;                      // trigger algorithm 10 times
   while (slPCyclesT > millis())
   {
+    // Simulate that consumption has fallen by the corresponding feed-in values
+    clCaG.updateConsumptionPower(600.0 - (36.0 * clCaG.feedInTargetDcCurrent()));
+
     clCaG.process();
 
     // simulate the actual value so the "discrete approximation" is considered here
@@ -163,7 +165,7 @@ void test_ca_set_power_to_max_at_start(void)
   TEST_ASSERT_EQUAL(CA_APPROX_STEP * 10, clCaG.feedInTargetDcCurrent());
   TEST_ASSERT_EQUAL(36.0, clCaG.feedInTargetDcVoltage());
   TEST_ASSERT_EQUAL((CA_APPROX_STEP * 10) * 36.0, clCaG.feedInTargetPowerApprox());
-  TEST_ASSERT_EQUAL(9.0 * 36.0, clCaG.feedInTargetPower()); // This is the target value that we are approaching in defined steps
+  TEST_ASSERT_EQUAL((CA_APPROX_STEP * 10) * 36.0, clCaG.feedInTargetPowerApprox()); // This is the target value that we are approaching in defined steps
 
   //---------------------------------------------------------------------------------------------------
   // proceed the test and check the increasing of the current
@@ -172,6 +174,9 @@ void test_ca_set_power_to_max_at_start(void)
   slPCyclesT = millis() + CA_REFRESH_TIME * 5 + 1;                                   // trigger algorithm 10 times
   while (slPCyclesT > millis())
   {
+    // Simulate that consumption has fallen by the corresponding feed-in values
+    clCaG.updateConsumptionPower(600.0 - (36.0 * clCaG.feedInTargetDcCurrent()));
+
     clCaG.process();
 
     // simulate the actual value so the "discrete approximation" is considered here
@@ -179,7 +184,7 @@ void test_ca_set_power_to_max_at_start(void)
   }
   TEST_ASSERT_EQUAL((CA_APPROX_STEP * 10) + (CA_APPROX_STEP * 5), clCaG.feedInTargetDcCurrent());
   TEST_ASSERT_EQUAL(36.0, clCaG.feedInTargetDcVoltage());
-  TEST_ASSERT_EQUAL(9 * 36.0, clCaG.feedInTargetPower()); // This is the target value that we are approaching in defined steps
+  TEST_ASSERT_EQUAL((CA_APPROX_STEP * (10 + 5)) * 36.0, clCaG.feedInTargetPowerApprox()); // This is the target value that we are approaching in defined steps
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -217,9 +222,9 @@ void test_ca_set_power_to_middle_after_max(void)
   //---------------------------------------------------------------------------------------------------
   // check expected values:  => y=mx+b, x=(300+324)=600 : DcInCurrent = 600 * 0,015 + 0 = 9 A
   //                         => P=UI : 36 V * 9 A = 324 W
-  TEST_ASSERT_EQUAL(9.0, clCaG.feedInTargetDcCurrent());
+  TEST_ASSERT_EQUAL((CA_APPROX_STEP) + 9.0, clCaG.feedInTargetDcCurrent());
   TEST_ASSERT_EQUAL(36.0, clCaG.feedInTargetDcVoltage());
-  TEST_ASSERT_EQUAL(324.0, clCaG.feedInTargetPower());
+  TEST_ASSERT_EQUAL(((CA_APPROX_STEP) + 9.0) * 36.0, clCaG.feedInTargetPowerApprox());
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -559,9 +564,9 @@ void test_ca_set_power_to_700(void)
 void setup()
 {
   //---------------------------------------------------------------------------------------------------
-  // initialise the LCD and trigger first display
+  // initialise
   //
-  clCaG.init(1);
+  clCaG.init();
 
   // NOTE!!! Wait for >2 secs
   // if board doesn't support software reset via Serial.DTR/RTS
@@ -578,7 +583,7 @@ void setup()
 //--------------------------------------------------------------------------------------------------------------------//
 void test_ca_init_2_strings(void)
 {
-  clCaG.init(2);
+  clCaG.init();
 
   TEST_ASSERT_EQUAL(0.0, clCaG.consumptionPower());
 
@@ -593,7 +598,6 @@ void test_ca_init_2_strings(void)
   TEST_ASSERT_EQUAL(0.0, clCaG.feedInActualDcVoltage());
 
   TEST_ASSERT_EQUAL(1, clCaG.filterOrder());
-  TEST_ASSERT_EQUAL(2, clCaG.stringCount());
 
   //---------------------------------------------------------------------------------------------------
   // perform setup and check value have been set
