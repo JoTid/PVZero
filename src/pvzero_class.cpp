@@ -323,28 +323,30 @@ void PVZeroClass::processControlAlgorithm(void)
   aftActualCurrentOfPsuP[1] = aclPsuP[1].actualCurrent();
   abtPsuIsAvailableP[0] = aclPsuP[0].isAvailable();
   abtPsuIsAvailableP[1] = aclPsuP[1].isAvailable();
+  ftMpptBatteryCurrentP = clMpptP.batteryCurrent();
+  ftMpptBatteryVoltageP = clMpptP.batteryVoltage();
 
   ftRealFeedInPowerP = (((aftActualVoltageOfPsuP[0] * aftActualCurrentOfPsuP[0]) +
                          (aftActualVoltageOfPsuP[1] * aftActualCurrentOfPsuP[1])) *
                         0.95); // consider 95% efficiency of the inverter
 
   ftTotalConsumptionP = ftRealFeedInPowerP + (float)consumptionPower;
-  ftBatteryCurrentP = (clMpptP.batteryCurrent() - (aftActualCurrentOfPsuP[0] + aftActualCurrentOfPsuP[1]));
+  ftBatteryCurrentP = (ftMpptBatteryCurrentP - (aftActualCurrentOfPsuP[0] + aftActualCurrentOfPsuP[1]));
 
   // update current values each second
-  ftBatteryCurrentSumInSecP += clMpptP.batteryCurrent();
+  ftBatteryCurrentSumInSecP += ftMpptBatteryCurrentP;
   ftBatteryCurrentSumOutSecP += (aftActualCurrentOfPsuP[0] + aftActualCurrentOfPsuP[1]);
 
   // convert Asec value to Ah value:
-  ftBatteryCurrentSumInP += (ftBatteryCurrentSumInSecP / 3600.0);
-  ftBatteryCurrentSumOutP += (ftBatteryCurrentSumOutSecP / 3600.0);
+  ftBatteryCurrentSumInP = (ftBatteryCurrentSumInSecP / 3600.0);
+  ftBatteryCurrentSumOutP = (ftBatteryCurrentSumOutSecP / 3600.0);
 
   //---------------------------------------------------------------------------------------------------
   // just show all data we handle with
   //
   I::get().logger() << F("Current Time: ") << I::get().time().currentTime() << endl;
   // I::get().logger() << F("loop() running on core ") << xPortGetCoreID() << "..." << endl;
-  // I::get().logger() << F("MPPT Values: ") << String(clMpptP.batteryVoltage(), 3) << " V, " << String(clMpptP.batteryCurrent(), 3) << " A, state " << clMpptP.stateOfOperation() << endl;
+  // I::get().logger() << F("MPPT Values: ") << String(ftMpptBatteryVoltageP, 3) << " V, " << String(ftMpptBatteryCurrentP, 3) << " A, state " << clMpptP.stateOfOperation() << endl;
   // I::get().logger() << F("PSU0 actual values: ") << String(aftActualVoltageOfPsuP[0], 3) << " V, " << String(aftActualVoltageOfPsuP[0], 3) << " A, is available " << abtPsuIsAvailableP[0] << endl;
   // I::get().logger() << F("PSU0 target values: ") << String(aclPsuP[0].targetVoltage(), 3) << " V, " << String(aclPsuP[0].targetCurrent(), 3) << " A" << endl;
   // I::get().logger() << F("PSU1 actual values: ") << String(aftActualVoltageOfPsuP[1], 3) << " V, " << String(aftActualCurrentOfPsuP[1], 3) << " A, is available " << abtPsuIsAvailableP[1] << endl;
@@ -399,8 +401,8 @@ void PVZeroClass::processControlAlgorithm(void)
   //---------------------------------------------------------------------------------------------------
   // update value for battery guard
   //
-  clBatGuardP.updateVoltage(clMpptP.batteryVoltage());
-  clBatGuardP.updateCurrent(clMpptP.batteryCurrent());
+  clBatGuardP.updateVoltage(ftMpptBatteryVoltageP);
+  clBatGuardP.updateCurrent(ftMpptBatteryCurrentP);
   clBatGuardP.updateTime(I::get().time().currentTime());
   clBatGuardP.updateMpptState(clMpptP.stateOfOperation());
   clBatGuardP.process();
@@ -705,9 +707,9 @@ void PVZeroClass::_onPVZeroState(WebServer *webServer)
   json["check_interval"] = PZI::get().config().getCheckInterval();
   json["next_check"] = _shelly3emConnector.infoSleepUntil();
   json["mppt_available"] = true;
-  json["mppt_w"] = clMpptP.batteryVoltage() * clMpptP.batteryCurrent();
-  json["mppt_v"] = clMpptP.batteryVoltage();
-  json["mppt_a"] = clMpptP.batteryCurrent();
+  json["mppt_w"] = ftMpptBatteryVoltageP * ftMpptBatteryCurrentP;
+  json["mppt_v"] = ftMpptBatteryVoltageP;
+  json["mppt_a"] = ftMpptBatteryCurrentP;
   json["psu1_available"] = abtPsuIsAvailableP[0];
   json["psu1_w"] = (aftActualVoltageOfPsuP[0] * aftActualCurrentOfPsuP[0]);
   json["psu1_v"] = aftActualVoltageOfPsuP[0];
