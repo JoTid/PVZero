@@ -120,6 +120,7 @@ void Uart::taskUartApp(void *_this)
         //
         Serial2.flush();
         uart->clUartMuxP.enable(UartMux::eIF_2);
+        delay(10);
         Serial2.flush();
         teUartAppStateG = eUART_APP_SM_PSU1_e;
       }
@@ -144,6 +145,7 @@ void Uart::taskUartApp(void *_this)
         //
         Serial2.flush();
         uart->clUartMuxP.enable(UartMux::eIF_3);
+        delay(10);
         Serial2.flush();
         teUartAppStateG = eUART_APP_SM_PSU2_e;
       }
@@ -245,6 +247,7 @@ void Uart::taskUartApp(void *_this)
         //
         Serial2.flush();
         uart->clUartMuxP.enable(UartMux::eIF_1);
+        delay(10);
         Serial2.flush();
         teUartAppStateG = eUART_APP_SM_MPPT_e;
       }
