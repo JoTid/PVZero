@@ -35,46 +35,6 @@ using namespace PVZ;
 #define MY_SHELLY_PIN 6
 #endif
 
-// void mpptCallback(uint16_t id, int32_t value);
-// VEDirect mppt(Serial2, mpptCallback);
-
-// uint16_t panelVoltage = 0;
-// uint16_t chargeCurrent = 0;
-
-// void setup() {
-//   Serial.begin(19200);
-//   mppt.begin();
-// }
-
-// void loop() {
-//   static unsigned long secondsTimer = 0;
-//   mppt.update();
-//   unsigned long m = millis();
-//   if(m - secondsTimer > 1000L){
-//     secondsTimer = m;
-//     mppt.ping();  // send oing every second
-//   }
-// }
-
-// void mpptCallback(uint16_t id, int32_t value)
-// {
-//   Serial.print(F("------------------------------- > mpptCallback id: "));
-//   Serial.println(value);
-
-//   if (id == VEDirect_kPanelVoltage)
-//   {
-//     panelVoltage = value;
-//     Serial.print(F("Vpv : "));
-//     Serial.println(value * 0.01);
-//   }
-//   if (id == VEDirect_kChargeCurrent)
-//   {
-//     chargeCurrent = value;
-//     Serial.print(F("Ich : "));
-//     Serial.println(value * 0.1);
-//   }
-// }
-
 PVZeroClass::PVZeroClass()
     : _shelly3emConnector(MY_SHELLY_PIN), // pinPot=D6
       uartP(clMpptP, aclPsuP[0], aclPsuP[1])
@@ -92,34 +52,19 @@ PVZeroClass::~PVZeroClass()
 {
 }
 
-// unsigned long time_interval;
-// unsigned long time_interval_stamp;
-// unsigned long ts_after = millis();
-
-// Serial.printf("Time reinit the USART: %i ", ts_after - ts_before);
-
-// void onReceiveFunction()
-// {
-//   time_interval = millis() - time_interval_stamp;
-//   time_interval_stamp = millis();
-
-//   size_t available = Serial2.available();
-//   while (available--)
-//   {
-//     Serial.print((char)Serial2.read());
-//   }
-//   Serial.println();
-
-//   Serial.printf("onReceive Callback:: Interval %i: ", time_interval);
-// }
-
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
 void PVZeroClass::setup()
 {
   //---------------------------------------------------------------------------------------------------
   // initialise the LCD and trigger first display
   //
+#ifdef LCD_SUPPORT
   _lcd.init(FIRMWARE_VERSION);
   _lcd.process();
+#endif
 
   EWC::I::get().configFS().addConfig(_ewcUpdater);
   EWC::I::get().configFS().addConfig(_ewcMail);
@@ -449,6 +394,7 @@ void PVZeroClass::loop()
   //---------------------------------------------------------------------------------------------------
   // Measure and calculate the charge voltage (input voltage PSUs)
   //
+#if 0
   if (McOvsSample(&atsOvsInputsP[0], analogRead(33)) == true)
   {
     ftPsuVccT = (float)McOvsGetResult(&atsOvsInputsP[0]);
@@ -457,6 +403,7 @@ void PVZeroClass::loop()
 
     I::get().logger() << F("Measured Charge Voltage: ") << McOvsGetResult(&atsOvsInputsP[0]) << F(" V") << endl;
   }
+#endif
 
   //---------------------------------------------------------------------------------------------------
   // Trigger 3EM loop and NTP time each second
@@ -473,6 +420,7 @@ void PVZeroClass::loop()
       //-----------------------------------------------------------------------------------
       // update time if available
       //
+#ifdef LCD_SUPPORT
       if (I::get().time().timeAvailable())
       {
         //---------------------------------------------------------------------------
@@ -487,7 +435,7 @@ void PVZeroClass::loop()
       {
         _lcd.updateTime("");
       }
-
+#endif
       //-----------------------------------------------------------------------------------
       // trigger Shell 3EM loop
       //
@@ -509,6 +457,7 @@ void PVZeroClass::loop()
     }
   }
 
+#ifdef LCD_SUPPORT
   //---------------------------------------------------------------------------------------------------
   // Prepare informations for the LCD screens, when WiFi is connected
   //
@@ -639,6 +588,7 @@ void PVZeroClass::loop()
   // Trigger the LCD application
   //
   _lcd.process();
+#endif
 }
 
 void PVZeroClass::_onPVZeroState(WebServer *webServer)

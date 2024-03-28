@@ -45,6 +45,8 @@ namespace PVZ
 
 #define FIRMWARE_VERSION "0.81.06"
 
+#undef  LCD_SUPPORT
+
 #define BATTERY_GUARD_FILE "/battery.guard"
 
   class PVZeroClass
