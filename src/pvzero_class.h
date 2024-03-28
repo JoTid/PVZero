@@ -84,6 +84,7 @@ namespace PVZ
     bool abtPsuIsAvailableP[2];
     float ftMpptBatteryCurrentP;
     float ftMpptBatteryVoltageP;
+    float ftLimitedTargetCurrentP;
 
     float ftRealFeedInPowerP;
     float ftTotalConsumptionP;

@@ -204,27 +204,88 @@ void PVZeroClass::setup()
 //--------------------------------------------------------------------------------------------------------------------//
 void PVZeroClass::processControlAlgorithm(void)
 {
-  float ftActualCurrentTotalT = 0.0;
-  float ftActualVoltageTotalT = 0.0;
-  float ftTargetVoltageT = 0.0;
-  float ftLimitedTargetCurrentT;
-  int32_t slNumberOfStringsT = 0;
+  float ftActualCurrentTotalT = 0.0; // holds the current sum of both PSUs
+  float ftTargetVoltageT = 0.0;      // is typically is equal to the MPPT voltage except the PSUs should be switched off
+  int32_t slNumberOfStringsT = 0;    // number of available strings, typically number of PSUs
 
-  aftActualVoltageOfPsuP[0] = ((float)aclPsuActualVoltageFilterP[0].process((int32_t)(aclPsuP[0].actualVoltage() * 100))) * 0.01;
-  aftActualCurrentOfPsuP[0] = ((float)aclPsuActualCurrentFilterP[0].process((int32_t)(aclPsuP[0].actualCurrent() * 100))) * 0.01;
-  aftActualVoltageOfPsuP[1] = ((float)aclPsuActualVoltageFilterP[1].process((int32_t)(aclPsuP[1].actualVoltage() * 100))) * 0.01;
-  aftActualCurrentOfPsuP[1] = ((float)aclPsuActualCurrentFilterP[1].process((int32_t)(aclPsuP[1].actualCurrent() * 100))) * 0.01;
+  //---------------------------------------------------------------------------------------------------
+  // take values from PSU, make sure they are not negative
+  //
+  if (((int32_t)(aclPsuP[0].actualVoltage() * 100)) > 0)
+  {
+    aftActualVoltageOfPsuP[0] = ((float)aclPsuActualVoltageFilterP[0].process((int32_t)(aclPsuP[0].actualVoltage() * 100))) * 0.01;
+  }
+  else
+  {
+    aftActualVoltageOfPsuP[0] = 0.0;
+  }
+  if (((int32_t)(aclPsuP[0].actualCurrent() * 100)) > 0)
+  {
+    aftActualCurrentOfPsuP[0] = ((float)aclPsuActualCurrentFilterP[0].process((int32_t)(aclPsuP[0].actualCurrent() * 100))) * 0.01;
+  }
+  else
+  {
+    aftActualCurrentOfPsuP[0] = 0.0;
+  }
+
+  if (((int32_t)(aclPsuP[1].actualVoltage() * 100)) > 0)
+  {
+    aftActualVoltageOfPsuP[1] = ((float)aclPsuActualVoltageFilterP[1].process((int32_t)(aclPsuP[1].actualVoltage() * 100))) * 0.01;
+  }
+  else
+  {
+    aftActualVoltageOfPsuP[1] = 0.0;
+  }
+
+  if (((int32_t)(aclPsuP[1].actualCurrent() * 100)) > 0)
+  {
+    aftActualCurrentOfPsuP[1] = ((float)aclPsuActualCurrentFilterP[1].process((int32_t)(aclPsuP[1].actualCurrent() * 100))) * 0.01;
+  }
+  else
+  {
+    aftActualCurrentOfPsuP[1] = 0.0;
+  }
+
+  //---------------------------------------------------------------------------------------------------
+  // update availability flags
+  //
   abtPsuIsAvailableP[0] = aclPsuP[0].isAvailable();
   abtPsuIsAvailableP[1] = aclPsuP[1].isAvailable();
+
+  //---------------------------------------------------------------------------------------------------
+  // depending on availability of the PSUs update number of Strings and Current sum
+  //
+  if (abtPsuIsAvailableP[0])
+  {
+    ftActualCurrentTotalT += aftActualCurrentOfPsuP[0];
+    slNumberOfStringsT++;
+  }
+
+  if (abtPsuIsAvailableP[1])
+  {
+    ftActualCurrentTotalT += aftActualCurrentOfPsuP[1];
+    slNumberOfStringsT++;
+  }
+
+  //---------------------------------------------------------------------------------------------------
+  // take values from MPPT
+  //
   ftMpptBatteryCurrentP = clMpptP.batteryCurrent();
   ftMpptBatteryVoltageP = clMpptP.batteryVoltage();
 
+  //---------------------------------------------------------------------------------------------------
+  // calculate the real feed in power and other values for display in GUI
+  //
   ftRealFeedInPowerP = (((aftActualVoltageOfPsuP[0] * aftActualCurrentOfPsuP[0]) +
                          (aftActualVoltageOfPsuP[1] * aftActualCurrentOfPsuP[1])) *
                         0.95); // consider 95% efficiency of the inverter
 
   ftTotalConsumptionP = ftRealFeedInPowerP + (float)consumptionPower;
   ftBatteryCurrentP = (ftMpptBatteryCurrentP - (aftActualCurrentOfPsuP[0] + aftActualCurrentOfPsuP[1]));
+
+  //---------------------------------------------------------------------------------------------------
+  // update values for curren in and current out in [Ah]
+  //
 
   // update current values each second
   ftBatteryCurrentSumInSecP += ftMpptBatteryCurrentP;
@@ -237,7 +298,7 @@ void PVZeroClass::processControlAlgorithm(void)
   //---------------------------------------------------------------------------------------------------
   // just show all data we handle with
   //
-  I::get().logger() << F("Current Time: ") << I::get().time().currentTime() << endl;
+  // I::get().logger() << F("Current Time: ") << I::get().time().currentTime() << endl;
   // I::get().logger() << F("loop() running on core ") << xPortGetCoreID() << "..." << endl;
   // I::get().logger() << F("MPPT Values: ") << String(ftMpptBatteryVoltageP, 3) << " V, " << String(ftMpptBatteryCurrentP, 3) << " A, state " << clMpptP.stateOfOperation() << endl;
   // I::get().logger() << F("PSU0 actual values: ") << String(aftActualVoltageOfPsuP[0], 3) << " V, " << String(aftActualVoltageOfPsuP[0], 3) << " A, is available " << abtPsuIsAvailableP[0] << endl;
@@ -246,11 +307,16 @@ void PVZeroClass::processControlAlgorithm(void)
   // I::get().logger() << F("PSU1 target values: ") << String(aclPsuP[1].targetVoltage(), 3) << " V, " << String(aclPsuP[1].targetCurrent(), 3) << " A" << endl;
 
   //---------------------------------------------------------------------------------------------------
+  //---------------------------------------------------------------------------------------------------
   // collect and provide data to the control algorithm
   //
-  clCaP.setFeedInTargetDcVoltage(ftMpptBatteryVoltageP - 1.0);
+
+  //---------------------------------------------------------------------------------------------------
+  // update actual consumption power given in [Wh]
+  //
   if (isConsumptionPowerValid)
   {
+    // take value from Shelly 3EM
     clCaP.updateConsumptionPower((float)consumptionPower);
   }
   else
@@ -259,39 +325,28 @@ void PVZeroClass::processControlAlgorithm(void)
     // \todo decide what to do, if the no consumption power is not available
     //       provide this value from GUI
     //
-    // Set the power to 250Wh
-    //
     clCaP.updateConsumptionPower(250.0);
   }
 
   //---------------------------------------------------------------------------------------------------
-  // consider feed in of both PSUs and provide values to the control algorithm
+  // Set voltage to the voltage from MPPT that also corresponds to the voltage of battery
+  // and update actual values, that correspond to the target values.
+  // Set target actual values to the target values leads in to the better control results.
   //
-  if (abtPsuIsAvailableP[0])
-  {
-    ftActualVoltageTotalT = aftActualVoltageOfPsuP[0];
-    ftActualCurrentTotalT += aftActualCurrentOfPsuP[0];
-    slNumberOfStringsT++;
-  }
+  clCaP.setFeedInTargetDcVoltage(ftMpptBatteryVoltageP);
+  clCaP.updateFeedInActualDcValues(ftMpptBatteryVoltageP, ftLimitedTargetCurrentP * slNumberOfStringsT);
 
-  if (abtPsuIsAvailableP[1])
-  {
-    ftActualVoltageTotalT = aftActualVoltageOfPsuP[0];
-    ftActualCurrentTotalT += aftActualCurrentOfPsuP[0];
-    slNumberOfStringsT++;
-  }
-
-  I::get().logger() << F("Actual Values for CA: Consumption ") << String((float)consumptionPower, 3) << " W " << String(PZI::get().config().getMaxVoltage(), 3) << " V, " << String(clBatGuardP.limitedCurrent(clCaP.feedInTargetDcCurrent()), 3) << " A" << endl;
+  // I::get().logger() << F("Actual Values for CA: Consumption ") << String((float)consumptionPower, 3) << " W " << String((ftMpptBatteryVoltageP), 1) << " V, " << String(clBatGuardP.limitedCurrent(clCaP.feedInTargetDcCurrent()), 3) << " A" << endl;
   // I::get().logger() << F("Actual Values for CA: Consumption ") << String((float)consumptionPower, 3) << " W " << String(ftActualVoltageTotalT, 3) << " V, " << String(ftActualCurrentTotalT, 3) << " A" << endl;
-  clCaP.updateFeedInActualDcValues(PZI::get().config().getMaxVoltage(), clBatGuardP.limitedCurrent(clCaP.feedInTargetDcCurrent()));
 
   //---------------------------------------------------------------------------------------------------
   // finally trigger the processing of data
   //
   clCaP.process();
 
-  I::get().logger() << F("Target Current after CA: ") << String(clCaP.feedInTargetDcCurrent(), 3) << " A" << endl;
+  // I::get().logger() << F("Target Current after CA: ") << String(clCaP.feedInTargetDcCurrent(), 3) << " A" << endl;
 
+  //---------------------------------------------------------------------------------------------------
   //---------------------------------------------------------------------------------------------------
   // update value for battery guard
   //
@@ -302,38 +357,46 @@ void PVZeroClass::processControlAlgorithm(void)
   clBatGuardP.process();
 
   //---------------------------------------------------------------------------------------------------
-  // Update target data of the PSU only one time in second
+  // Adjust current value depending on available number of strings / PSUs
   //
   if (slNumberOfStringsT > 0)
   {
     //-------------------------------------------------------------------------------------------
     // Consider current limit and adjust it corresponding to the number of connected PSUs
     //
-    ftLimitedTargetCurrentT = clBatGuardP.limitedCurrent(clCaP.feedInTargetDcCurrent());
+    ftLimitedTargetCurrentP = clBatGuardP.limitedCurrent(clCaP.feedInTargetDcCurrent());
     if (slNumberOfStringsT > 1)
     {
-      ftLimitedTargetCurrentT /= 2.0;
+      ftLimitedTargetCurrentP /= 2.0;
     }
 
     //-------------------------------------------------------------------------------------------
     // make sure current do not exceeds the limit provided by user
     //
-    if (ftLimitedTargetCurrentT > PZI::get().config().getMaxAmperage())
+    if (ftLimitedTargetCurrentP > PZI::get().config().getMaxAmperage())
     {
-      ftLimitedTargetCurrentT = PZI::get().config().getMaxAmperage();
+      ftLimitedTargetCurrentP = PZI::get().config().getMaxAmperage();
     }
   }
 
-  I::get().logger() << F("Target Current after BG: ") << String(ftLimitedTargetCurrentT, 3) << " A, considering " << slNumberOfStringsT << " PSUs" << endl;
+  // I::get().logger() << F("Target Current after BG: ") << String(ftLimitedTargetCurrentP, 3) << " A, considering " << slNumberOfStringsT << " PSUs" << endl;
 
-  if ((int32_t)(ftLimitedTargetCurrentT * 100) != 0)
+  //---------------------------------------------------------------------------------------------------
+  // Adjust voltage value depending on feed in current.
+  // If feed in current is near by 0.00 A, that means that PSUs can be switched off and the
+  // target voltage can be set to 0.0 V.
+  //
+  if ((int32_t)(ftLimitedTargetCurrentP * 100) != 0)
   {
-    // // reset value for Current in and Current out each time the discharged state has been reached before
-    // if (((int32_t)(ftTargetVoltageT * 100)) == 0)
-    // {
-    //   ftBatteryCurrentSumInSecP = 0.0;
-    //   ftBatteryCurrentSumOutSecP = 0.0;
-    // }
+    //-------------------------------------------------------------------------------------------
+    // Each time the PSUs are switched on after the were off the new cycle begins and
+    // we reset values for current in and out sums.
+    //
+    if (((int32_t)(ftTargetVoltageT * 100)) == 0)
+    {
+      ftBatteryCurrentSumInSecP = 0.0;
+      ftBatteryCurrentSumOutSecP = 0.0;
+    }
 
     ftTargetVoltageT = clCaP.feedInTargetDcVoltage();
   }
@@ -347,7 +410,7 @@ void PVZeroClass::processControlAlgorithm(void)
   //
   if (abtPsuIsAvailableP[0])
   {
-    aclPsuP[0].set(ftTargetVoltageT, ftLimitedTargetCurrentT);
+    aclPsuP[0].set(ftTargetVoltageT, ftLimitedTargetCurrentP);
   }
   else
   {
@@ -360,7 +423,7 @@ void PVZeroClass::processControlAlgorithm(void)
   //
   if (abtPsuIsAvailableP[1])
   {
-    aclPsuP[1].set(ftTargetVoltageT, ftLimitedTargetCurrentT);
+    aclPsuP[1].set(ftTargetVoltageT, ftLimitedTargetCurrentP);
   }
   else
   {
