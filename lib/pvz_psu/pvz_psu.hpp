@@ -60,24 +60,16 @@ public:
   int32_t model();
 
 private:
-#define PSU_REFRESH_TIME 1000
-
   int32_t slModelNumberP;
   DPM8600 clPsuP;
 
   float ftActualVoltageP;
   float ftActualCurrentP;
   float ftActualTemperatureP;
+  bool btConstantCurrentOutputP;
 
   float ftTargetVoltageP;
   float ftTargetCurrentP;
-
-  // Fixed-point numbers with 3 decimal places
-  int32_t slTargetVoltageNewP;
-  int32_t slTargetCurrentNewP;
-
-  int32_t slTargetVoltageOldP;
-  int32_t slTargetCurrentOldP;
 
   bool btIsEnabledP;
 

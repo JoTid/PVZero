@@ -26,12 +26,6 @@ PvzPsu::PvzPsu()
   slModelNumberP = -1; // not initialised
   ftActualVoltageP = 0.0;
   ftActualCurrentP = 0.0;
-
-  slTargetVoltageNewP = 0;
-  slTargetCurrentNewP = 0;
-
-  slTargetVoltageOldP = 0;
-  slTargetCurrentOldP = 0;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -96,6 +90,23 @@ int32_t PvzPsu::read()
   float ftReadValueT;
 
   //---------------------------------------------------------------------------------------------------
+  // read status
+  //
+  if (slReturnT >= 0)
+  {
+    ftReadValueT = clPsuP.read('s');
+    slReturnT = (int32_t)ftReadValueT;
+    if (slReturnT > 0)
+    {
+      btConstantCurrentOutputP = true;
+    }
+    else
+    {
+      btConstantCurrentOutputP = false;
+    }
+  }
+
+  //---------------------------------------------------------------------------------------------------
   // read voltage only if PSU is available an no previous errors occur
   //
   if (slReturnT >= 0)
@@ -104,7 +115,11 @@ int32_t PvzPsu::read()
     slReturnT = (int32_t)ftReadValueT;
     if (slReturnT >= 0)
     {
-      ftActualVoltageP = ftReadValueT;
+      // take value only the PSU indicates constant voltage
+      if (btConstantCurrentOutputP == false)
+      {
+        ftActualVoltageP = ftReadValueT;
+      }
     }
   }
 
@@ -117,7 +132,11 @@ int32_t PvzPsu::read()
     slReturnT = (int32_t)ftReadValueT;
     if (slReturnT >= 0)
     {
-      ftActualCurrentP = ftReadValueT;
+      // take value only the PSU indicates constant current
+      if (btConstantCurrentOutputP == true)
+      {
+        ftActualCurrentP = ftReadValueT;
+      }
     }
   }
 
@@ -152,14 +171,9 @@ int32_t PvzPsu::write()
   int32_t slReturnT = 0;
 
   //---------------------------------------------------------------------------------------------------
-  // Do not write value each time if previous is the same one
+  // Write new values to the PSU
   //
-  if ((slTargetVoltageOldP != slTargetVoltageNewP) ||
-      (slTargetCurrentOldP != slTargetCurrentNewP) ||
-      (slTargetCurrentOldP == 0))
-  {
-    slReturnT = clPsuP.writeVC(ftTargetVoltageP, ftTargetCurrentP);
-  }
+  slReturnT = clPsuP.writeVC(ftTargetVoltageP, ftTargetCurrentP);
 
   if (slReturnT > 0)
   {
@@ -173,67 +187,6 @@ int32_t PvzPsu::write()
 //                                                                                                                    //
 //                                                                                                                    //
 //--------------------------------------------------------------------------------------------------------------------//
-// void PvzPsu::process(bool btForceV)
-// {
-//   std::lock_guard<std::mutex> lck(uartMutexP);
-//   static unsigned long ulOldTimeS;
-//   static uint32_t ulRefreshTimeT;
-
-//   //---------------------------------------------------------------------------------------------------
-//   // Model number is negative in case of failure at initialisation.
-//   // In other case it contain the maximal A value (5, 8, 16 or 24)
-//   //
-//   if ((slModelNumberP < 0) && (btForceV == false))
-//   {
-//     return;
-//   }
-
-//   //---------------------------------------------------------------------------------------------------
-//   // count the millisecond ticks and avoid overflow
-//   //
-//   unsigned long ulNewTimeT = millis();
-//   if (ulNewTimeT != ulOldTimeS)
-//   {
-//     if (ulNewTimeT > ulOldTimeS)
-//     {
-//       ulRefreshTimeT += (uint32_t)(ulNewTimeT - ulOldTimeS);
-//     }
-//     else
-//     {
-//       ulRefreshTimeT += (uint32_t)(ulOldTimeS - ulNewTimeT);
-//     }
-//     ulOldTimeS = ulNewTimeT;
-//   }
-
-//   //---------------------------------------------------------------------------------------------------
-//   // refresh the PSU only within define time
-//   //
-//   if (ulRefreshTimeT > PSU_REFRESH_TIME)
-//   {
-//     ulRefreshTimeT = 0;
-
-//     //-------------------------------------------------------------------------------------------
-//     // simple poll actual values from PSU
-//     //
-//     if (clPsuP.read('p') > 0)
-//     {
-//       btIsEnabledP = true;
-//     }
-//     else
-//     {
-//       btIsEnabledP = false;
-//     }
-
-//     ftActualVoltageP = clPsuP.read('v');
-//     ftActualCurrentP = clPsuP.read('c');
-//     ftActualTemperatureP = clPsuP.read('t');
-//   }
-// }
-
-//--------------------------------------------------------------------------------------------------------------------//
-//                                                                                                                    //
-//                                                                                                                    //
-//--------------------------------------------------------------------------------------------------------------------//
 int32_t PvzPsu::set(float ftVoltageV, float ftCurrentV)
 {
   std::lock_guard<std::mutex> lck(uartMutexP);
@@ -241,10 +194,6 @@ int32_t PvzPsu::set(float ftVoltageV, float ftCurrentV)
 
   ftTargetVoltageP = ftVoltageV;
   ftTargetCurrentP = ftCurrentV;
-
-  // set values for comparison
-  slTargetVoltageNewP = (int32_t)(ftTargetVoltageP * 1000);
-  slTargetCurrentNewP = (int32_t)(ftTargetVoltageP * 1000);
 
   return slReturnT;
 }
