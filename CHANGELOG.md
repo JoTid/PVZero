@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+- The communication method with the power supply units. So values are more stable and do not ha such value outliers.
+  In addition, the status is read out and the corresponding values are only accepted depending on this.
+  Furthermore filter now that voltage and current values.
+
+- Instead of setting a constant value for the PSU voltage, it is now set 1.0V below the battery voltage.
+  This seems to make the PSUs more stable.
+
+- Fix issue where incorrect values were supplied to the CA and thus the consumption power was not taken into account,
+  with the result that the feed-in was higher than the consumption
+
 ## [0.81.05] - 2024-03-24
 
 - Version which was used during commissioning and works with a certain degree of success.

@@ -70,23 +70,28 @@ Zustandsautomat des Batteriewächters.
 Beschreibung der Zustände:
 
 - **charging**: Der Strom wird auf den Wert **Battery Current** vom Victron SmartSolar begrenzt
+- **charging with discharge**: Der Strom wird nicht begrenzt
 - **charged**: Der Strom wird nicht begrenzt, Zeitstempel wird gespeichert
 - **discharging**: Der Strom wird nicht begrenzt
 - **discharged**: Der Strom wird auf den Wer 0.0 A begrenzt, Einspeisung wird eingestellt
 
 Beschreibung der Zustandsübergänge:
 
-1. **Battery Voltage** >= CHARGE_CUTOFF_VOLTAGE (58.4 V)
+1. **Battery Voltage** >= CHARGE_CUTOFF_VOLTAGE (58.4 V)s
 
 2. **Battery Voltage** < CHARGE_CUTOFF_VOLTAGE (58.4 V)
 
 3. **Battery Voltage** <= DISCHARGE_VOLTAGE (40.0 V)
 
-4. **Battery Voltage** > (DISCHARGE_VOLTAGE + DISCHARGE_VOLTAGE_OFFSET) (40.0 V + 2.0 V)
+4. **Battery Voltage** > (DISCHARGE_VOLTAGE + DISCHARGE_VOLTAGE_OFFSET) (45.0 V + 6.0 V)
 
 5. (**Battery Current** == 0.0 A) && (Zeitstempel < 2 Wochen)
 
 6. **Battery Current** > 0.0 A
+
+7. (**Battery Voltage**) >= 53.0 V && (**Battery Current** > 0.0 A)
+
+8. **Battery Voltage** < 52.0 V
 
 Um festzustellen ob die Batterie geladen oder entladen wird, is der **Battery Current** Wert vom Victron SmartSolar
 erforderlich.

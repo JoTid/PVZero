@@ -1,6 +1,6 @@
-<mxfile host="Electron" modified="2024-03-20T22:07:42.033Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.0.4 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="BXlh0WeAfEFcbHaMoAGE" version="24.0.4" type="device" pages="3">
+<mxfile host="Electron" modified="2024-03-28T21:06:22.839Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.0.4 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="oVhU9eA9VDKk7yzXRhWl" version="24.0.4" type="device" pages="4">
   <diagram id="GDF2bqVlT_cqfWEFH5KE" name="battery guard">
-    <mxGraphModel dx="2074" dy="1196" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1235" dy="623" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -119,14 +119,6 @@
         <mxCell id="O16gCxfHV4XE0OwBhvlR-10" value="charged" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="1050" y="600" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="O16gCxfHV4XE0OwBhvlR-11" value="" style="ellipse;html=1;shape=startState;fillColor=#000000;strokeColor=#ff0000;" parent="1" vertex="1">
-          <mxGeometry x="930" y="390" width="40" height="40" as="geometry" />
-        </mxCell>
-        <mxCell id="O16gCxfHV4XE0OwBhvlR-12" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;verticalAlign=bottom;endArrow=open;endSize=8;strokeColor=#ff0000;rounded=0;" parent="1" source="O16gCxfHV4XE0OwBhvlR-11" edge="1">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="1050" y="410" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
         <mxCell id="O16gCxfHV4XE0OwBhvlR-13" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.56;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" edge="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="1170" y="400.20000000000005" as="sourcePoint" />
@@ -224,7 +216,43 @@
           <mxGeometry x="1470" y="650" width="60" height="30" as="geometry" />
         </mxCell>
         <mxCell id="O16gCxfHV4XE0OwBhvlR-41" value="[out] = Battery Current" style="text;whiteSpace=wrap;spacing=0;fontSize=10;align=center;verticalAlign=middle;" parent="1" vertex="1">
-          <mxGeometry x="1000" y="440" width="110" height="30" as="geometry" />
+          <mxGeometry x="970" y="360" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="2AG61RUC39u-of7MrIXW-1" value="charging with discharge" style="ellipse;shape=umlControl;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="930" y="480" width="120" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="2AG61RUC39u-of7MrIXW-2" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.099;exitY=0.843;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.761;entryY=0.202;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="O16gCxfHV4XE0OwBhvlR-7" target="2AG61RUC39u-of7MrIXW-1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1170" y="470" as="sourcePoint" />
+            <mxPoint x="1220" y="420" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2AG61RUC39u-of7MrIXW-4" value="7." style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="2AG61RUC39u-of7MrIXW-2">
+          <mxGeometry x="0.009" y="1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2AG61RUC39u-of7MrIXW-3" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.327;entryY=0.965;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.965;exitY=0.373;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="2AG61RUC39u-of7MrIXW-1" target="O16gCxfHV4XE0OwBhvlR-7">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1170" y="470" as="sourcePoint" />
+            <mxPoint x="1220" y="420" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2AG61RUC39u-of7MrIXW-5" value="8." style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="2AG61RUC39u-of7MrIXW-3">
+          <mxGeometry x="-0.0312" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2AG61RUC39u-of7MrIXW-7" value="" style="ellipse;html=1;shape=startState;fillColor=#000000;strokeColor=#ff0000;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="610" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="2AG61RUC39u-of7MrIXW-8" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;verticalAlign=bottom;endArrow=open;endSize=8;strokeColor=#ff0000;rounded=0;" edge="1" parent="1" source="2AG61RUC39u-of7MrIXW-7">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1410" y="630" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2AG61RUC39u-of7MrIXW-9" value="[out] = [in]" style="text;whiteSpace=wrap;spacing=0;fontSize=10;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="950" y="550" width="60" height="30" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
@@ -1077,6 +1105,14 @@
         <mxCell id="k0yTvwxwQ73OQT519Gxl-3" value="&lt;font style=&quot;font-size: 8px;&quot;&gt;ADC&lt;/font&gt;" style="edgeLabel;resizable=0;html=1;;align=center;verticalAlign=middle;" parent="k0yTvwxwQ73OQT519Gxl-2" connectable="0" vertex="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="A-0col3wt0bbo3mHfvJE" name="Seite-4">
+    <mxGraphModel dx="1861" dy="749" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
       </root>
     </mxGraphModel>
   </diagram>
