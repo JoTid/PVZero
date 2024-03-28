@@ -43,9 +43,9 @@ limitations under the License.
 namespace PVZ
 {
 
-#define FIRMWARE_VERSION "0.81.06"
+#define FIRMWARE_VERSION "0.81.07"
 
-#undef  LCD_SUPPORT
+#undef LCD_SUPPORT
 
 #define BATTERY_GUARD_FILE "/battery.guard"
 
