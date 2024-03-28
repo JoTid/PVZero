@@ -181,46 +181,6 @@ void PVZeroClass::setup()
   // \todo disable the guarding only while debug
   // clBatGuardP.enable(false);
 
-  // PID	0xA058
-  // FW	163
-  // SER#	HQ2302M4XVJ
-  // V	56020
-  // I	8300
-  // VPV	101780
-  // PPV	475
-  // CS	3
-  // MPPT	2
-  // OR	0x00000000
-  // ERR	0
-  // LOAD	OFF
-  // H19	3357
-  // H20	385
-  // H21	2003
-  // H22	523
-  // H23	1802
-  // HSDS	12
-  // Checksum	[19]
-
-  // 0d 0a 50 49 44 09 30 78 41 30 35 38 0d 0a 46 57
-  // 09 31 36 33 0d 0a 53 45 52 23 09 48 51 32 33 30
-  // 32 4d 34 58 56 4a 0d 0a 56 09 35 36 33 32 30 0d
-  // 0a 49 09 35 34 30 30 0d 0a 56 50 56 09 31 31 32
-  // 39 39 30 0d 0a 50 50 56 09 33 32 30 0d 0a 43 53
-  // 09 33 0d 0a 4d 50 50 54 09 31 0d 0a 4f 52 09 30
-  // 78 30 30 30 30 30 30 30 30 0d 0a 45 52 52 09 30
-  // 0d 0a 4c 4f 41 44 09 4f 46 46 0d 0a 48 31 39 09
-  // 33 33 35 37 0d 0a 48 32 30 09 33 38 35 0d 0a 48
-  // 32 31 09 32 30 30 33 0d 0a 48 32 32 09 35 32 33
-  // 0d 0a 48 32 33 09 31 38 30 32 0d 0a 48 53 44 53
-  // 09 31 32 0d 0a 43 68 65 63 6b 73 75 6d 09 1f
-
-  // 16*12 = ca. 192 bytes
-
-  // Serial2.begin(19200);
-  // Serial2.setRxFIFOFull(5);
-  // Serial2.onReceive(onReceiveFunction, false);
-  // mppt.begin();
-
   EWC::I::get().logger() << F("setup() running on core ") << xPortGetCoreID() << endl;
   uartP.setup();
 
@@ -228,82 +188,15 @@ void PVZeroClass::setup()
   ftBatteryCurrentSumOutSecP = 0.0;
   ftBatteryCurrentSumInP = 0.0;
   ftBatteryCurrentSumOutP = 0.0;
+
+  //---------------------------------------------------------------------------------------------------
+  // filter value from PSUs a little bit to avoid outlier
+  //
+  aclPsuActualCurrentFilterP[0].init(3);
+  aclPsuActualCurrentFilterP[1].init(3);
+  aclPsuActualVoltageFilterP[0].init(3);
+  aclPsuActualVoltageFilterP[1].init(3);
 }
-
-// // Definieren Sie einen struct, um die Daten aus der Tabelle zu speichern
-// struct SensorData
-// {
-//   char *parameterName;
-//   char *value;
-// };
-
-// // Deklarieren Sie ein Array von SensorData-Elementen
-// SensorData sensorData[20]; // Anpassen Sie die Größe an die Anzahl der Zeilen in der Tabelle
-
-// // Definieren Sie die Trennzeichen
-// const char *EOL = "\r\n"; // Zeilentrauf
-// const char *SEP = "\t";   // Spaltenbegrenzer
-
-// void parseTable(char *tableData)
-// {
-//   // char str[256];
-//   // strcpy(str, tableData);
-//   // // int i = 0;
-//   // // while (i < 256)
-//   // // {
-//   // //   str[i] = tableData[i];
-
-//   // // }
-//   // char *line = strtok(str, EOL); // Zeile für Zeile parsen
-//   // EWC::I::get().logger() << " str : " << str << endl;
-//   // char *token;
-//   int i = 0;
-
-//   // while (line != NULL)
-//   // {
-//   //   EWC::I::get().logger() << " Line : " << line << endl;
-//   //   token = strtok(line, SEP); // Spalten parsen
-//   //   sensorData[i].parameterName = token;
-//   //   EWC::I::get().logger() << " token A : " << token << endl;
-//   //   token = strtok(NULL, SEP);
-//   //   sensorData[i].value = token;
-//   //   EWC::I::get().logger() << " token B : " << token << endl;
-
-//   //   i++;
-//   //   line = strtok(NULL, EOL);
-//   // }
-//   char *ptr, *savePtr, *p, *saveP;
-//   // const char delim[] = "|";
-
-//   ptr = strtok_r(tableData, EOL, &savePtr);
-//   while (ptr != NULL)
-//   {
-//     // EWC::I::get().logger() << " Line : " << ptr << endl;
-//     // hier haben wir alles zwischen | (außen)
-//     // Serial.println(ptr);
-//     p = strtok_r(ptr, SEP, &saveP);
-//     // while (p != NULL)
-//     // {
-//     sensorData[i].parameterName = p;
-//     // EWC::I::get().logger() << " token : " << p << endl;
-
-//     // // alles zwischen : (innen)
-//     // Serial.print("____");
-//     // Serial.println(p);
-//     p = strtok_r(NULL, SEP, &saveP);
-//     sensorData[i].value = p;
-//     // }
-//     i++;
-//     // außen neu testen
-//     ptr = strtok_r(NULL, EOL, &savePtr);
-//   }
-// }
-
-// std::mutex serial_mtx;
-// #include "vedirect_parser.h"
-
-// static bool btVictronReceptionPendingT = true;
-// static uint8_t ulChecksumT;
 
 //--------------------------------------------------------------------------------------------------------------------//
 //                                                                                                                    //
@@ -317,10 +210,10 @@ void PVZeroClass::processControlAlgorithm(void)
   float ftLimitedTargetCurrentT;
   int32_t slNumberOfStringsT = 0;
 
-  aftActualVoltageOfPsuP[0] = aclPsuP[0].actualVoltage();
-  aftActualCurrentOfPsuP[0] = aclPsuP[0].actualCurrent();
-  aftActualVoltageOfPsuP[1] = aclPsuP[1].actualVoltage();
-  aftActualCurrentOfPsuP[1] = aclPsuP[1].actualCurrent();
+  aftActualVoltageOfPsuP[0] = ((float)aclPsuActualVoltageFilterP[0].process((int32_t)(aclPsuP[0].actualVoltage() * 100))) * 0.01;
+  aftActualCurrentOfPsuP[0] = ((float)aclPsuActualCurrentFilterP[0].process((int32_t)(aclPsuP[0].actualCurrent() * 100))) * 0.01;
+  aftActualVoltageOfPsuP[1] = ((float)aclPsuActualVoltageFilterP[1].process((int32_t)(aclPsuP[1].actualVoltage() * 100))) * 0.01;
+  aftActualCurrentOfPsuP[1] = ((float)aclPsuActualCurrentFilterP[1].process((int32_t)(aclPsuP[1].actualCurrent() * 100))) * 0.01;
   abtPsuIsAvailableP[0] = aclPsuP[0].isAvailable();
   abtPsuIsAvailableP[1] = aclPsuP[1].isAvailable();
   ftMpptBatteryCurrentP = clMpptP.batteryCurrent();
@@ -355,6 +248,7 @@ void PVZeroClass::processControlAlgorithm(void)
   //---------------------------------------------------------------------------------------------------
   // collect and provide data to the control algorithm
   //
+  clCaP.setFeedInTargetDcVoltage(ftMpptBatteryVoltageP - 1.0);
   if (isConsumptionPowerValid)
   {
     clCaP.updateConsumptionPower((float)consumptionPower);
