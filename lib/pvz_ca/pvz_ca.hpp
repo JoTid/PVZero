@@ -23,7 +23,7 @@
 #endif
 
 #ifndef CA_REFRESH_TIME
-#define CA_REFRESH_TIME 500
+#define CA_REFRESH_TIME 3000
 #endif
 
 /*--------------------------------------------------------------------------------------------------------------------*\
@@ -35,6 +35,8 @@ class PvzCa
 private:
   bool btConsumptionPowerPendingP;
   bool btActualValuesPendingP;
+
+  float ftConsumptionPowerOffsetP;
 
   float ftConsumptionPowerP;
 
@@ -85,6 +87,17 @@ public:
    *
    */
   int32_t setFilterOrder(uint8_t);
+
+  /**
+   * @brief Set consumption power offset
+   *
+   * This value can be adjusted if we do not want to fall under the negative consumption value.
+   * By setting this value to 50.0 Wh than this value wll be the new zero line.
+   *
+   * @return 0 in case of success or a negative value in case of an error
+   *
+   */
+  int32_t setConsumptionPowerOffset(float ftValueV);
 
   /**
    * @brief update actual Feed In values for Voltage and Current

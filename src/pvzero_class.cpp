@@ -157,6 +157,7 @@ void PVZeroClass::setup()
   clCaP.setFeedInTargetDcVoltage(PZI::get().config().getMaxVoltage());
   clCaP.setFeedInTargetDcCurrentLimits(0.0, PZI::get().config().getMaxAmperage());
   clCaP.setFilterOrder(_config.getFilterOrder());
+  clCaP.setConsumptionPowerOffset(50.0); // Adjust the zero line
 
   //---------------------------------------------------------------------------------------------------
   // prepare software oversampling

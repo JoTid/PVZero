@@ -116,6 +116,8 @@ void PvzCa::init()
   aftFeedInTargetDcCurrentLimitP[0] = 0.0;
   aftFeedInTargetDcCurrentLimitP[1] = 0.0;
 
+  ftConsumptionPowerOffsetP = 50.0;
+
   //---------------------------------------------------------------------------------------------------
   // calc gain and offset
   //
@@ -163,6 +165,17 @@ float PvzCa::discreteApproximation(float ftActualV, float ftTargetV)
 //                                                                                                                    //
 //                                                                                                                    //
 //--------------------------------------------------------------------------------------------------------------------//
+int32_t PvzCa::setConsumptionPowerOffset(float ftValueV)
+{
+  ftConsumptionPowerOffsetP = ftValueV;
+
+  return 0;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
 void PvzCa::process(void)
 {
   static unsigned long ulOldTimeS;
@@ -197,13 +210,24 @@ void PvzCa::process(void)
     //---------------------------------------------------------------------------------------------------
     // consider pending feed-in power
     //
-    ftCalcT = ftConsumptionPowerP + ftFeedInActualPowerP;
+    ftCalcT = ftConsumptionPowerP + ftFeedInActualPowerP - ftConsumptionPowerOffsetP;
 
     //---------------------------------------------------------------------------------------------------
     // scale values y = m * x + b = current to feed in
     //
     ftCalcT = (ftCalcT * ftCurrentGainP);
     ftCalcT += ftCurrentOffsetP;
+
+    if ((ftCalcT < 0.200) && ((ftConsumptionPowerP + ftFeedInActualPowerP) > 0.0))
+    {
+      ftCalcT = 0.2;
+    }
+
+    // limit target values
+    if (ftCalcT < 0.0)
+    {
+      ftCalcT = 0.0;
+    }
 
     //---------------------------------------------------------------------------------------------------
     // store feed-in target current and calculate feed in power P = U * I
