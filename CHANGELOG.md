@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+## [0.81.06] - 2024-03-28
+
 - The communication method with the power supply units. So values are more stable and do not ha such value outliers.
   In addition, the status is read out and the corresponding values are only accepted depending on this.
   Furthermore filter now that voltage and current values.
@@ -16,6 +18,8 @@ and this project adheres to [Semantic Versioning].
 
 - Fix issue where incorrect values were supplied to the CA and thus the consumption power was not taken into account,
   with the result that the feed-in was higher than the consumption
+
+- Introduce new state with unlimited feed-in while charging and adjust voltage limits for transition between the states.
 
 ## [0.81.05] - 2024-03-24
 
