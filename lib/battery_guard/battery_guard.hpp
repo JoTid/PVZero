@@ -56,7 +56,7 @@
  * [V] as fixed comma value with 1 DD
  * This is the offset required for the voltage to rise before the discharge state is exited.
  */
-#define BG_DISCHARGE_VOLTAGE_OFFSET 70
+#define BG_DISCHARGE_VOLTAGE_OFFSET 60
 
 /**
  * [A] as fixed comma value with 1 DD

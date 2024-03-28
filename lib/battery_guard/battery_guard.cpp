@@ -208,7 +208,7 @@ void BatteryGuard::process(void)
 
       case eChargingWithDischarge:
         //
-        // Grund für diese Maßnahmen: Der Laderegler, regelet immer wieder den Strom gegen 0, was dazu führt, dass
+        // Grund für diese Maßnahmen: Der Laderegler, regelt immer wieder den Strom gegen 0, was dazu führt, dass
         // der Wechselrichter getrennt wird und sich wieder auf Netz synchronisieren muss.
         // Dies kann bis zu einer Minute dauern, dass soll nicht so sein.
         //
