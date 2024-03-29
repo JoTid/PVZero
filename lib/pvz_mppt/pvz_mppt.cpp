@@ -69,10 +69,10 @@ void PvzMppt::updateFrame(const char *pszFrameV, const int32_t slLengthV)
   //-------------------------------------------------------------------------------------------
   // parse only if checksum is valid
   //
-  // if (ulChecksumT == 0)
-  // {
-  parseTable(ascFrameP);
-  // }
+  if (ulChecksumT == 0)
+  {
+    parseTable(ascFrameP);
+  }
 
   //-------------------------------------------------------------------------------------------
   // print the parsed data for debugging
