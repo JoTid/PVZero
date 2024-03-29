@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+## [0.81.07] - 2024-03-29
+
+- Remove LED initialisation from main setup, as LED will lead to ESP reboot
+
+- Enable CRC Check for the Text frames of MPPT
+
 ## [0.81.06] - 2024-03-28
 
 - The communication method with the power supply units. So values are more stable and do not ha such value outliers.
