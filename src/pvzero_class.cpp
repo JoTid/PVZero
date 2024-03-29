@@ -71,7 +71,6 @@ void PVZeroClass::setup()
   EWC::I::get().configFS().addConfig(_ewcMqtt);
   EWC::I::get().configFS().addConfig(_config);
   EWC::I::get().configFS().addConfig(_shelly3emConnector);
-  // EWC::I::get().led().enable(true, LED_BUILTIN, LOW);
   EWC::I::get().server().enableConfigUri();
   EWC::I::get().server().setup();
   EWC::I::get().config().paramLanguage = "de";
