@@ -21,7 +21,7 @@ limitations under the License.
 #include <mutex>
 #include <extensions/ewcTime.h>
 #include <extensions/ewcMail.h>
-#include <ewcTickerLED.h>
+#include <ewcLed.h>
 #include <ewcInterface.h>
 #include "shelly_3em_connector.h"
 #include "ewcLogger.h"
@@ -114,7 +114,7 @@ void Shelly3emConnector::loop()
           if (!_isRequesting)
           {
             _isRequesting = true;
-            EWC::I::get().logger() << F("Shelly3emConnector: request consumption power from ") << getUri() << " actually task is " << _taskIsRunning << endl;
+            EWC::I::get().logger() << F("Shelly3emConnector: request consumption power from ") << getUri() << endl;
             I::get().led().start(LED_GREEN, 250, 150);
             vTaskResume(_httpTaskHandle);
             std::lock_guard<std::mutex> lck(httpTaskMutex);
@@ -163,6 +163,7 @@ void Shelly3emConnector::loop()
                 _infoState = "Fehler beim holen der aktuellen Verbrauchswerte vom Shelly " + getUri() + "\nHttpCode" + getErrorCodes();
                 PZI::get().mail().sendWarning("Shelly 3em nicht erreichbar", _infoState.c_str());
               }
+              _sleeper.sleep(PZI::get().config().getCheckInterval() * 1000);
             }
           }
         }
