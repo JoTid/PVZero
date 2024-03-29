@@ -50,7 +50,7 @@
  * Value in batter is defined to 40V.
  * Define a value that has an offset.
  */
-#define BG_DISCHARGE_VOLTAGE 450
+#define BG_DISCHARGE_VOLTAGE 440
 
 /**
  * [V] as fixed comma value with 1 DD
@@ -97,13 +97,12 @@ public:
   typedef enum State_e
   {
 
-    eCharging = 0,
-    eChargingWithDischarge,
+    eCharge = 0,
+    eChargeAndDischarge,
+    eChargeUntilCharged,
     eCharged,
-    eDischarging,
-    eDischarged,
-    eMpptNotBulk,
-    eError
+    eDischarge,
+    eDischarged
 
   } State_te;
 

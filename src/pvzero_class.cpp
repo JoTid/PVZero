@@ -151,40 +151,51 @@ void PVZeroClass::processControlAlgorithm(void)
 {
   float ftActualCurrentTotalT = 0.0; // holds the current sum of both PSUs
   float ftTargetVoltageT = 0.0;      // is typically is equal to the MPPT voltage except the PSUs should be switched off
-  int32_t slNumberOfStringsT = 0;    // number of available strings, typically number of PSUs
+  float ftValueT;
+  int32_t slValueT;
+  int32_t slNumberOfStringsT = 0; // number of available strings, typically number of PSUs
 
   //---------------------------------------------------------------------------------------------------
   // take values from PSU, make sure they are not negative
   //
-  if (((int32_t)(aclPsuP[0].actualVoltage() * 100)) > 0)
+  ftValueT = aclPsuP[0].actualVoltage();
+  slValueT = ((int32_t)(ftValueT * 100));
+  if (slValueT > 0)
   {
-    aftActualVoltageOfPsuP[0] = ((float)aclPsuActualVoltageFilterP[0].process((int32_t)(aclPsuP[0].actualVoltage() * 100))) * 0.01;
+    aftActualVoltageOfPsuP[0] = aclPsuActualVoltageFilterP[0].process(ftValueT);
   }
   else
   {
     aftActualVoltageOfPsuP[0] = 0.0;
   }
-  if (((int32_t)(aclPsuP[0].actualCurrent() * 100)) > 0)
+
+  ftValueT = aclPsuP[0].actualCurrent();
+  slValueT = ((int32_t)(ftValueT * 100));
+  if (slValueT > 0)
   {
-    aftActualCurrentOfPsuP[0] = ((float)aclPsuActualCurrentFilterP[0].process((int32_t)(aclPsuP[0].actualCurrent() * 100))) * 0.01;
+    aftActualCurrentOfPsuP[0] = aclPsuActualCurrentFilterP[0].process(ftValueT);
   }
   else
   {
     aftActualCurrentOfPsuP[0] = 0.0;
   }
 
-  if (((int32_t)(aclPsuP[1].actualVoltage() * 100)) > 0)
+  ftValueT = aclPsuP[1].actualVoltage();
+  slValueT = ((int32_t)(slValueT * 100));
+  if (ftValueT > 0)
   {
-    aftActualVoltageOfPsuP[1] = ((float)aclPsuActualVoltageFilterP[1].process((int32_t)(aclPsuP[1].actualVoltage() * 100))) * 0.01;
+    aftActualVoltageOfPsuP[1] = aclPsuActualVoltageFilterP[1].process(ftValueT);
   }
   else
   {
     aftActualVoltageOfPsuP[1] = 0.0;
   }
 
-  if (((int32_t)(aclPsuP[1].actualCurrent() * 100)) > 0)
+  ftValueT = aclPsuP[1].actualCurrent();
+  slValueT = ((int32_t)(slValueT * 100));
+  if (slValueT > 0)
   {
-    aftActualCurrentOfPsuP[1] = ((float)aclPsuActualCurrentFilterP[1].process((int32_t)(aclPsuP[1].actualCurrent() * 100))) * 0.01;
+    aftActualCurrentOfPsuP[1] = aclPsuActualCurrentFilterP[1].process(ftValueT);
   }
   else
   {
@@ -217,6 +228,42 @@ void PVZeroClass::processControlAlgorithm(void)
   //
   ftMpptBatteryCurrentP = clMpptP.batteryCurrent();
   ftMpptBatteryVoltageP = clMpptP.batteryVoltage();
+  ubMpptStateOfOperationP = clMpptP.stateOfOperation();
+
+  // update the MPPT state for the GUI
+  switch (ubMpptStateOfOperationP)
+  {
+  case 0:
+    strMpptState = "Off";
+    break;
+  case 2:
+    strMpptState = "Fault";
+    break;
+  case 3:
+    strMpptState = "Bulk - Ladephase mit maximalen Ladestrom";
+    break;
+  case 4:
+    strMpptState = "Absorption - Nachladephase in der die Batterie­spannung konstant bleibt";
+    break;
+  case 5:
+    strMpptState = "Float - Erhaltungsphase der Batterie und angeschlossene Endgeräte werden mit Strom versorgt";
+    break;
+  case 7:
+    strMpptState = "Equalize (manual)";
+    break;
+  case 245:
+    strMpptState = "Starting-up";
+    break;
+  case 247:
+    strMpptState = "Auto equalize / Recondition";
+    break;
+  case 252:
+    strMpptState = "External Control";
+    break;
+  default:
+    strMpptState = "unknown";
+    break;
+  }
 
   //---------------------------------------------------------------------------------------------------
   // calculate the real feed in power and other values for display in GUI
@@ -245,7 +292,7 @@ void PVZeroClass::processControlAlgorithm(void)
   //
   // I::get().logger() << F("Current Time: ") << I::get().time().currentTime() << endl;
   // I::get().logger() << F("loop() running on core ") << xPortGetCoreID() << "..." << endl;
-  // I::get().logger() << F("MPPT Values: ") << String(ftMpptBatteryVoltageP, 3) << " V, " << String(ftMpptBatteryCurrentP, 3) << " A, state " << clMpptP.stateOfOperation() << endl;
+  // I::get().logger() << F("MPPT Values: ") << String(ftMpptBatteryVoltageP, 3) << " V, " << String(ftMpptBatteryCurrentP, 3) << " A, state " << ubMpptStateOfOperationP << endl;
   // I::get().logger() << F("PSU0 actual values: ") << String(aftActualVoltageOfPsuP[0], 3) << " V, " << String(aftActualVoltageOfPsuP[0], 3) << " A, is available " << abtPsuIsAvailableP[0] << endl;
   // I::get().logger() << F("PSU0 target values: ") << String(aclPsuP[0].targetVoltage(), 3) << " V, " << String(aclPsuP[0].targetCurrent(), 3) << " A" << endl;
   // I::get().logger() << F("PSU1 actual values: ") << String(aftActualVoltageOfPsuP[1], 3) << " V, " << String(aftActualCurrentOfPsuP[1], 3) << " A, is available " << abtPsuIsAvailableP[1] << endl;
@@ -297,8 +344,8 @@ void PVZeroClass::processControlAlgorithm(void)
   //
   clBatGuardP.updateVoltage(ftMpptBatteryVoltageP);
   clBatGuardP.updateCurrent(ftMpptBatteryCurrentP);
+  clBatGuardP.updateMpptState(ubMpptStateOfOperationP);
   clBatGuardP.updateTime(I::get().time().currentTime());
-  clBatGuardP.updateMpptState(clMpptP.stateOfOperation());
   clBatGuardP.process();
 
   //---------------------------------------------------------------------------------------------------
@@ -619,6 +666,7 @@ void PVZeroClass::_onPVZeroState(WebServer *webServer)
   json["feed_in_power"] = ftRealFeedInPowerP; // consider 95% efficiency of the inverter
   json["enable_second_psu"] = consumptionPower;
   json["battery_state"] = strBatteryState;
+  json["mppt_state"] = strMpptState;
   json["total_consumption"] = ftTotalConsumptionP;
   json["battery_current"] = ftBatteryCurrentP;
   json["battery_current_sum_in"] = ftBatteryCurrentSumInP;
@@ -747,26 +795,23 @@ void PVZeroClass::batteryGuard_EventCallback(BatteryGuard::State_te teSStateV)
 {
   switch (teSStateV)
   {
-  case BatteryGuard::State_te::eCharging:
-    strBatteryState = String("charging");
+  case BatteryGuard::State_te::eCharge:
+    strBatteryState = String("charge");
+    break;
+  case BatteryGuard::State_te::eChargeAndDischarge:
+    strBatteryState = String("charge and discharge");
+    break;
+  case BatteryGuard::State_te::eChargeUntilCharged:
+    strBatteryState = String("charge until charged");
     break;
   case BatteryGuard::State_te::eCharged:
     strBatteryState = String("charged");
     break;
-  case BatteryGuard::State_te::eDischarging:
-    strBatteryState = String("discharging");
+  case BatteryGuard::State_te::eDischarge:
+    strBatteryState = String("discharge");
     break;
   case BatteryGuard::State_te::eDischarged:
     strBatteryState = String("discharged");
-    break;
-  case BatteryGuard::State_te::eError:
-    strBatteryState = String("error");
-    break;
-  case BatteryGuard::State_te::eMpptNotBulk:
-    strBatteryState = String("not bulk");
-    break;
-  case BatteryGuard::State_te::eChargingWithDischarge:
-    strBatteryState = String("charging with discharge");
     break;
   default:
     strBatteryState = "-";

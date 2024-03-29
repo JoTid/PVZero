@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+- Add MPPT state to the GUI
+- Update State machine of battery guard, introduce new states and define optimize conditions for transitions
+
 ## [0.81.07] - 2024-03-29
 
 - Remove LED initialisation from main setup, as LED will lead to ESP reboot

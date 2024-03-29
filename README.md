@@ -43,19 +43,19 @@ Um diese Aufgaben zu meisten, werden 3 Eingangsgrößen herangezogen:
 1. **Datum und Uhrzeit**: Bereitgestellt aus dem Internet, werden diese jedes Mal bei einer Vollladung gespeichert.
    Damit ermittelt der Batteriewächter den nächsten Zeitpunkt für das Vollladen der Batterie.
 
-1. **Battery Voltage**: Es gibt zwei Quellen für diesen Wert
+1. **Charge Voltage**: Es gibt zwei Quellen für diesen Wert
 
    - Messung der Versorgungsspannung des Netzteils mit dem ADC des ESP32
    - Wert wird aus dem Victron SmartSolar über das USART VE.Direct Protokoll gelesen
 
-   Die **Battery Voltage** wird ständig gemessen und für die Ermittlung der Zustände _charged_ und _discharged_
+   Die **Charge Voltage** wird ständig gemessen und für die Ermittlung der Zustände _charged_ und _discharged_
    verwendet.
 
-1. **Battery Current**: Es gibt eine Quelle für diesen Wert
+1. **Charge Current**: Es gibt eine Quelle für diesen Wert
 
    - Wert wird aus dem Victron SmartSolar über das USART VE.Direct Protokoll gelesen
 
-   Die **Battery Current** wird ständig ausgelesen und wird die Ermittlung der Zustände _charging_ und _discharging_
+   Die **Charge Current** wird ständig ausgelesen und wird die Ermittlung der Zustände _charging_ und _discharging_
    verwendet.
 
 Aus den genannten Eingangsgrößen wir eine Ausgangsgröße bestimmt:
@@ -69,39 +69,44 @@ Zustandsautomat des Batteriewächters.
 
 Beschreibung der Zustände:
 
-- **charging**: Der Strom wird auf den Wert **Battery Current** vom Victron SmartSolar begrenzt
-- **charging with discharge**: Der Strom wird nicht begrenzt
-- **charged**: Der Strom wird nicht begrenzt, Zeitstempel wird gespeichert
-- **discharging**: Der Strom wird nicht begrenzt
-- **discharged**: Der Strom wird auf den Wer 0.0 A begrenzt, Einspeisung wird eingestellt
+- **charge**: Der Strom wird auf den Wert **Charge Current** vom MPPT begrenzt, solange die Bedingung 5. oder 7. oder 9. nicht erfüllt ist
+- **charge and discharge**: Der Strom wird nicht begrenzt, solange die Bedingung 1. oder 8. nicht erfüllt ist
+- **charge until charged**: Der Strom wird auf den Wer 0.0 A begrenzt, solange die Bedingung 10. nicht erfüllt ist
+- **charged**: Der Strom wird nicht begrenzt und der Zeitstempel wird gespeichert, solange die Bedingung 2. nicht erfüllt ist
+- **discharge**: Der Strom wird nicht begrenzt, solange die Bedingung 3. oder 5. nicht erfüllt ist
+- **discharged**: Der Strom wird auf den Wer 0.0 A begrenzt, solange die Bedingung 4. nicht erfüllt ist
 
 Beschreibung der Zustandsübergänge:
 
-1. **Battery Voltage** >= CHARGE_CUTOFF_VOLTAGE (58.4 V)s
+1. **Charge Voltage** >= CHARGE_CUTOFF_VOLTAGE (58.4 V)
 
-2. **Battery Voltage** < CHARGE_CUTOFF_VOLTAGE (58.4 V)
+2. **Charge Voltage** < (CHARGE_CUTOFF_VOLTAGE - 0.4V) (58.0 V)
 
-3. **Battery Voltage** <= DISCHARGE_VOLTAGE (40.0 V)
+3. **Charge Voltage** <= (DISCHARGE_VOLTAGE) (42.0 V)
 
-4. **Battery Voltage** > (DISCHARGE_VOLTAGE + DISCHARGE_VOLTAGE_OFFSET) (45.0 V + 6.0 V)
+4. (**Charge Voltage** > (ABSORPTION_VOLTAGE) (51.2 V)) && (**Charge Current** > 0.1 A)
 
-5. (**Battery Current** == 0.0 A) && (Zeitstempel < 2 Wochen)
+5. **Charge Current** < 0.2 A
 
-6. **Battery Current** > 0.0 A
+6. **Charge Current** > 0.5 A
 
-7. (**Battery Voltage**) >= 53.0 V && (**Battery Current** > 0.0 A)
+7. **Charge Voltage** >= (CHARGE_CUTOFF_VOLTAGE - 5.0 V)
 
-8. **Battery Voltage** < 52.0 V
+8. **Charge Voltage** <= ABSORPTION_VOLTAGE (51.2)
 
-Um festzustellen ob die Batterie geladen oder entladen wird, is der **Battery Current** Wert vom Victron SmartSolar
+9. (Zeitstempel - SavedZeitstempel) > 2 Wochen
+
+10. **Charge Voltage** >= CHARGE_CUTOFF_VOLTAGE (58.4 V)
+
+Um festzustellen ob die Batterie geladen oder entladen wird, is der **Charge Current** Wert vom Victron SmartSolar
 erforderlich.
 
-Nur mit dem Wert **Battery Voltage** verschmelzen die Beiden Zustände _charging_ und _discharging_ zu einem und
+Nur mit dem Wert **Charge Voltage** verschmelzen die Beiden Zustände _charging_ und _discharging_ zu einem und
 es kann lediglich nur eine Sicherheitsabschaltung für das Entladen der Batterie realisiert werden. Zudem Muss eine
 Entscheidung getroffen werden, wann die Einspeisung wieder eingeschaltet werden soll.
 
 ### Sicher Zustand
 
-Die Batterieüberwachung basiert auf **Battery Voltage** und **Battery Current**. Fehlt der Parameter für Strom, kann
+Die Batterieüberwachung basiert auf **Charge Voltage** und **Charge Current**. Fehlt der Parameter für Strom, kann
 nur eine Abschaltung, also Begrenzung des Stroms auf 0.0A nur bei geringer Spannung erfolgen. Ist neben dem Strom auch
 der Spannungswert nicht vorhanden ist Batterieüberwachung nicht möglich und der Strom wird nicht begrenzt.

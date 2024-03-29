@@ -78,35 +78,21 @@ float BatteryGuard::limitedCurrent(float ftTargetCurrentV)
   //
   switch (teStateP)
   {
-  case eMpptNotBulk:
-    // current is not limited
-    break;
-
-  case eChargingWithDischarge:
-    // current is not limited
-    break;
-
-  case eCharging:
+  case eCharge:
     //-------------------------------------------------------------------------------------------
     // The current is limited to the Battery Current value of the Victron SmartSolar
     // nur wenn die Spannung einen gewissen wert unterschirtten hat. Im anderen Fall wird der Akku schon den
     // sollwert abfangen.
-
+    //
     if (slTargeCurrentT > slBatteryCurrentP)
     {
       ftLimitCurrentT = (float)(slBatteryCurrentP);
       ftLimitCurrentT *= 0.01;
-
-      // check the MPPT is in absorbtion phase
-      //
-      // if (slBatteryVoltageP > (BG_CHARGE_CUTOFF_VOLTAGE - 14))
-      // {
-      // ftLimitCurrentT += 0.2;
-      // }
     }
 
     break;
 
+  case eChargeUntilCharged:
   case eDischarged:
     //-------------------------------------------------------------------------------------------
     // The current is limited to the value 0.0 A, feed-in is stopped
@@ -115,6 +101,9 @@ float BatteryGuard::limitedCurrent(float ftTargetCurrentV)
 
     break;
 
+  case eChargeAndDischarge:
+  case eCharged:
+  case eDischarge:
   default:
     break;
   }
@@ -199,102 +188,99 @@ void BatteryGuard::process(void)
       //
       switch (teStateP)
       {
-        //---------------------------------------------------------------------------
-        // The current is limited to the Charging Current value of the Victron SmartSolar
-        //
-      case eMpptNotBulk:
-        clAddStateInfoP = String("MPPT is no in Bulk operation State : " + String(ubMpptStateOfOperationP));
-        break;
 
-      case eChargingWithDischarge:
-        //
-        // Grund für diese Maßnahmen: Der Laderegler, regelt immer wieder den Strom gegen 0, was dazu führt, dass
+        //---------------------------------------------------------------------------
+        // Grund für diese Zustand: Der Laderegler, regelt immer wieder den Strom gegen 0, was dazu führt, dass
         // der Wechselrichter getrennt wird und sich wieder auf Netz synchronisieren muss.
         // Dies kann bis zu einer Minute dauern, dass soll nicht so sein.
         //
-        //
+      case eChargeAndDischarge:
+
         //---------------------------------------------------------------------------
-        // Battery Voltage < (52 V)
+        // 8. Charge Voltage <= ABSORPTION_VOLTAGE (51.2)
         //
-        if (slBatteryVoltageP < 520)
+        if (slBatteryVoltageP <= BG_ABSORPTION_VOLTAGE)
         {
-          teStateP = eCharging;
+          teStateP = eCharge;
 
           if (pfnEventHandlerP != nullptr)
           {
             pfnEventHandlerP(teStateP);
           }
         }
+
+        //---------------------------------------------------------------------------
+        // 1. Charge Voltage >= CHARGE_CUTOFF_VOLTAGE (58.4 V)
+        //
+        else if (slBatteryVoltageP >= BG_CHARGE_CUTOFF_VOLTAGE)
+        {
+          teStateP = eCharged;
+
+          if (pfnEventHandlerP != nullptr)
+          {
+            pfnEventHandlerP(teStateP);
+          }
+        }
+
+        //---------------------------------------------------------------------------
+        // stay in this state
+        //
         else
         {
-          clAddStateInfoP = String("the feed in current is not limited while charge voltage is >= 52.0 V.");
+          clAddStateInfoP = String("Der Strom wird nicht begrenzt, solange die Bedingung 1. oder 8. nicht erfüllt ist");
         }
         break;
 
         //---------------------------------------------------------------------------
         // The current is limited to the Charging Current value of the Victron SmartSolar
         //
-      case eCharging:
+      case eCharge:
+
         //---------------------------------------------------------------------------
-        // Battery Voltage >= CHARGE_CUTOFF_VOLTAGE (58.4 V)
+        // 7. Charge Voltage >= (CHARGE_CUTOFF_VOLTAGE - 5.0 V)
         //
-        if (slBatteryVoltageP >= BG_CHARGE_CUTOFF_VOLTAGE)
+        if (slBatteryVoltageP >= (BG_CHARGE_CUTOFF_VOLTAGE - 50))
         {
-          teStateP = eCharged;
-          //---------------------------------------------------------------------------
-          // save time when the battery has been fully charged
-          //
-          if (pfnSaveTimeHandlerP != nullptr)
-          {
-            pfnSaveTimeHandlerP(uqTimeP);
-          }
+          teStateP = eChargeAndDischarge;
 
           if (pfnEventHandlerP != nullptr)
           {
             pfnEventHandlerP(teStateP);
           }
         }
-        else if ((slBatteryVoltageP >= 530) && (slBatteryCurrentP > 0))
+
+        //---------------------------------------------------------------------------
+        // 9. (Zeitstempel - SavedZeitstempel) > 2 Wochen
+        //
+        else if ((uqTimeP - uqFullyChargedTimeP) > (uint64_t)BG_FULL_CHARGE_REPETITION_TIME)
         {
-          teStateP = eChargingWithDischarge;
+          teStateP = eChargeUntilCharged;
           if (pfnEventHandlerP != nullptr)
           {
             pfnEventHandlerP(teStateP);
           }
         }
-        //---------------------------------------------------------------------------
-        // (**Battery Current** == 0.0 A) && (Zeitstempel < 2 Wochen)
-        //
-        else if (slBatteryCurrentP <= 10)
-        {
-          //-------------------------------------------------------------------
-          // calculate time difference to perform full charge each two weeks
-          // it is treu when the time difference is < 2 weeks
-          //
-          if (1) //(uqTimeP - uqFullyChargedTimeP) < (uint64_t)BG_FULL_CHARGE_REPETITION_TIME)
-          {
-            teStateP = eDischarging;
-            if (pfnEventHandlerP != nullptr)
-            {
-              pfnEventHandlerP(teStateP);
-            }
-          }
-          else
-          {
-            clAddStateInfoP = String("full battery charge every 2 weeks, charging till Charge Voltage reaches " + String(((float)BG_CHARGE_CUTOFF_VOLTAGE) * 0.1, 1) + " V, discharging is blocked!");
-          }
-        }
-        else
-        {
-          clAddStateInfoP = String("the feed in current is limited to the Charge Current value while charge voltage is < 53.0 V. ");
-        }
 
         //---------------------------------------------------------------------------
+        // 5. Charge Current < 0.2 A
+        //
+        else if (slBatteryCurrentP < 20)
+        {
+          teStateP = eDischarge;
+          if (pfnEventHandlerP != nullptr)
+          {
+            pfnEventHandlerP(teStateP);
+          }
+        }
+
         //---------------------------------------------------------------------------
         // stay in this state
         //
-        // limitation of the current is performed at request within limitedCurrent()
-        //
+        else
+        {
+          clAddStateInfoP = String("Der Strom wird auf den Wert Charge Current vom MPPT begrenzt, solange die Bedingung 5. oder 7. oder 9. nicht erfüllt ist");
+        }
+
         break;
 
         //---------------------------------------------------------------------------
@@ -308,38 +294,42 @@ void BatteryGuard::process(void)
         uqFullyChargedTimeP = uqTimeP;
 
         //---------------------------------------------------------------------------
-        // Check condition for one possible transition to discharging:
-        // Battery Voltage < CHARGE_CUTOFF_VOLTAGE (58.4 V)
+        // 2. Charge Voltage < (CHARGE_CUTOFF_VOLTAGE - 0.4V) (58.0 V)
         //
-        if (slBatteryVoltageP < BG_CHARGE_CUTOFF_VOLTAGE)
+        if (slBatteryVoltageP < (BG_CHARGE_CUTOFF_VOLTAGE - 4))
         {
-          teStateP = eDischarging;
+          //---------------------------------------------------------------------------
+          // save time when the battery has been fully charged
+          //
+          if (pfnSaveTimeHandlerP != nullptr)
+          {
+            pfnSaveTimeHandlerP(uqTimeP);
+          }
+
+          teStateP = eDischarge;
           if (pfnEventHandlerP != nullptr)
           {
             pfnEventHandlerP(teStateP);
           }
         }
-        else
-        {
-          clAddStateInfoP = String("the feed in current is not limited, time stamp has been saved.");
-        }
 
-        //---------------------------------------------------------------------------
         //---------------------------------------------------------------------------
         // stay in this state
         //
-        // limitation of the current is performed at request within limitedCurrent()
-        //
+        else
+        {
+          clAddStateInfoP = String("Der Strom wird nicht begrenzt und der Zeitstempel wird gespeichert, solange die Bedingung 2. nicht erfüllt ist");
+        }
+
         break;
 
         //---------------------------------------------------------------------------
         // The current is not limited and no other
         //
-      case eDischarging:
+      case eDischarge:
 
         //---------------------------------------------------------------------------
-        // Check condition for possible transition to discharged:
-        // Battery Voltage <= DISCHARGE_VOLTAGE (40.0 V)
+        // 3. Charge Voltage <= (DISCHARGE_VOLTAGE) (42.0 V)
         //
         if (slBatteryVoltageP <= BG_DISCHARGE_VOLTAGE)
         {
@@ -351,27 +341,25 @@ void BatteryGuard::process(void)
         }
 
         //---------------------------------------------------------------------------
-        // Battery Current > 0.0 A
+        // 6. Charge Current > 0.5 A
         //
-        else if (slBatteryCurrentP > 100)
+        else if (slBatteryCurrentP > 50)
         {
-          teStateP = eCharging;
+          teStateP = eCharge;
           if (pfnEventHandlerP != nullptr)
           {
             pfnEventHandlerP(teStateP);
           }
         }
-        else
-        {
-          clAddStateInfoP = String("the feed in current is not limited, till battery voltage is > " + String(((float)(BG_DISCHARGE_VOLTAGE)) * 0.1, 1) + " V");
-        }
 
-        //---------------------------------------------------------------------------
         //---------------------------------------------------------------------------
         // stay in this state
         //
-        // limitation of the current is performed at request within limitedCurrent()
-        //
+        else
+        {
+          clAddStateInfoP = String("Der Strom wird nicht begrenzt, solange die Bedingung 3. oder 5. nicht erfüllt ist");
+        }
+
         break;
 
         //---------------------------------------------------------------------------
@@ -380,28 +368,25 @@ void BatteryGuard::process(void)
       case eDischarged:
 
         //---------------------------------------------------------------------------
-        // Check condition for possible transition to charging:
-        // Battery Voltage > (DISCHARGE_VOLTAGE + DISCHARGE_VOLTAGE_OFFSET) (40.0 V + 2.0V)
+        // 4. (Charge Voltage > (ABSORPTION_VOLTAGE) (51.2 V)) && (Charge Current > 0.1 A)
         //
-        if (slBatteryVoltageP > (BG_DISCHARGE_VOLTAGE + BG_DISCHARGE_VOLTAGE_OFFSET))
+        if ((slBatteryVoltageP > BG_ABSORPTION_VOLTAGE) && (slBatteryCurrentP > 10))
         {
-          teStateP = eCharging;
+          teStateP = eCharge;
           if (pfnEventHandlerP != nullptr)
           {
             pfnEventHandlerP(teStateP);
           }
         }
-        else
-        {
-          clAddStateInfoP = String("feed-in is stopped, while battery voltage is <= " + String(((float)(BG_DISCHARGE_VOLTAGE + BG_DISCHARGE_VOLTAGE_OFFSET)) * 0.1, 1) + " V");
-        }
 
-        //---------------------------------------------------------------------------
         //---------------------------------------------------------------------------
         // stay in this state
         //
-        // limitation of the current is performed at request within limitedCurrent()
-        //
+        else
+        {
+          clAddStateInfoP = String("Der Strom wird auf den Wer 0.0 A begrenzt, solange die Bedingung 4. nicht erfüllt ist");
+        }
+
         break;
 
         //---------------------------------------------------------------------------
@@ -411,30 +396,19 @@ void BatteryGuard::process(void)
         break;
       }
     }
-
-    if (pfnEventHandlerP != nullptr)
-    {
-      pfnEventHandlerP(teStateP);
-    }
   }
 }
 
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
 void BatteryGuard::updateMpptState(uint8_t ubStateV)
 {
-  if (ubMpptStateOfOperationP != ubStateV)
-  {
-    ubMpptStateOfOperationP = ubStateV;
-
-    if ((ubMpptStateOfOperationP == 4) ||
-        (ubMpptStateOfOperationP == 5))
-    {
-      teStateP = eMpptNotBulk;
-    }
-    else
-    {
-      teStateP = eCharging;
-    }
-  }
+  //---------------------------------------------------------------------------------------------------
+  // save value for further usage
+  //
+  ubMpptStateOfOperationP = ubStateV;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//

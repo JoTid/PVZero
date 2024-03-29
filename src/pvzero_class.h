@@ -87,6 +87,7 @@ namespace PVZ
     float ftMpptBatteryCurrentP;
     float ftMpptBatteryVoltageP;
     float ftLimitedTargetCurrentP;
+    uint8_t ubMpptStateOfOperationP;
 
     float ftRealFeedInPowerP;
     float ftTotalConsumptionP;
@@ -113,6 +114,7 @@ namespace PVZ
     float handleCalibrationLow(float value);
     float handleCalibrationHigh(float value);
     void updatePsuVccScaling(uint8_t ubSetupV);
+    String strMpptState = "-";
     String strBatteryState = "-";
     String strBatteryStateInfo = "";
     void batteryGuard_TimeStorageCallback(uint64_t uqTimeV);

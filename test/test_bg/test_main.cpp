@@ -61,7 +61,7 @@ void test_bg_init_parameter(void)
 
   TEST_ASSERT_EQUAL(true, clGuardG.isEnabled());
 
-  TEST_ASSERT_EQUAL(BatteryGuard::eCharging, clGuardG.state());
+  TEST_ASSERT_EQUAL(BatteryGuard::eCharge, clGuardG.state());
   uqTimeG = 0;
 }
 
@@ -93,8 +93,8 @@ void test_bg_discharging(void)
   TEST_ASSERT_EQUAL(42.5, clGuardG.maximalVoltage());
   TEST_ASSERT_EQUAL(0.0, clGuardG.minimalCurrent());
   TEST_ASSERT_EQUAL(0.0, clGuardG.maximalCurrent());
-  TEST_ASSERT_EQUAL(BatteryGuard::eDischarging, clGuardG.state());
-  TEST_ASSERT_EQUAL(BatteryGuard::eDischarging, slCallbackEventG);
+  TEST_ASSERT_EQUAL(BatteryGuard::eDischarge, clGuardG.state());
+  TEST_ASSERT_EQUAL(BatteryGuard::eDischarge, slCallbackEventG);
   TEST_ASSERT_EQUAL(5.0, clGuardG.limitedCurrent(5.0));
 
   //---------------------------------------------------------------------------------------------------
@@ -114,7 +114,7 @@ void test_bg_discharging(void)
   TEST_ASSERT_EQUAL(45.6, clGuardG.maximalVoltage());
   TEST_ASSERT_EQUAL(0.0, clGuardG.minimalCurrent());
   TEST_ASSERT_EQUAL(0.0, clGuardG.maximalCurrent());
-  TEST_ASSERT_EQUAL(BatteryGuard::eDischarging, clGuardG.state());
+  TEST_ASSERT_EQUAL(BatteryGuard::eDischarge, clGuardG.state());
   TEST_ASSERT_EQUAL(5.0, clGuardG.limitedCurrent(5.0));
 
   //---------------------------------------------------------------------------------------------------
@@ -134,7 +134,7 @@ void test_bg_discharging(void)
   TEST_ASSERT_EQUAL(45.6, clGuardG.maximalVoltage());
   TEST_ASSERT_EQUAL(0.0, clGuardG.minimalCurrent());
   TEST_ASSERT_EQUAL(0.0, clGuardG.maximalCurrent());
-  TEST_ASSERT_EQUAL(BatteryGuard::eDischarging, clGuardG.state());
+  TEST_ASSERT_EQUAL(BatteryGuard::eDischarge, clGuardG.state());
   TEST_ASSERT_EQUAL(5.0, clGuardG.limitedCurrent(5.0));
 }
 
@@ -166,7 +166,7 @@ void test_bg_discharged(void)
   TEST_ASSERT_EQUAL(45.6, clGuardG.maximalVoltage());
   TEST_ASSERT_EQUAL(0.0, clGuardG.minimalCurrent());
   TEST_ASSERT_EQUAL(0.0, clGuardG.maximalCurrent());
-  TEST_ASSERT_EQUAL(BatteryGuard::eDischarging, clGuardG.state());
+  TEST_ASSERT_EQUAL(BatteryGuard::eDischarge, clGuardG.state());
   TEST_ASSERT_EQUAL(5.0, clGuardG.limitedCurrent(5.0)); // No limitation
 
   //---------------------------------------------------------------------------------------------------
@@ -246,7 +246,7 @@ void test_bg_discharged(void)
   {
     clGuardG.process();
   }
-  TEST_ASSERT_EQUAL(BatteryGuard::eCharging, clGuardG.state()); // change to charging state
+  TEST_ASSERT_EQUAL(BatteryGuard::eCharge, clGuardG.state()); // change to charging state
   TEST_ASSERT_EQUAL(0, (clGuardG.limitedCurrent(5.0) * 10.0));
 
   slPCyclesT = millis() + BG_REFRESH_TIME * 2 + 1; // trigger algorithm x times
@@ -258,8 +258,8 @@ void test_bg_discharged(void)
   TEST_ASSERT_EQUAL(45.6, clGuardG.maximalVoltage());
   TEST_ASSERT_EQUAL(0.0, clGuardG.minimalCurrent());
   TEST_ASSERT_EQUAL(0.0, clGuardG.maximalCurrent());
-  TEST_ASSERT_EQUAL(BatteryGuard::eDischarging, clGuardG.state()); // as the current is still 0 A change to discharging
-  TEST_ASSERT_EQUAL(BatteryGuard::eDischarging, slCallbackEventG);
+  TEST_ASSERT_EQUAL(BatteryGuard::eDischarge, clGuardG.state()); // as the current is still 0 A change to discharging
+  TEST_ASSERT_EQUAL(BatteryGuard::eDischarge, slCallbackEventG);
   TEST_ASSERT_EQUAL(5.0, clGuardG.limitedCurrent(5.0));
 }
 
@@ -290,8 +290,8 @@ void test_bg_charging(void)
   TEST_ASSERT_EQUAL(45.6, clGuardG.maximalVoltage());
   TEST_ASSERT_EQUAL(1.0, clGuardG.minimalCurrent());
   TEST_ASSERT_EQUAL(1.0, clGuardG.maximalCurrent());
-  TEST_ASSERT_EQUAL(BatteryGuard::eCharging, clGuardG.state());
-  TEST_ASSERT_EQUAL(BatteryGuard::eCharging, slCallbackEventG);
+  TEST_ASSERT_EQUAL(BatteryGuard::eCharge, clGuardG.state());
+  TEST_ASSERT_EQUAL(BatteryGuard::eCharge, slCallbackEventG);
   TEST_ASSERT_EQUAL(10, (clGuardG.limitedCurrent(5.0) * 10)); // Limit to battery current + 0.5 A
 
   //---------------------------------------------------------------------------------------------------
@@ -312,7 +312,7 @@ void test_bg_charging(void)
   TEST_ASSERT_EQUAL(55.0, clGuardG.maximalVoltage());
   TEST_ASSERT_EQUAL(1.0, clGuardG.minimalCurrent());
   TEST_ASSERT_EQUAL(6.0, clGuardG.maximalCurrent());
-  TEST_ASSERT_EQUAL(BatteryGuard::eCharging, clGuardG.state());
+  TEST_ASSERT_EQUAL(BatteryGuard::eCharge, clGuardG.state());
   TEST_ASSERT_EQUAL(-1, slCallbackEventG);                    // no callback should be called
   TEST_ASSERT_EQUAL(60, (clGuardG.limitedCurrent(6.0) * 10)); // No limit required as the current is equal or higher
 
@@ -334,7 +334,7 @@ void test_bg_charging(void)
   TEST_ASSERT_EQUAL(58.2, clGuardG.maximalVoltage());
   TEST_ASSERT_EQUAL(1.0, clGuardG.minimalCurrent());
   TEST_ASSERT_EQUAL(20.0, clGuardG.maximalCurrent());
-  TEST_ASSERT_EQUAL(BatteryGuard::eCharging, clGuardG.state());
+  TEST_ASSERT_EQUAL(BatteryGuard::eCharge, clGuardG.state());
   TEST_ASSERT_EQUAL(-1, slCallbackEventG);                    // no callback should be called
   TEST_ASSERT_EQUAL(60, (clGuardG.limitedCurrent(6.0) * 10)); // No limit required as the current is equal or higher
 }
@@ -407,8 +407,8 @@ void test_bg_charged(void)
   {
     clGuardG.process();
   }
-  TEST_ASSERT_EQUAL(BatteryGuard::eDischarging, clGuardG.state());
-  TEST_ASSERT_EQUAL(BatteryGuard::eDischarging, slCallbackEventG);
+  TEST_ASSERT_EQUAL(BatteryGuard::eDischarge, clGuardG.state());
+  TEST_ASSERT_EQUAL(BatteryGuard::eDischarge, slCallbackEventG);
 
   slPCyclesT = millis() + BG_REFRESH_TIME * 2 + 1; // trigger algorithm x times
   while (slPCyclesT > millis())
@@ -416,8 +416,8 @@ void test_bg_charged(void)
     clGuardG.process();
   }
 
-  TEST_ASSERT_EQUAL(BatteryGuard::eCharging, clGuardG.state()); // as the current is still > 0 change to charging state again
-  TEST_ASSERT_EQUAL(BatteryGuard::eCharging, slCallbackEventG);
+  TEST_ASSERT_EQUAL(BatteryGuard::eCharge, clGuardG.state()); // as the current is still > 0 change to charging state again
+  TEST_ASSERT_EQUAL(BatteryGuard::eCharge, slCallbackEventG);
   TEST_ASSERT_EQUAL(60, (clGuardG.limitedCurrent(6.0) * 10)); // No current limit
 }
 
@@ -446,7 +446,7 @@ void test_bg_force_charged(void)
     clGuardG.process();
   }
 
-  TEST_ASSERT_EQUAL(BatteryGuard::eCharging, clGuardG.state());
+  TEST_ASSERT_EQUAL(BatteryGuard::eCharge, clGuardG.state());
   TEST_ASSERT_EQUAL(-1, slCallbackEventG);                    // no state change, so no event
   TEST_ASSERT_EQUAL(50, (clGuardG.limitedCurrent(5.0) * 10)); // No current limit
 
@@ -467,7 +467,7 @@ void test_bg_force_charged(void)
     clGuardG.process();
   }
 
-  TEST_ASSERT_EQUAL(BatteryGuard::eCharging, clGuardG.state()); // we should stay in charging state
+  TEST_ASSERT_EQUAL(BatteryGuard::eCharge, clGuardG.state()); // we should stay in charging state
 
   TEST_ASSERT_EQUAL(-1, slCallbackEventG);                    // no callback should be called
   TEST_ASSERT_EQUAL(0, uqCallbackTimeG);                      // no callback should be called
@@ -499,8 +499,8 @@ void test_bg_force_charged(void)
     clGuardG.process();
   }
 
-  TEST_ASSERT_EQUAL(BatteryGuard::eDischarging, clGuardG.state());
-  TEST_ASSERT_EQUAL(BatteryGuard::eDischarging, slCallbackEventG);
+  TEST_ASSERT_EQUAL(BatteryGuard::eDischarge, clGuardG.state());
+  TEST_ASSERT_EQUAL(BatteryGuard::eDischarge, slCallbackEventG);
   TEST_ASSERT_EQUAL(120, (clGuardG.limitedCurrent(12.0) * 10)); // no limit
 
   clGuardG.updateVoltage(52.4);
@@ -512,8 +512,8 @@ void test_bg_force_charged(void)
     clGuardG.process();
   }
 
-  TEST_ASSERT_EQUAL(BatteryGuard::eCharging, clGuardG.state()); // as the current is still > 0 change to charging state again
-  TEST_ASSERT_EQUAL(BatteryGuard::eCharging, slCallbackEventG);
+  TEST_ASSERT_EQUAL(BatteryGuard::eCharge, clGuardG.state()); // as the current is still > 0 change to charging state again
+  TEST_ASSERT_EQUAL(BatteryGuard::eCharge, slCallbackEventG);
   TEST_ASSERT_EQUAL(60, (clGuardG.limitedCurrent(6.0) * 10)); // limit to available current
 }
 
