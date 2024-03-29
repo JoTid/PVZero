@@ -405,6 +405,18 @@ void PVZeroClass::loop()
   }
 #endif
 
+  //-------------------------------------------------------------------------------------------
+  // proceed only if WiFi connection is established
+  //
+  if (PZI::get().ewcServer().isConnected())
+  {
+
+    //-----------------------------------------------------------------------------------
+    // trigger Shell 3EM loop
+    //
+    _shelly3emConnector.loop();
+  }
+
   //---------------------------------------------------------------------------------------------------
   // Trigger 3EM loop and NTP time each second
   //
@@ -436,10 +448,6 @@ void PVZeroClass::loop()
         _lcd.updateTime("");
       }
 #endif
-      //-----------------------------------------------------------------------------------
-      // trigger Shell 3EM loop
-      //
-      _shelly3emConnector.loop();
     }
 
     processControlAlgorithm();
