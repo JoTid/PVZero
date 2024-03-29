@@ -128,7 +128,8 @@ void Shelly3emConnector::loop()
             if (isValidConsumptionPower())
             {
               // update time
-              if (!I::get().time().isNtpEnabled()) {
+              if (!I::get().time().isNtpEnabled())
+              {
                 I::get().time().setLocalTime(getTimestamp());
               }
               // successful request
@@ -169,7 +170,7 @@ void Shelly3emConnector::loop()
         {
           // create request task
           httpClient.useHTTP10(true);
-          httpClient.setReuse(true);
+          // httpClient.setReuse(true);
           EWC::I::get().logger() << F("Shelly3emConnector: create request task") << endl;
           xTaskCreate(
               this->httpTask,                // Function that should be called
@@ -253,7 +254,8 @@ void Shelly3emConnector::_onTaskResult(bool valid, int32_t consumptionPower, uin
   _taskConsumptionPower = consumptionPower;
   _taskIsRunning = false;
   _taskTimestamp = timestamp;
-  if (!valid) {
+  if (!valid)
+  {
     _taskErrorCodes += ": " + String(httpCode) + ", ";
   }
 }
