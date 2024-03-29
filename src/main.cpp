@@ -35,7 +35,7 @@ void setup()
   // initialise EspWebConfig
   //
   EWC::I::get().logger().setLogging(true);
-  EWC::I::get().led().init(true, HIGH, GREEN_LED_PIN, RED_LED_PIN);
+  // EWC::I::get().led().init(true, HIGH, GREEN_LED_PIN, RED_LED_PIN);
   EWC::I::get().config().paramDeviceName = String("pvz-") + EWC::I::get().config().getChipId();
   EWC::I::get().config().paramAPName = String("pvz-") + EWC::I::get().config().getChipId();
   EWC::I::get().config().paramHostname = String("pvz-") + EWC::I::get().config().getChipId();
