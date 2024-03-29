@@ -31,10 +31,9 @@
     <div id="header"></div>
     <div class="base-panel">
       <br />
-      <span id="pvzero_title" style="font-weight: bold; font-size: 2em"
-        >PVZero</span
-      >
+      <span id="pvzero_title" style="font-weight: bold; font-size: 2em">PVZero</span>
       <span id="version">Unknown</span>
+      <div class="line_named"></div>
       <div id="shelly_3em" class="noorder">
         <form>
           <div>
@@ -86,21 +85,14 @@
           <div style="padding-left: 10px; padding-bottom: 0px">&#10551;</div>
           <span class="material-icons"> battery_std </span>
           <div id="battery_current" style="padding-bottom: 0px">- A</div>
-          <div
-            style="padding-left: 10px; padding-right: 10px; padding-bottom: 0px"
-          >
-          &rarr;
-          </div>
+          <div style="padding-left: 10px; padding-right: 10px; padding-bottom: 0px"> &rarr; </div>
           <div id="battery_current_sum_in" style="padding-bottom: 0px">- Ah</div>
-          <div
-            style="padding-left: 10px; padding-right: 10px; padding-bottom: 0px"
-          >
-          &rarr;
-          </div>
+          <div style="padding-left: 10px; padding-right: 10px; padding-bottom: 0px"> &rarr; </div>
           <div id="battery_current_sum_out" style="padding-bottom: 0px">- Ah</div>
         </div>
 
-        <div class="line_named">Leistungssteuerung</div>
+        <h3>Leistungssteuerung</h3>
+        <div class="line_named"></div>
         <table>
           <thead>
             <tr>
@@ -157,10 +149,30 @@
           </body>
         </table>
 
-        <div class="line_named">Speicher</div>
+        <h3>Speicher</h3>
+        <div class="line_named"></div>
+        <div>
+          <div id="mppt_state" style="padding-bottom: 0px"></div>
+        </div>
         <div>
           <div id="battery_state" style="padding-bottom: 0px"></div>
           <label id="info_battery_state"></label>
+        </div>
+        <div>
+          <br />
+          <h4>Bedingungen für Zustandsübergänge:</h4>
+          <ol>
+            <li>Charge Voltage >= CHARGE_CUTOFF_VOLTAGE (58.4 V)</li>
+            <li>Charge Voltage < (CHARGE_CUTOFF_VOLTAGE - 0.4V) (58.0 V)</li>
+            <li>Charge Voltage <= (DISCHARGE_VOLTAGE) (42.0 V)</li>
+            <li>(Charge Voltage > (ABSORPTION_VOLTAGE) (51.2 V)) && (Charge Current > 0.1 A)</li>
+            <li>Charge Current < 0.2 A</li>
+            <li>Charge Current > 0.5 A</li>
+            <li>Charge Voltage >= (CHARGE_CUTOFF_VOLTAGE - 5.0 V)</li>
+            <li>Charge Voltage <= ABSORPTION_VOLTAGE (51.2)</li>
+            <li>(Zeitstempel - GespeicherterZeitstempel) > 2 Wochen</li>
+            <li>Charge Voltage >= CHARGE_CUTOFF_VOLTAGE (58.4 V)</li>
+          </ol>
         </div>
       </div>
       <br />

@@ -5,6 +5,7 @@
   "feed_in_power": 0,
   "enable_second_psu": false,
   "enable_lcd": true,
+  "mppt_state": "Off",
   "battery_state": "charging",
   "battery_state_info": "",
   "total_consumption": -1.0,

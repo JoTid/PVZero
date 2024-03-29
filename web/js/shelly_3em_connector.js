@@ -111,35 +111,24 @@ function fillPVZeroState(data, url) {
   }
 
   if (data["psu2_available"]) {
-    document.getElementById("psu2_w").innerText =
-      data["psu2_w"].toFixed(0) + " W";
-    document.getElementById("psu2_v").innerText =
-      data["psu2_v"].toFixed(1) + " V";
-    document.getElementById("psu2_a").innerText =
-      data["psu2_a"].toFixed(1) + " A";
-    document.getElementById("psu2_target_w").innerText =
-      data["psu2_target_w"].toFixed(0) + " W";
-    document.getElementById("psu2_target_v").innerText =
-      data["psu2_target_v"].toFixed(1) + " V";
-    document.getElementById("psu2_target_a").innerText =
-      data["psu2_target_a"].toFixed(1) + " A";
+    document.getElementById("psu2_w").innerText = data["psu2_w"].toFixed(0) + " W";
+    document.getElementById("psu2_v").innerText = data["psu2_v"].toFixed(1) + " V";
+    document.getElementById("psu2_a").innerText = data["psu2_a"].toFixed(1) + " A";
+    document.getElementById("psu2_target_w").innerText = data["psu2_target_w"].toFixed(0) + " W";
+    document.getElementById("psu2_target_v").innerText = data["psu2_target_v"].toFixed(1) + " V";
+    document.getElementById("psu2_target_a").innerText = data["psu2_target_a"].toFixed(1) + " A";
   }
 
   if (data["analog_available"]) {
-    document.getElementById("analog_v").innerText =
-      data["analog_v"].toFixed(2) + " V";
+    document.getElementById("analog_v").innerText = data["analog_v"].toFixed(2) + " V";
   }
 
-  document.getElementById("battery_state").innerText =
-    "Status: " + data["battery_state"];
-  document.getElementById("info_battery_state").innerText =
-    data["battery_state_info"];
+  document.getElementById("mppt_state").innerText = "MPPT Status: " + data["mppt_state"];
+  document.getElementById("battery_state").innerText = "PVZero Status: " + data["battery_state"];
+  document.getElementById("info_battery_state").innerText = data["battery_state_info"];
 
   if (document.getElementById("autoupdate").checked) {
     console.log(`Set timer for update in 1 sec`);
-    timerRefresh = setTimeout(
-      getJSON.bind(null, "/pvzero/state.json", "fillPVZeroState"),
-      1000
-    );
+    timerRefresh = setTimeout( getJSON.bind(null, "/pvzero/state.json", "fillPVZeroState"), 1000);
   }
 }
