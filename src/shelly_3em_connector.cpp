@@ -21,7 +21,7 @@ limitations under the License.
 #include <mutex>
 #include <extensions/ewcTime.h>
 #include <extensions/ewcMail.h>
-#include <ewcTickerLED.h>
+#include <ewcLed.h>
 #include <ewcInterface.h>
 #include "shelly_3em_connector.h"
 #include "ewcLogger.h"
@@ -114,7 +114,7 @@ void Shelly3emConnector::loop()
           if (!_isRequesting)
           {
             _isRequesting = true;
-            EWC::I::get().logger() << F("Shelly3emConnector: request consumption power from ") << getUri() << " actually task is " << _taskIsRunning << endl;
+            EWC::I::get().logger() << F("Shelly3emConnector: request consumption power from ") << getUri() << endl;
             I::get().led().start(LED_GREEN, 250, 150);
             vTaskResume(_httpTaskHandle);
             std::lock_guard<std::mutex> lck(httpTaskMutex);
@@ -128,7 +128,8 @@ void Shelly3emConnector::loop()
             if (isValidConsumptionPower())
             {
               // update time
-              if (!I::get().time().isNtpEnabled()) {
+              if (!I::get().time().isNtpEnabled())
+              {
                 I::get().time().setLocalTime(getTimestamp());
               }
               // successful request
@@ -162,14 +163,15 @@ void Shelly3emConnector::loop()
                 _infoState = "Fehler beim holen der aktuellen Verbrauchswerte vom Shelly " + getUri() + "\nHttpCode" + getErrorCodes();
                 PZI::get().mail().sendWarning("Shelly 3em nicht erreichbar", _infoState.c_str());
               }
+              _sleeper.sleep(PZI::get().config().getCheckInterval() * 1000);
             }
           }
         }
         else
         {
           // create request task
-          httpClient.useHTTP10(true);
-          httpClient.setReuse(true);
+          // httpClient.useHTTP10(true);
+          // httpClient.setReuse(true);
           EWC::I::get().logger() << F("Shelly3emConnector: create request task") << endl;
           xTaskCreate(
               this->httpTask,                // Function that should be called
@@ -253,7 +255,8 @@ void Shelly3emConnector::_onTaskResult(bool valid, int32_t consumptionPower, uin
   _taskConsumptionPower = consumptionPower;
   _taskIsRunning = false;
   _taskTimestamp = timestamp;
-  if (!valid) {
+  if (!valid)
+  {
     _taskErrorCodes += ": " + String(httpCode) + ", ";
   }
 }

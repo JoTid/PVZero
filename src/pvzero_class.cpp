@@ -71,7 +71,6 @@ void PVZeroClass::setup()
   EWC::I::get().configFS().addConfig(_ewcMqtt);
   EWC::I::get().configFS().addConfig(_config);
   EWC::I::get().configFS().addConfig(_shelly3emConnector);
-  // EWC::I::get().led().enable(true, LED_BUILTIN, LOW);
   EWC::I::get().server().enableConfigUri();
   EWC::I::get().server().setup();
   EWC::I::get().config().paramLanguage = "de";
@@ -405,6 +404,23 @@ void PVZeroClass::loop()
   }
 #endif
 
+  //-------------------------------------------------------------------------------------------
+  // proceed only if WiFi connection is established
+  //
+  if (PZI::get().ewcServer().isConnected())
+  {
+
+    //-----------------------------------------------------------------------------------
+    // trigger mqtt client loop to trigger reconnection
+    //
+    _ewcMqtt.loop();
+
+    //-----------------------------------------------------------------------------------
+    // trigger Shelly 3EM loop
+    //
+    _shelly3emConnector.loop();
+  }
+
   //---------------------------------------------------------------------------------------------------
   // Trigger 3EM loop and NTP time each second
   //
@@ -436,10 +452,6 @@ void PVZeroClass::loop()
         _lcd.updateTime("");
       }
 #endif
-      //-----------------------------------------------------------------------------------
-      // trigger Shell 3EM loop
-      //
-      _shelly3emConnector.loop();
     }
 
     processControlAlgorithm();
