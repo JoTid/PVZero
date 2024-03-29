@@ -170,7 +170,7 @@ void Shelly3emConnector::loop()
         else
         {
           // create request task
-          httpClient.useHTTP10(true);
+          // httpClient.useHTTP10(true);
           // httpClient.setReuse(true);
           EWC::I::get().logger() << F("Shelly3emConnector: create request task") << endl;
           xTaskCreate(
