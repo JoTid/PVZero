@@ -411,7 +411,12 @@ void PVZeroClass::loop()
   {
 
     //-----------------------------------------------------------------------------------
-    // trigger Shell 3EM loop
+    // trigger mqtt client loop to trigger reconnection
+    //
+    _ewcMqtt.loop();
+
+    //-----------------------------------------------------------------------------------
+    // trigger Shelly 3EM loop
     //
     _shelly3emConnector.loop();
   }
