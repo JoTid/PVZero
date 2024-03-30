@@ -51,7 +51,6 @@ namespace PVZ
     uint8_t getFilterOrder() { return _filterOrder; }
     float getMaxVoltage() { return _maxVoltage; }
     float getMaxAmperage() { return _maxAmperage; }
-    bool isEnabledSecondPsu() { return _enableSecondPsu; }
     // LCD enabled
     bool isEnabledLcd() { return _enabledLcd; }
 
@@ -67,7 +66,6 @@ namespace PVZ
     int _filterOrder;
     float _maxVoltage;
     float _maxAmperage;
-    bool _enableSecondPsu;
     bool _enabledLcd;
     float _calibrationLow;
     float _calibrationLowMes;

@@ -58,14 +58,6 @@ PVZeroClass::~PVZeroClass()
 //--------------------------------------------------------------------------------------------------------------------//
 void PVZeroClass::setup()
 {
-  //---------------------------------------------------------------------------------------------------
-  // initialise the LCD and trigger first display
-  //
-#ifdef LCD_SUPPORT
-  _lcd.init(FIRMWARE_VERSION);
-  _lcd.process();
-#endif
-
   EWC::I::get().configFS().addConfig(_ewcUpdater);
   EWC::I::get().configFS().addConfig(_ewcMail);
   EWC::I::get().configFS().addConfig(_ewcMqtt);
@@ -141,6 +133,11 @@ void PVZeroClass::setup()
   aclPsuActualCurrentFilterP[1].init(3);
   aclPsuActualVoltageFilterP[0].init(3);
   aclPsuActualVoltageFilterP[1].init(3);
+
+  //---------------------------------------------------------------------------------------------------
+  // initialisation of the LCD
+  //
+  enableLcd();
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -483,22 +480,23 @@ void PVZeroClass::loop()
       //-----------------------------------------------------------------------------------
       // update time if available
       //
-#ifdef LCD_SUPPORT
-      if (I::get().time().timeAvailable())
+      if (_config.isEnabledLcd())
       {
+        if (I::get().time().timeAvailable())
+        {
+          //---------------------------------------------------------------------------
+          // update current time on LCD
+          //
+          _lcd.updateTime(I::get().time().str());
+        }
         //---------------------------------------------------------------------------
-        // update current time on LCD
+        // time is not available, clear it on LCD
         //
-        _lcd.updateTime(I::get().time().str());
+        else
+        {
+          _lcd.updateTime("");
+        }
       }
-      //---------------------------------------------------------------------------
-      // time is not available, clear it on LCD
-      //
-      else
-      {
-        _lcd.updateTime("");
-      }
-#endif
     }
 
     processControlAlgorithm();
@@ -516,138 +514,139 @@ void PVZeroClass::loop()
     }
   }
 
-#ifdef LCD_SUPPORT
-  //---------------------------------------------------------------------------------------------------
-  // Prepare informations for the LCD screens, when WiFi is connected
-  //
-  if ((WiFi.isConnected() == true)) // && (clBatGuardP.alarm() == false))
+  if (_config.isEnabledLcd())
   {
-    tsWifiT.clIp = WiFi.localIP();
-    tsWifiT.clSsid = WiFi.SSID();
-
-    _lcd.updateWifiInfo(&tsWifiT);
-    _lcd.updateWifiRssi(WiFi.RSSI());
-
-    if (isConsumptionPowerValid)
+    //---------------------------------------------------------------------------------------------------
+    // Prepare informations for the LCD screens, when WiFi is connected
+    //
+    if ((WiFi.isConnected() == true)) // && (clBatGuardP.alarm() == false))
     {
-      atsLcdScreenP[0].aclLine[0] = String("Cons. power: " + String(consumptionPower) + "Wh");
+      tsWifiT.clIp = WiFi.localIP();
+      tsWifiT.clSsid = WiFi.SSID();
 
-      //-----------------------------------------------------------------------------------
-      // Print Infos from PSUs only if they are available
-      //
-      slLcdScreenNrT = 0;
+      _lcd.updateWifiInfo(&tsWifiT);
+      _lcd.updateWifiRssi(WiFi.RSSI());
 
-      //-----------------------------------------------------------------------------------
-      // display info that depends on PSU A
-      //
-      if (abtPsuIsAvailableP[0])
+      if (isConsumptionPowerValid)
       {
-        atsLcdScreenP[0].aclLine[1] = String("A[Wh]: " + String(clCaP.feedInTargetPower(), 0) + " | " + String(aftActualVoltageOfPsuP[0] * aftActualCurrentOfPsuP[0], 0));
-        slLcdScreenNrT++;
+        atsLcdScreenP[0].aclLine[0] = String("Cons. power: " + String(consumptionPower) + "Wh");
 
-        atsLcdScreenP[slLcdScreenNrT].aclLine[0] = String("Feed-in via PSU A");
-        atsLcdScreenP[slLcdScreenNrT].aclLine[1] = String("(" + String(clCaP.feedInTargetPower(), 0) + ")" + String(clCaP.feedInTargetPowerApprox(), 0) + "Wh=" +
-                                                          String(clCaP.feedInTargetDcVoltage(), 0) + "V+" +
-                                                          String(clCaP.feedInTargetDcCurrent(), 1) + "A");
+        //-----------------------------------------------------------------------------------
+        // Print Infos from PSUs only if they are available
+        //
+        slLcdScreenNrT = 0;
 
-        atsLcdScreenP[slLcdScreenNrT].aclLine[2] = String("" + String(aftActualVoltageOfPsuP[0] * aftActualCurrentOfPsuP[0], 0) + " Wh = " +
-                                                          String(aftActualVoltageOfPsuP[0], 0) + "V + " +
-                                                          String(aftActualCurrentOfPsuP[0], 1) + "A");
+        //-----------------------------------------------------------------------------------
+        // display info that depends on PSU A
+        //
+        if (abtPsuIsAvailableP[0])
+        {
+          atsLcdScreenP[0].aclLine[1] = String("A[Wh]: " + String(clCaP.feedInTargetPower(), 0) + " | " + String(aftActualVoltageOfPsuP[0] * aftActualCurrentOfPsuP[0], 0));
+          slLcdScreenNrT++;
+
+          atsLcdScreenP[slLcdScreenNrT].aclLine[0] = String("Feed-in via PSU A");
+          atsLcdScreenP[slLcdScreenNrT].aclLine[1] = String("(" + String(clCaP.feedInTargetPower(), 0) + ")" + String(clCaP.feedInTargetPowerApprox(), 0) + "Wh=" +
+                                                            String(clCaP.feedInTargetDcVoltage(), 0) + "V+" +
+                                                            String(clCaP.feedInTargetDcCurrent(), 1) + "A");
+
+          atsLcdScreenP[slLcdScreenNrT].aclLine[2] = String("" + String(aftActualVoltageOfPsuP[0] * aftActualCurrentOfPsuP[0], 0) + " Wh = " +
+                                                            String(aftActualVoltageOfPsuP[0], 0) + "V + " +
+                                                            String(aftActualCurrentOfPsuP[0], 1) + "A");
+        }
+        else
+        {
+          atsLcdScreenP[0].aclLine[1] = String(" - No PSU A connected");
+        }
+
+        //-----------------------------------------------------------------------------------
+        // display info that depends on PSU A
+        //
+        if (abtPsuIsAvailableP[1])
+        {
+          atsLcdScreenP[0].aclLine[2] = String("B[Wh]: " + String(clCaP.feedInTargetPower(), 0) + " | " + String(aftActualVoltageOfPsuP[1] * aftActualCurrentOfPsuP[1], 0));
+
+          slLcdScreenNrT++;
+
+          atsLcdScreenP[slLcdScreenNrT].aclLine[0] = String("Feed-in via PSU B");
+          atsLcdScreenP[slLcdScreenNrT].aclLine[1] = String("(" + String(clCaP.feedInTargetPower(), 0) + ")" + String(clCaP.feedInTargetPowerApprox(), 0) + "Wh=" +
+                                                            String(clCaP.feedInTargetDcVoltage(), 0) + "V+" +
+                                                            String(clCaP.feedInTargetDcCurrent(), 1) + "A");
+
+          atsLcdScreenP[slLcdScreenNrT].aclLine[2] = String("" + String(aftActualVoltageOfPsuP[1] * aftActualCurrentOfPsuP[1], 0) + " Wh = " +
+                                                            String(aftActualVoltageOfPsuP[1], 0) + "V + " +
+                                                            String(aftActualCurrentOfPsuP[1], 1) + "A");
+        }
+        else
+        {
+          atsLcdScreenP[0].aclLine[2] = String(" - No PSU B connected");
+        }
+
+        _lcd.setScreen(&atsLcdScreenP[0], slLcdScreenNrT + 1);
+        _lcd.ok();
       }
+      //---------------------------------------------------------------------------
+      // print warning with connection failure to the power meter
+      //
       else
       {
-        atsLcdScreenP[0].aclLine[1] = String(" - No PSU A connected");
+        _lcd.warning("Request ERROR at 3EM", "Check URL:", PZI::get().config().getShelly3emAddr());
       }
-
-      //-----------------------------------------------------------------------------------
-      // display info that depends on PSU A
-      //
-      if (abtPsuIsAvailableP[1])
-      {
-        atsLcdScreenP[0].aclLine[2] = String("B[Wh]: " + String(clCaP.feedInTargetPower(), 0) + " | " + String(aftActualVoltageOfPsuP[1] * aftActualCurrentOfPsuP[1], 0));
-
-        slLcdScreenNrT++;
-
-        atsLcdScreenP[slLcdScreenNrT].aclLine[0] = String("Feed-in via PSU B");
-        atsLcdScreenP[slLcdScreenNrT].aclLine[1] = String("(" + String(clCaP.feedInTargetPower(), 0) + ")" + String(clCaP.feedInTargetPowerApprox(), 0) + "Wh=" +
-                                                          String(clCaP.feedInTargetDcVoltage(), 0) + "V+" +
-                                                          String(clCaP.feedInTargetDcCurrent(), 1) + "A");
-
-        atsLcdScreenP[slLcdScreenNrT].aclLine[2] = String("" + String(aftActualVoltageOfPsuP[1] * aftActualCurrentOfPsuP[1], 0) + " Wh = " +
-                                                          String(aftActualVoltageOfPsuP[1], 0) + "V + " +
-                                                          String(aftActualCurrentOfPsuP[1], 1) + "A");
-      }
-      else
-      {
-        atsLcdScreenP[0].aclLine[2] = String(" - No PSU B connected");
-      }
-
-      _lcd.setScreen(&atsLcdScreenP[0], slLcdScreenNrT + 1);
-      _lcd.ok();
     }
-    //---------------------------------------------------------------------------
-    // print warning with connection failure to the power meter
+
+    //---------------------------------------------------------------------------------------------------
+    // Show failure info, when WiFi is not connected
     //
     else
     {
-      _lcd.warning("Request ERROR at 3EM", "Check URL:", PZI::get().config().getShelly3emAddr());
-    }
-  }
+      _lcd.updateTime("");
+      _lcd.updateWifiRssi(0);
 
-  //---------------------------------------------------------------------------------------------------
-  // Show failure info, when WiFi is not connected
-  //
-  else
-  {
-    _lcd.updateTime("");
-    _lcd.updateWifiRssi(0);
-
-    if (I::get().server().isAP())
-    {
-      _lcd.busy(String("Connect to AP:").c_str(), I::get().server().config().paramAPName.c_str());
-    }
-    else
-    {
-      switch (WiFi.status())
+      if (I::get().server().isAP())
       {
-      case WL_NO_SHIELD:
-        clStringT = "NO_SHIELD";
-        break;
-      case WL_IDLE_STATUS:
-        clStringT = "IDLE_STATUS";
-        break;
-      case WL_NO_SSID_AVAIL:
-        clStringT = "NO_SSID_AVAIL";
-        break;
-      case WL_SCAN_COMPLETED:
-        clStringT = "SCAN_COMPLETED";
-        break;
-      case WL_CONNECTED:
-        clStringT = "CONNECTED";
-        break;
-      case WL_CONNECT_FAILED:
-        clStringT = "CONNECT_FAILED";
-        break;
-      case WL_CONNECTION_LOST:
-        clStringT = "CONNECTION_LOST";
-        break;
-      case WL_DISCONNECTED:
-        clStringT = "DISCONNECTED";
-        break;
-      default:
-        clStringT = "WL: " + String(WiFi.status());
-        break;
+        _lcd.busy(String("Connect to AP:").c_str(), I::get().server().config().paramAPName.c_str());
       }
+      else
+      {
+        switch (WiFi.status())
+        {
+        case WL_NO_SHIELD:
+          clStringT = "NO_SHIELD";
+          break;
+        case WL_IDLE_STATUS:
+          clStringT = "IDLE_STATUS";
+          break;
+        case WL_NO_SSID_AVAIL:
+          clStringT = "NO_SSID_AVAIL";
+          break;
+        case WL_SCAN_COMPLETED:
+          clStringT = "SCAN_COMPLETED";
+          break;
+        case WL_CONNECTED:
+          clStringT = "CONNECTED";
+          break;
+        case WL_CONNECT_FAILED:
+          clStringT = "CONNECT_FAILED";
+          break;
+        case WL_CONNECTION_LOST:
+          clStringT = "CONNECTION_LOST";
+          break;
+        case WL_DISCONNECTED:
+          clStringT = "DISCONNECTED";
+          break;
+        default:
+          clStringT = "WL: " + String(WiFi.status());
+          break;
+        }
 
-      _lcd.warning("WiFi connection lost:", String("WiFi status: " + String(WiFi.status())), clStringT);
+        _lcd.warning("WiFi connection lost:", String("WiFi status: " + String(WiFi.status())), clStringT);
+      }
     }
-  }
 
-  //---------------------------------------------------------------------------------------------------
-  // Trigger the LCD application
-  //
-  _lcd.process();
-#endif
+    //---------------------------------------------------------------------------------------------------
+    // Trigger the LCD application
+    //
+    _lcd.process();
+  }
 }
 
 void PVZeroClass::_onPVZeroState(WebServer *webServer)

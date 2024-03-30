@@ -60,6 +60,8 @@ namespace PVZ
 
     PVZConfig &config() { return _config; }
     PvzCa clCaP;
+    void clearLcd() { _lcd.init(""); }
+    void enableLcd() { _lcd.init(FIRMWARE_VERSION); }
 
   protected:
     unsigned long _tsStarted = 0;

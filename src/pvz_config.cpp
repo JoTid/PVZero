@@ -59,7 +59,6 @@ void PVZConfig::fillJson(JsonDocument &config)
   config["pvzero"]["max_voltage"] = String(_maxVoltage, 2);
   config["pvzero"]["max_amperage"] = String(_maxAmperage, 2);
   config["pvzero"]["enable_lcd"] = _enabledLcd;
-  config["pvzero"]["enable_second_psu"] = _enableSecondPsu;
   config["pvzero"]["calibration_low"] = String(_calibrationLow, 2);
   config["pvzero"]["calibration_low_mes"] = String(_calibrationLowMes, 0);
   config["pvzero"]["calibration_high"] = String(_calibrationHigh, 2);
@@ -97,18 +96,21 @@ void PVZConfig::fromJson(JsonDocument &config)
   jv = config["pvzero"]["enable_lcd"];
   if (!jv.isNull())
   {
-    _enabledLcd = jv.as<bool>();
-  }
-  jv = config["pvzero"]["enable_second_psu"];
-  if (!jv.isNull())
-  {
-    _enableSecondPsu = jv.as<bool>();
-    if (_enableSecondPsu)
+    bool enableLcd = jv.as<bool>();
+    if (!enableLcd && _enabledLcd)
     {
-      EWC::I::get().logger().setLogging(false);
+      // clear LCD display
+      PZI::get().pvz().clearLcd();
     }
-    // if psu activated, we should disable the settings to disallow enable the logger again.
-    EWC::I::get().config().disableLogSetting = _enableSecondPsu;
+    else
+    {
+      if (enableLcd && !_enabledLcd)
+      {
+        // enable LCD display
+        PZI::get().pvz().enableLcd();
+      }
+    }
+    _enabledLcd = enableLcd;
   }
   jv = config["pvzero"]["calibration_low"];
   if (!jv.isNull())
@@ -140,7 +142,6 @@ void PVZConfig::_initParameter()
   _filterOrder = 1;
   _maxVoltage = 36;
   _maxAmperage = 7;
-  _enableSecondPsu = false;
   _enabledLcd = true;
   _calibrationLow = 24;
   _calibrationLowMes = -1;
@@ -180,13 +181,6 @@ void PVZConfig::_onConfigSave(WebServer *webServer)
       config["pvzero"]["check_interval"] = val;
     }
   }
-  bool enableSecondPsu = false;
-  if (webServer->hasArg("enable_second_psu"))
-  {
-    enableSecondPsu = webServer->arg("enable_second_psu").equals("true");
-  }
-  config["pvzero"]["enable_second_psu"] = enableSecondPsu;
-  I::get().config().disableLogSetting = enableSecondPsu;
   bool enableLcd = false;
   if (webServer->hasArg("enable_lcd"))
   {
