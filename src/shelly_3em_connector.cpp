@@ -171,7 +171,7 @@ void Shelly3emConnector::loop()
         {
           // create request task
           // httpClient.useHTTP10(true);
-          // httpClient.setReuse(true);
+          httpClient.setReuse(true);
           EWC::I::get().logger() << F("Shelly3emConnector: create request task") << endl;
           xTaskCreate(
               this->httpTask,                // Function that should be called
@@ -272,20 +272,22 @@ void Shelly3emConnector::httpTask(void *_this)
     int32_t consumptionPower = 0;
     uint64_t timestamp = 0;
     String requestUri = sc->getUri();
+    sc->httpClient.begin(sc->wifiClient, requestUri.c_str());
 
     //-------------------------------------------------------------------------------------------
-    // Before sending the Request increase the timeout time. This has been done to avoid
-    // HTTPC_ERROR_READ_TIMEOUT errors that has been occurred sometimes.
-    //
-    // sc->httpClient.setTimeout(50);
     // Send request
-    sc->httpClient.begin(sc->wifiClient, requestUri.c_str());
     int httpCode = sc->httpClient.GET();
-    if (httpCode != 200)
+    if (httpCode != HTTP_CODE_OK)
     {
-      EWC::I::get().logger() << F("Shelly3emConnector: ERROR httpCode of GET: ") << httpCode << endl;
+      // Fallback on first error
+      // Before sending the Request increase the timeout time. This has been done to avoid
+      // HTTPC_ERROR_READ_TIMEOUT errors that has been occurred sometimes.
+      sc->httpClient.setTimeout(1000);
+      // Send request
+      sc->httpClient.begin(sc->wifiClient, requestUri.c_str());
+      httpCode = sc->httpClient.GET();
     }
-    else
+    if (httpCode == HTTP_CODE_OK)
     {
       JsonDocument doc;
       String jsonStr = sc->httpClient.getString();
@@ -294,6 +296,11 @@ void Shelly3emConnector::httpTask(void *_this)
       timestamp = (uint64_t)doc["unixtime"];
       valid = true;
     }
+    else
+    {
+      EWC::I::get().logger() << F("Shelly3emConnector: ERROR httpCode of GET: ") << httpCode << endl;
+    }
+    sc->httpClient.end();
     sc->_onTaskResult(valid, consumptionPower, timestamp, httpCode);
   }
 }
