@@ -2,7 +2,6 @@
   "pvzero": {
     "check_interval": 10,
     "shelly3emAddr": "",
-    "enable_second_psu": false,
     "enable_lcd": true,
     "max_voltage": 36,
     "max_amperage": 7,

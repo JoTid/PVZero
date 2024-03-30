@@ -215,11 +215,5 @@
     },
     "info_enable_serial_log": {
       "de": "Aktiviert seriellen Port für die Log Ausgaben."
-    },
-    "lbl_enable_second_psu": {
-      "de": "Steuere zwei String-Eingänge des Wechselrichters an"
-    },
-    "info_enable_second_psu": {
-      "de": "Die zweite PSU wird über einen zusätzlichen seriellen Port gesteuert. Das Logging wird deaktiviert."
     }
 }

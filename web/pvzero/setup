@@ -42,10 +42,6 @@
               <input id="max_amperage" type="number" step="0.01" name="max_amperage" placeholder="7">
               <label id="info_max_amperage">Darf max. Eingangsstrom des Wechselrichters je String-Eingang nicht überschreiten.</label>
             </div>
-            <div>
-              <input id="enable_second_psu" type="checkbox" name="enable_second_psu" value="true" checked><label id="lbl_enable_second_psu">Control two string inputs of the microinverter</label></input>
-              <label id="info_enable_second_psu">Second PSU will be controlled via additional serial port. Logging will be disabled.</label>
-            </div>            
         </div>
           <input id="npt_apply" type="submit" name="apply" value="Apply">
         </form>
@@ -80,7 +76,6 @@
           document.getElementById(id).value = data["pvzero"][id];
         });
         document.getElementById("check_interval_output").value = data["pvzero"]["check_interval"];
-        document.getElementById("enable_second_psu").checked = data["pvzero"]["enable_second_psu"];
         document.getElementById("enable_lcd").checked = data["pvzero"]["enable_lcd"];
         document.getElementById("filter_order_output").value = data["pvzero"]["filter_order"];
         if (data["pvzero"]["calibration_low_mes"] > 0) {
