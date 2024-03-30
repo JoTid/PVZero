@@ -58,6 +58,7 @@ void Uart::taskUartApp(void *_this)
 
   while (true)
   {
+    uint64_t startTs = millis();
     //-------------------------------------------------------------------------------------------
     // handle state and the corresponding transitions of the Serial2 state machine
     //
@@ -330,6 +331,18 @@ void Uart::taskUartApp(void *_this)
 
     default:
       break;
+    }
+
+    // sleep the rest of one second
+    int64_t delayTs = 990 - (millis() - startTs);
+    if (delayTs > 0)
+    {
+      EWC::I::get().logger() << "UART: sleep for " << delayTs << " ms" << endl;
+      delay(delayTs);
+    }
+    else
+    {
+      EWC::I::get().logger() << "UART: loop tacked " << delayTs << " ms" << endl;
     }
   }
 }
