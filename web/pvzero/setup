@@ -13,7 +13,7 @@
           <div class="noorder">
             <div>
                 <label id="lbl_check_interval" for="check_interval">Prüfintervall</label>
-                <input type="range" min="1" max="60" value="1" class="slider" id="check_interval" name="check_interval" oninput="this.nextElementSibling.value = this.value">
+                <input type="range" min="1" max="60" value="1" class="slider number" id="check_interval" name="check_interval" oninput="this.nextElementSibling.value = this.value">
                 <output id="check_interval_output">1</output>
                 <label id="info_check_interval">Sekunden zwischen zwei Prüfungen. Standard: 10 Sekunden.</label>
             </div>
@@ -28,7 +28,7 @@
             <div class="line_named">Leistungssteuerung</div>
             <div>
                 <label id="lbl_filter_order" for="filter_order">Filterkonstante</label>
-                <input type="range" min="1" max="255" value="1" class="slider" id="filter_order" name="filter_order" oninput="this.nextElementSibling.value = this.value">
+                <input type="range" min="1" max="255" value="1" class="slider number" id="filter_order" name="filter_order" oninput="this.nextElementSibling.value = this.value">
                 <output id="filter_order_output">1</output>
                 <label id="info_filter_order">Mit steigendem Wert wird das Rauschen der Gesamtleistung vom Shelly 3EM stärker unterdrückt und träge nachgefahren.</label>
             </div>
