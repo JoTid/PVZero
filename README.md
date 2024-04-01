@@ -8,6 +8,10 @@ With an ESP32, the power grid data of a **Shelly 3EM** is queried, processed and
 The project is based on [Arduino Framework](https://www.arduino.cc/reference/en) and is developed in
 [VS Code](https://code.visualstudio.com/) using the [PlatformIO IDE](https://platformio.org/) extension.
 
+### Favicon.ico
+
+Upload a **favicon.ico** with `pio run --target uploadfs`
+
 ## System setup
 
 The system for which the PVZero application is being realised looks as follows in its full configuration:
