@@ -67,6 +67,8 @@ public:
 
   uint8_t stateOfOperation();
 
+  bool available();
+
 private:
   /**
    * @brief This struct is used to store parameter from the text frame
@@ -123,6 +125,8 @@ private:
   float ftBatteryCurrentP;
 
   uint8_t ubStateOfOperationP;
+
+  bool bAvailableP = false;
 
   std::mutex mpptMutexP;
 };

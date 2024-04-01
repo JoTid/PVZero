@@ -673,7 +673,7 @@ void PVZeroClass::_onPVZeroState(WebServer *webServer)
   json["battery_state_info"] = strBatteryStateInfo;
   json["check_interval"] = PZI::get().config().getCheckInterval();
   json["next_check"] = _shelly3emConnector.infoSleepUntil();
-  json["mppt_available"] = true;
+  json["mppt_available"] = clMpptP.available();
   json["mppt_w"] = ftMpptBatteryVoltageP * ftMpptBatteryCurrentP;
   json["mppt_v"] = ftMpptBatteryVoltageP;
   json["mppt_a"] = ftMpptBatteryCurrentP;

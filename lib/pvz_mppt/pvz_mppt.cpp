@@ -72,6 +72,11 @@ void PvzMppt::updateFrame(const char *pszFrameV, const int32_t slLengthV)
   if (ulChecksumT == 0)
   {
     parseTable(ascFrameP);
+    bAvailableP = true;
+  }
+  else
+  {
+    bAvailableP = false;
   }
 
   //-------------------------------------------------------------------------------------------
@@ -109,6 +114,12 @@ uint8_t PvzMppt::stateOfOperation()
 {
   std::lock_guard<std::mutex> lck(mpptMutexP);
   return ubStateOfOperationP;
+}
+
+bool PvzMppt::available()
+{
+  std::lock_guard<std::mutex> lck(mpptMutexP);
+  return bAvailableP;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
