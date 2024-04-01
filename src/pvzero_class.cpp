@@ -21,7 +21,7 @@ limitations under the License.
 #include <ewcConfigServer.h>
 #include "generated/webIndexHTML.h"
 #include "generated/webLanguagesJSON.h"
-#include "generated/webShelly_3em_connectorJS.h"
+#include "generated/webPvzJS.h"
 #include "pvzero_class.h"
 #include "pvzero_interface.h"
 #include <mutex>
@@ -70,9 +70,9 @@ void PVZeroClass::setup()
   EWC::I::get().logger() << F("Setup WebServer") << endl;
   EWC::I::get().server().webServer().on(HOME_URI, std::bind(&ConfigServer::sendContentG, &EWC::I::get().server(), ws, FPSTR(PROGMEM_CONFIG_TEXT_HTML), HTML_WEB_INDEX_GZIP, sizeof(HTML_WEB_INDEX_GZIP)));
   EWC::I::get().server().webServer().on("/languages.json", std::bind(&ConfigServer::sendContentG, &EWC::I::get().server(), ws, FPSTR(PROGMEM_CONFIG_APPLICATION_JSON), JSON_WEB_LANGUAGES_GZIP, sizeof(JSON_WEB_LANGUAGES_GZIP)));
-  EWC::I::get().server().webServer().on("/pvzero/state.json", std::bind(&PVZeroClass::_onPVZeroState, this, ws));
+  EWC::I::get().server().webServer().on("/pvz/state.json", std::bind(&PVZeroClass::_onPVZeroState, this, ws));
   EWC::I::get().server().webServer().on("/check", std::bind(&PVZeroClass::_onPVZeroCheck, this, ws));
-  EWC::I::get().server().webServer().on("/js/shelly_3em_connector.js", std::bind(&ConfigServer::sendContentG, &EWC::I::get().server(), ws, FPSTR(PROGMEM_CONFIG_APPLICATION_JS), JS_WEB_SHELLY_3EM_CONNECTOR_GZIP, sizeof(JS_WEB_SHELLY_3EM_CONNECTOR_GZIP)));
+  EWC::I::get().server().webServer().on("/js/pvz.js", std::bind(&ConfigServer::sendContentG, &EWC::I::get().server(), ws, FPSTR(PROGMEM_CONFIG_APPLICATION_JS), JS_WEB_PVZ_GZIP, sizeof(JS_WEB_PVZ_GZIP)));
   _ewcMqttHA.setup(_ewcMqtt, "pvz." + I::get().config().getChipId(), I::get().config().paramDeviceName, "pvz");
   _ewcMqttHA.addProperty("sensor", "consumption" + I::get().config().getChipId(), "Consumption", "power", "consumption", "W", false);
   _ewcMqttHA.addProperty("sensor", "feedIn" + I::get().config().getChipId(), "Feed-In", "power", "feedIn", "W", false);
@@ -691,7 +691,7 @@ void PVZeroClass::_onPVZeroState(WebServer *webServer)
   json["psu2_target_w"] = aclPsuP[1].targetVoltage() * aclPsuP[1].targetCurrent();
   json["psu2_target_v"] = aclPsuP[1].targetVoltage();
   json["psu2_target_a"] = aclPsuP[1].targetCurrent();
-  json["analog_available"] = !isnan(ftPsuVccT);
+  json["analog_available"] = PZI::get().config().isEnabledAnalog() && !isnan(ftPsuVccT);
   json["analog_v"] = isnan(ftPsuVccT) ? 0.0 : ftPsuVccT;
   String output;
   serializeJson(json, output);

@@ -1,0 +1,11 @@
+{
+  "peripherals": {
+    "enable_lcd": true,
+    "enable_led": true,
+    "enable_analog": false,
+    "calibration_low": 24,
+    "calibration_low_mes": -1,
+    "calibration_high": 48,
+    "calibration_high_mes": -1
+  }
+}

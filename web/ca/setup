@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta
+      name="viewport"
+      charset="UTF-8"
+      content="width=device-width, initial-scale=1, user-scalable=yes"
+    />
+    <title>Control algorithm Setup</title>
+    <link rel="stylesheet" href="/css/base.css" />
+  </head>
+  <body style="padding-top: 58px">
+    <div id="header"></div>
+    <div id="loader" class="loader"></div>
+    <div id="base-panel" class="base-panel" hidden>
+      <form action="/pvz/ca/config/save" method="post">
+        <div class="noorder">
+          <div class="line_named">Leistungssteuerung</div>
+          <div>
+            <label id="lbl_filter_order" for="filter_order">
+              Filterkonstante
+            </label>
+            <input
+              type="range"
+              min="1"
+              max="255"
+              value="1"
+              class="slider number"
+              id="filter_order"
+              name="filter_order"
+              oninput="this.nextElementSibling.value = this.value"
+            />
+            <output id="filter_order_output">1</output>
+            <label id="info_filter_order">
+              Mit steigendem Wert wird das Rauschen der Gesamtleistung vom
+              Shelly 3EM stärker unterdrückt und träge nachgefahren.
+            </label>
+          </div>
+          <div>
+            <label id="lbl_voltage" for="max_voltage">
+              Maximale Spannung je String
+            </label>
+            <input
+              id="max_voltage"
+              type="number"
+              step="0.01"
+              name="max_voltage"
+              placeholder="36"
+            />
+            <label id="info_voltage">
+              Darf max. MPPT Spannung des Wechselrichters nicht überschreiten.
+            </label>
+          </div>
+          <div>
+            <label id="lbl_max_amperage" for="max_amperage">
+              Maximaler Strom je String
+            </label>
+            <input
+              id="max_amperage"
+              type="number"
+              step="0.01"
+              name="max_amperage"
+              placeholder="7"
+            />
+            <label id="info_max_amperage">
+              Darf max. Eingangsstrom des Wechselrichters je String-Eingang
+              nicht überschreiten.
+            </label>
+          </div>
+          <div>
+            <label id="lbl_max_power_if_unknown" for="max_power_if_unknown">
+              Maximale Einspeisung in Watt
+            </label>
+            <input
+              id="max_power_if_unknown"
+              type="number"
+              step="1"
+              name="max_power_if_unknown"
+              placeholder="260"
+            />
+            <label id="info_max_power_if_unknown">
+              Maximale Einspeisung wenn keine Verbrauchsmessung vorliegt.
+            </label>
+          </div>
+        </div>
+        <input id="npt_apply" type="submit" name="apply" value="Apply" />
+      </form>
+    </div>
+
+    <script>
+      var jsons = [["/pvz/ca/config.json", "fillPVZConfig"]];
+    </script>
+    <script src="/js/postload.js"></script>
+    <script type="text/javascript">
+      function fillPVZConfig(data, url) {
+        [
+          "filter_order",
+          "max_voltage",
+          "max_amperage",
+          "max_power_if_unknown",
+        ].forEach(function (id, idy, arr) {
+          document.getElementById(id).value = data["ca"][id];
+        });
+        document.getElementById("filter_order_output").value =
+          data["ca"]["filter_order"];
+        document.getElementById("loader").hidden = true;
+        document.getElementById("base-panel").hidden = false;
+      }
+    </script>
+  </body>
+</html>

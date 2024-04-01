@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta
+      name="viewport"
+      charset="UTF-8"
+      content="width=device-width, initial-scale=1, user-scalable=yes"
+    />
+    <title>PVZ peripherals Setup</title>
+    <link rel="stylesheet" href="/css/base.css" />
+  </head>
+  <body style="padding-top: 58px">
+    <div id="header"></div>
+    <div id="loader" class="loader"></div>
+    <div id="base-panel" class="base-panel" hidden>
+      <form action="/pvz/lcd/enable" method="post">
+        <div class="noorder">
+          <div>
+            <label class="switch">
+              <input
+                id="enable_lcd"
+                type="checkbox"
+                class="switch input"
+                name="enable_lcd"
+                value="on"
+                onclick="submit();"
+              />
+              <span class="switch slider"></span>
+            </label>
+            <label id="lbl_enable_lcd" after="enable_lcd"> LCD </label>
+            <label id="info_enable_lcd"></label>
+          </div>
+        </div>
+      </form>
+      <form action="/pvz/led/enable" method="post">
+        <div class="noorder">
+          <div>
+            <label class="switch">
+              <input
+                id="enable_led"
+                type="checkbox"
+                class="switch input"
+                name="enable_led"
+                value="on"
+                onclick="submit();"
+              />
+              <span class="switch slider"></span>
+            </label>
+            <label id="lbl_enable_led" after="enable_led"> LED </label>
+            <label id="info_enable_led"></label>
+          </div>
+        </div>
+      </form>
+      <form action="/pvz/analog/enable" method="post">
+        <div class="noorder">
+          <div>
+            <label class="switch">
+              <input
+                id="enable_analog"
+                type="checkbox"
+                class="switch input"
+                name="enable_analog"
+                value="on"
+                onclick="submit();"
+              />
+              <span class="switch slider"></span>
+            </label>
+            <label id="lbl_enable_analog" after="enable_analog"> Analog </label>
+            <label id="info_enable_analog"></label>
+          </div>
+        </div>
+      </form>
+      <div class="line_named">Analog Kalibrierung</div>
+      <span id="calibration-form">
+        <form action="/pvz/analog/calibration/low" method="post">
+          <div class="noorder">
+            <div>
+              <label id="lbl_calibration_low" for="calibration_low">
+                Sollwert bei Low
+              </label>
+              <input
+                id="calibration_low"
+                type="number"
+                step="0.01"
+                name="calibration_low"
+                placeholder="24"
+              />
+              <input
+                id="low_apply"
+                type="submit"
+                name="calibration_low_apply"
+                value="LOW"
+                style="margin-top: 0px"
+              />
+              <label id="calibration_low_mes">--</label>
+            </div>
+          </div>
+        </form>
+        <form action="/pvz/analog/calibration/high" method="post">
+          <div class="noorder">
+            <div>
+              <label id="lbl_calibration_high" for="calibration_high">
+                Sollwert bei High
+              </label>
+              <input
+                id="calibration_high"
+                type="number"
+                step="0.01"
+                name="calibration_high"
+                placeholder="48"
+              />
+              <input
+                id="high_apply"
+                type="submit"
+                name="calibration_high_apply"
+                value="HIGH"
+                style="margin-top: 0px"
+              />
+              <label id="calibration_high_mes">--</label>
+            </div>
+          </div>
+        </form>
+      </span>
+    </div>
+
+    <script>
+      var jsons = [["/pvz/peripherals/config.json", "fillPVZConfig"]];
+    </script>
+    <script src="/js/postload.js"></script>
+    <script type="text/javascript">
+      function fillPVZConfig(data, url) {
+        ["calibration_low", "calibration_high"].forEach(function (
+          id,
+          idy,
+          arr
+        ) {
+          document.getElementById(id).value = data["peripherals"][id];
+        });
+        document.getElementById("enable_lcd").checked =
+          data["peripherals"]["enable_lcd"];
+        document.getElementById("enable_led").checked =
+          data["peripherals"]["enable_led"];
+        const analogEnabled = data["peripherals"]["enable_analog"];
+        document.getElementById("enable_analog").checked = analogEnabled;
+        document.getElementById("calibration_low").disabled = !analogEnabled;
+        document.getElementById("calibration_high").disabled = !analogEnabled;
+        document.getElementById("low_apply").disabled = !analogEnabled;
+        document.getElementById("high_apply").disabled = !analogEnabled;
+        if (data["peripherals"]["calibration_low_mes"] > 0) {
+          document.getElementById("calibration_low_mes").innerText =
+            "gemessener RAW Wert: " +
+            data["peripherals"]["calibration_low_mes"];
+        }
+        if (data["peripherals"]["calibration_high_mes"] > 0) {
+          document.getElementById("calibration_high_mes").innerText =
+            "gemessener RAW Wert: " +
+            data["peripherals"]["calibration_high_mes"];
+        }
+        document.getElementById("loader").hidden = true;
+        document.getElementById("base-panel").hidden = false;
+      }
+    </script>
+  </body>
+</html>

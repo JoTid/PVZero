@@ -64,6 +64,7 @@ namespace PVZ
     String getUri();
     String getErrorCodes();
     void deleteErrorCodes();
+    void forceUpdate() { _sleeper.wakeup(); }
 
   protected:
     int _potPin;

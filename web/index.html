@@ -31,7 +31,9 @@
     <div id="header"></div>
     <div class="base-panel">
       <br />
-      <span id="pvzero_title" style="font-weight: bold; font-size: 2em">PVZero</span>
+      <span id="pvzero_title" style="font-weight: bold; font-size: 2em">
+        PVZero
+      </span>
       <span id="version">Unknown</span>
       <div class="line_named"></div>
       <div id="shelly_3em" class="noorder">
@@ -85,10 +87,22 @@
           <div style="padding-left: 10px; padding-bottom: 0px">&#10551;</div>
           <span class="material-icons"> battery_std </span>
           <div id="battery_current" style="padding-bottom: 0px">- A</div>
-          <div style="padding-left: 10px; padding-right: 10px; padding-bottom: 0px"> &rarr; </div>
-          <div id="battery_current_sum_in" style="padding-bottom: 0px">- Ah</div>
-          <div style="padding-left: 10px; padding-right: 10px; padding-bottom: 0px"> &rarr; </div>
-          <div id="battery_current_sum_out" style="padding-bottom: 0px">- Ah</div>
+          <div
+            style="padding-left: 10px; padding-right: 10px; padding-bottom: 0px"
+          >
+            &rarr;
+          </div>
+          <div id="battery_current_sum_in" style="padding-bottom: 0px">
+            - Ah
+          </div>
+          <div
+            style="padding-left: 10px; padding-right: 10px; padding-bottom: 0px"
+          >
+            &rarr;
+          </div>
+          <div id="battery_current_sum_out" style="padding-bottom: 0px">
+            - Ah
+          </div>
         </div>
 
         <h3 style="margin-bottom: 3px">Leistungssteuerung</h3>
@@ -166,7 +180,10 @@
             <li>Charge Voltage >= CHARGE_CUTOFF_VOLTAGE (58.4 V)</li>
             <li>Charge Voltage < (CHARGE_CUTOFF_VOLTAGE - 0.4V) (58.0 V)</li>
             <li>Charge Voltage <= (DISCHARGE_VOLTAGE) (42.0 V)</li>
-            <li>(Charge Voltage > (ABSORPTION_VOLTAGE) (51.2 V)) && (Charge Current > 0.1 A)</li>
+            <li>
+              (Charge Voltage > (ABSORPTION_VOLTAGE) (51.2 V)) && (Charge
+              Current > 0.1 A)
+            </li>
             <li>Charge Current < 0.2 A</li>
             <li>Charge Current > 0.5 A</li>
             <li>Charge Voltage >= (CHARGE_CUTOFF_VOLTAGE - 5.0 V)</li>
@@ -179,13 +196,13 @@
       <br />
     </div>
     <script src="/js/postload.js"></script>
-    <script src="/js/shelly_3em_connector.js"></script>
+    <script src="/js/pvz.js"></script>
     <script type="text/javascript">
       function handleClickAutoUpdate(cb) {
         if (cb.checked) {
           console.log(`enable auto update`);
           timerRefresh = setTimeout(
-            getJSON.bind(null, "/pvzero/state.json", "fillPVZeroState"),
+            getJSON.bind(null, "/pvz/state.json", "fillPVZeroState"),
             1000
           );
         } else {

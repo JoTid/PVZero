@@ -53,6 +53,10 @@ namespace PVZ
     float getMaxAmperage() { return _maxAmperage; }
     // LCD enabled
     bool isEnabledLcd() { return _enabledLcd; }
+    // LED enabled
+    bool isEnabledLed() { return _enabledLed; }
+    // Analog enabled
+    bool isEnabledAnalog() { return _enabledAnalog; }
 
     float getCalibrationRawLow() { return _calibrationLowMes; }
     float getCalibrationRawHigh() { return _calibrationHighMes; }
@@ -66,7 +70,10 @@ namespace PVZ
     int _filterOrder;
     float _maxVoltage;
     float _maxAmperage;
+    int _maxPowerIfUnknown;
     bool _enabledLcd;
+    bool _enabledLed;
+    bool _enabledAnalog;
     float _calibrationLow;
     float _calibrationLowMes;
     float _calibrationHigh;
@@ -75,10 +82,26 @@ namespace PVZ
     CalibrationCallback _cbLow;
     CalibrationCallback _cbHigh;
 
-    void _onConfigGet(WebServer *webServer);
-    void _onConfigSave(WebServer *webServer);
+    void _onCfgCaGet(WebServer *webServer);
+    void _onCfgCaSave(WebServer *webServer);
+    void _onCfgShellyGet(WebServer *webServer);
+    void _onCfgShellySave(WebServer *webServer);
+    void _onCfgPeripheralsGet(WebServer *webServer);
+    void _onCfgPeripheralsSave(WebServer *webServer);
+
+    void _onLcdEnable(WebServer *webServer);
+    void _onLedEnable(WebServer *webServer);
+    void _onAnalogEnable(WebServer *webServer);
     void _onCalibrationLow(WebServer *webServer);
     void _onCalibrationHigh(WebServer *webServer);
+
+    void _fillCaJson(JsonDocument &config);
+    void _fillShellyJson(JsonDocument &config);
+    void _fillPeripheralsJson(JsonDocument &config);
+
+    void _setLcd(bool state);
+    void _setLed(bool state);
+    void _setAnalog(bool state);
   };
 }; // namespace
 

@@ -1,0 +1,6 @@
+{
+  "shelly": {
+    "check_interval": 10,
+    "shelly3emAddr": ""
+  }
+}

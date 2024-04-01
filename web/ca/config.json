@@ -1,0 +1,8 @@
+{
+  "ca": {
+    "filter_order": 3,
+    "max_voltage": 36,
+    "max_amperage": 7,
+    "max_power_if_unknown": 260
+  }
+}
