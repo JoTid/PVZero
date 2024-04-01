@@ -105,8 +105,7 @@
           </div>
         </div>
 
-        <h3 style="margin-bottom: 3px">Leistungssteuerung</h3>
-        <div class="line_named"></div>
+        <div class="line_named_h3">Leistungssteuerung</div>
         <table>
           <thead>
             <tr>
@@ -163,19 +162,12 @@
           </body>
         </table>
 
-        <h3 style="margin-bottom: 3px">Speicher</h3>
-        <div class="line_named"></div>
+        <div class="line_named_h3">Speicher</div>
+        <div id="mppt_state" style="padding-bottom: 0px"></div>
+        <div id="battery_state" style="padding-bottom: 0px"></div>
+        <label id="info_battery_state"></label>
         <div>
-          <div id="mppt_state" style="padding-bottom: 0px"></div>
-        </div>
-        <div>
-          <div id="battery_state" style="padding-bottom: 0px"></div>
-          <label id="info_battery_state"></label>
-        </div>
-        <div>
-          <br />
-          <h4 style="margin-bottom: 3px">Bedingungen für Zustandsübergänge:</h4>
-          <div class="line_named"></div>
+          <div class="line_named_h4">Bedingungen für Zustandsübergänge:</div>
           <ol>
             <li>Charge Voltage >= CHARGE_CUTOFF_VOLTAGE (58.4 V)</li>
             <li>Charge Voltage < (CHARGE_CUTOFF_VOLTAGE - 0.4V) (58.0 V)</li>
