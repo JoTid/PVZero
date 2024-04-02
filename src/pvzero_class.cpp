@@ -129,10 +129,10 @@ void PVZeroClass::setup()
   //---------------------------------------------------------------------------------------------------
   // filter value from PSUs a little bit to avoid outlier
   //
-  aclPsuActualCurrentFilterP[0].init(3);
-  aclPsuActualCurrentFilterP[1].init(3);
-  aclPsuActualVoltageFilterP[0].init(3);
-  aclPsuActualVoltageFilterP[1].init(3);
+  aclPsuActualCurrentFilterP[0].init(0);
+  aclPsuActualCurrentFilterP[1].init(0);
+  aclPsuActualVoltageFilterP[0].init(0);
+  aclPsuActualVoltageFilterP[1].init(0);
 
   //---------------------------------------------------------------------------------------------------
   // initialisation of the LCD
@@ -342,7 +342,10 @@ void PVZeroClass::processControlAlgorithm(void)
   clBatGuardP.updateVoltage(ftMpptBatteryVoltageP);
   clBatGuardP.updateCurrent(ftMpptBatteryCurrentP);
   clBatGuardP.updateMpptState(ubMpptStateOfOperationP);
-  clBatGuardP.updateTime(I::get().time().currentTime());
+  if (I::get().time().timeAvailable())
+  {
+    clBatGuardP.updateTime(I::get().time().currentTime());
+  }
   clBatGuardP.process();
 
   //---------------------------------------------------------------------------------------------------
@@ -790,9 +793,16 @@ void PVZeroClass::batteryGuard_TimeStorageCallback(uint64_t uqTimeV)
   I::get().configFS().saveTo(BATTERY_GUARD_FILE, String(uqTimeV));
 }
 
-void PVZeroClass::batteryGuard_EventCallback(BatteryGuard::State_te teSStateV)
+void PVZeroClass::batteryGuard_EventCallback(BatteryGuard::State_te teStateV)
 {
-  switch (teSStateV)
+
+  I::get().logger() << F("MPPT Values: ") << String(ftMpptBatteryVoltageP, 3) << " V, " << String(ftMpptBatteryCurrentP, 3) << " A, state " << ubMpptStateOfOperationP << ", is available " << clMpptP.available() << endl;
+  I::get().logger() << F("PSU0 actual values: ") << String(aftActualVoltageOfPsuP[0], 3) << " V, " << String(aftActualVoltageOfPsuP[0], 3) << " A, is available " << abtPsuIsAvailableP[0] << endl;
+  I::get().logger() << F("PSU0 target values: ") << String(aclPsuP[0].targetVoltage(), 3) << " V, " << String(aclPsuP[0].targetCurrent(), 3) << " A" << endl;
+  I::get().logger() << F("PSU1 actual values: ") << String(aftActualVoltageOfPsuP[1], 3) << " V, " << String(aftActualCurrentOfPsuP[1], 3) << " A, is available " << abtPsuIsAvailableP[1] << endl;
+  I::get().logger() << F("PSU1 target values: ") << String(aclPsuP[1].targetVoltage(), 3) << " V, " << String(aclPsuP[1].targetCurrent(), 3) << " A" << endl;
+
+  switch (teStateV)
   {
   case BatteryGuard::State_te::eCharge:
     strBatteryState = String("charge");
@@ -815,7 +825,7 @@ void PVZeroClass::batteryGuard_EventCallback(BatteryGuard::State_te teSStateV)
   default:
     strBatteryState = "-";
   }
-  strBatteryStateInfo = clBatGuardP.stateInfo();
+  strBatteryStateInfo = clBatGuardP.stateInfo(teStateV);
   EWC::I::get().logger() << F("Battery status: ") << strBatteryState << endl;
   EWC::I::get().logger() << F("Battery info: ") << strBatteryStateInfo << endl;
 }
