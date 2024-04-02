@@ -134,11 +134,13 @@ private:
   bool btEnabledP;
 
   State_te teStateP;
+  State_te teStateOldP;
 
   EventHandler_fn pfnEventHandlerP;
   SaveTimeHandler_fn pfnSaveTimeHandlerP;
 
-  String clAddStateInfoP;
+  String aclAddStateInfoP[6];
+
   // actual unix time given in [sec] since 01.01.1970
   uint64_t uqTimeP;
   // unix time in [sec] since 01.01.1970 when the battery was last fully charged
@@ -196,7 +198,7 @@ public:
    *
    * @param[in] uqTimeV Unix time given in [sec] since 01.01.1970
    */
-  void updateTime(uint64_t uqTimeV) { uqTimeP = uqTimeV; };
+  void updateTime(uint64_t uqTimeV);
 
   /**
    * @brief This method returns limited current, that depends on battery guard parameters
@@ -219,7 +221,7 @@ public:
 
   bool isEnabled() { return btEnabledP; }
 
-  String stateInfo() { return clAddStateInfoP; }
+  String stateInfo(State_te teStateV) { return aclAddStateInfoP[teStateV]; }
 };
 
 #endif // BATTERY_GUARD_HPP_

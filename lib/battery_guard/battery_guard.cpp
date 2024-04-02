@@ -35,12 +35,33 @@ BatteryGuard::BatteryGuard()
   slBatteryCurrentMinimalP = 0.0;
   slBatteryCurrentMaximalP = 0.0;
 
-  clAddStateInfoP = "";
-
   pfnEventHandlerP = nullptr;
   pfnSaveTimeHandlerP = nullptr;
 
   teStateP = eDischarged;
+  teStateOldP = teStateP;
+
+  aclAddStateInfoP[eCharge] = String("Der Strom wird auf den Wert Charge Current vom MPPT begrenzt\n");
+  aclAddStateInfoP[eCharge] += String("- Bei MPPT Current < 0.2 A erfolgt der Wechsel in den Zustand 'discharge', Übergang 5\n");
+  aclAddStateInfoP[eCharge] += String("- Bei MPPT Voltage >= " + String(((float)(BG_CHARGE_CUTOFF_VOLTAGE - 50)) * 0.1, 1) + " V erfolgt der Wechsel in den Zustand 'charge and discharge', Übergang 7\n");
+  aclAddStateInfoP[eCharge] += String("- Liegt eine Vollladung weiter als 2 Wochen zurück, erfolgt der Wechsel in den Zustand 'charge until charged', Übergang 9");
+
+  aclAddStateInfoP[eChargeAndDischarge] = String("Der Strom wird nicht begrenzt\n");
+  aclAddStateInfoP[eChargeAndDischarge] += String("- Bei MPPT Voltage >= " + String(((float)BG_CHARGE_CUTOFF_VOLTAGE) * 0.1, 1) + " V erfolgt der Wechsel in den Zustand 'charged', Übergang 1\n");
+  aclAddStateInfoP[eChargeAndDischarge] += String("- Bei MPPT Voltage <= " + String(((float)BG_ABSORPTION_VOLTAGE) * 0.1, 1) + " V erfolgt der Wechsel in den Zustand 'charge', Übergang 8");
+
+  aclAddStateInfoP[eChargeUntilCharged] = String("Der Strom wird auf den Wert 0.0 A begrenzt\n");
+  aclAddStateInfoP[eChargeUntilCharged] += String("- Bei MPPT Voltage >= " + String(((float)BG_CHARGE_CUTOFF_VOLTAGE) * 0.1, 1) + " V erfolgt der Wechsel in den Zustand 'charged', Übergang 10");
+
+  aclAddStateInfoP[eCharged] = String("Der Strom wird nicht begrenzt und der Zeitstempel wird beim Verlassen des Zustands gespeichert\n");
+  aclAddStateInfoP[eCharged] += String("- Bei MPPT Voltage < " + String(((float)(BG_CHARGE_CUTOFF_VOLTAGE - 4)) * 0.1, 1) + " V erfolgt der Wechsel in den Zustand 'discharge', Übergang 2");
+
+  aclAddStateInfoP[eDischarge] = String("Der Strom wird nicht begrenzt\n");
+  aclAddStateInfoP[eDischarge] += String("- Bei MPPT Voltage <= " + String(((float)BG_DISCHARGE_VOLTAGE) * 0.1, 1) + " V erfolgt der Wechsel in den Zustand 'discharged', Übergang 3\n");
+  aclAddStateInfoP[eDischarge] += String("- Bei MPPT Current > 0.5 A erfolgt der Wechsel in den Zustand 'charging', Übergang 6");
+
+  aclAddStateInfoP[eDischarged] = String("Der Strom wird auf den Wert 0.0 A begrenzt\n");
+  aclAddStateInfoP[eDischarged] += String("- Bei MPPT Voltage > " + String(((float)BG_ABSORPTION_VOLTAGE) * 0.1, 1) + " V und MPPT Current > 0.2 A erfolgt der Wechsel in den Zustand 'charge', Übergang 4");
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -61,7 +82,8 @@ void BatteryGuard::init(uint64_t uqTimeV, SaveTimeHandler_fn pfnSaveTimeHandlerV
   // take parameters
   //
   pfnSaveTimeHandlerP = pfnSaveTimeHandlerV;
-  uqTimeP = uqTimeV;
+  uqFullyChargedTimeP = uqTimeV;
+  uqTimeP = 0; // no pending time has been provided yet
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -202,11 +224,6 @@ void BatteryGuard::process(void)
         if (slBatteryVoltageP <= BG_ABSORPTION_VOLTAGE)
         {
           teStateP = eCharge;
-
-          if (pfnEventHandlerP != nullptr)
-          {
-            pfnEventHandlerP(teStateP);
-          }
         }
 
         //---------------------------------------------------------------------------
@@ -215,20 +232,8 @@ void BatteryGuard::process(void)
         else if (slBatteryVoltageP >= BG_CHARGE_CUTOFF_VOLTAGE)
         {
           teStateP = eCharged;
-
-          if (pfnEventHandlerP != nullptr)
-          {
-            pfnEventHandlerP(teStateP);
-          }
         }
 
-        //---------------------------------------------------------------------------
-        // stay in this state
-        //
-        else
-        {
-          clAddStateInfoP = String("Der Strom wird nicht begrenzt, solange die Bedingung 1. oder 8. nicht erfüllt ist");
-        }
         break;
 
         //---------------------------------------------------------------------------
@@ -242,23 +247,14 @@ void BatteryGuard::process(void)
         if (slBatteryVoltageP >= (BG_CHARGE_CUTOFF_VOLTAGE - 50))
         {
           teStateP = eChargeAndDischarge;
-
-          if (pfnEventHandlerP != nullptr)
-          {
-            pfnEventHandlerP(teStateP);
-          }
         }
 
         //---------------------------------------------------------------------------
         // 9. (Zeitstempel - SavedZeitstempel) > 2 Wochen
         //
-        else if ((uqTimeP - uqFullyChargedTimeP) > (uint64_t)BG_FULL_CHARGE_REPETITION_TIME)
+        else if ((uqTimeP != 0) && ((uqTimeP - uqFullyChargedTimeP) > (uint64_t)BG_FULL_CHARGE_REPETITION_TIME))
         {
           teStateP = eChargeUntilCharged;
-          if (pfnEventHandlerP != nullptr)
-          {
-            pfnEventHandlerP(teStateP);
-          }
         }
 
         //---------------------------------------------------------------------------
@@ -267,18 +263,17 @@ void BatteryGuard::process(void)
         else if (slBatteryCurrentP < 20)
         {
           teStateP = eDischarge;
-          if (pfnEventHandlerP != nullptr)
-          {
-            pfnEventHandlerP(teStateP);
-          }
         }
 
+        break;
+
+      case eChargeUntilCharged:
         //---------------------------------------------------------------------------
-        // stay in this state
+        // 110. Charge Voltage >= CHARGE_CUTOFF_VOLTAGE (58.4 V)
         //
-        else
+        if ((slBatteryVoltageP >= BG_CHARGE_CUTOFF_VOLTAGE))
         {
-          clAddStateInfoP = String("Der Strom wird auf den Wert Charge Current vom MPPT begrenzt, solange die Bedingung 5. oder 7. oder 9. nicht erfüllt ist");
+          teStateP = eCharged;
         }
 
         break;
@@ -307,18 +302,6 @@ void BatteryGuard::process(void)
           }
 
           teStateP = eDischarge;
-          if (pfnEventHandlerP != nullptr)
-          {
-            pfnEventHandlerP(teStateP);
-          }
-        }
-
-        //---------------------------------------------------------------------------
-        // stay in this state
-        //
-        else
-        {
-          clAddStateInfoP = String("Der Strom wird nicht begrenzt und der Zeitstempel wird gespeichert, solange die Bedingung 2. nicht erfüllt ist");
         }
 
         break;
@@ -334,10 +317,6 @@ void BatteryGuard::process(void)
         if (slBatteryVoltageP <= BG_DISCHARGE_VOLTAGE)
         {
           teStateP = eDischarged;
-          if (pfnEventHandlerP != nullptr)
-          {
-            pfnEventHandlerP(teStateP);
-          }
         }
 
         //---------------------------------------------------------------------------
@@ -346,18 +325,6 @@ void BatteryGuard::process(void)
         else if (slBatteryCurrentP > 50)
         {
           teStateP = eCharge;
-          if (pfnEventHandlerP != nullptr)
-          {
-            pfnEventHandlerP(teStateP);
-          }
-        }
-
-        //---------------------------------------------------------------------------
-        // stay in this state
-        //
-        else
-        {
-          clAddStateInfoP = String("Der Strom wird nicht begrenzt, solange die Bedingung 3. oder 5. nicht erfüllt ist");
         }
 
         break;
@@ -368,23 +335,12 @@ void BatteryGuard::process(void)
       case eDischarged:
 
         //---------------------------------------------------------------------------
-        // 4. (Charge Voltage > (ABSORPTION_VOLTAGE) (51.2 V)) && (Charge Current > 0.1 A)
+        // 4. (Charge Voltage > (ABSORPTION_VOLTAGE) (51.2 V)) && (Charge Current > 0.2 A)
+        // do not check the current, as the start can be performed at evening
         //
-        if ((slBatteryVoltageP > BG_ABSORPTION_VOLTAGE) && (slBatteryCurrentP > 10))
+        if ((slBatteryVoltageP > BG_ABSORPTION_VOLTAGE)) // && (slBatteryCurrentP > 20))
         {
           teStateP = eCharge;
-          if (pfnEventHandlerP != nullptr)
-          {
-            pfnEventHandlerP(teStateP);
-          }
-        }
-
-        //---------------------------------------------------------------------------
-        // stay in this state
-        //
-        else
-        {
-          clAddStateInfoP = String("Der Strom wird auf den Wer 0.0 A begrenzt, solange die Bedingung 4. nicht erfüllt ist");
         }
 
         break;
@@ -394,6 +350,18 @@ void BatteryGuard::process(void)
         //
       default:
         break;
+      }
+
+      //-----------------------------------------------------------------------------------
+      // trigger event handler at state change
+      //
+      if (teStateOldP != teStateP)
+      {
+        teStateOldP = teStateP;
+        if (pfnEventHandlerP != nullptr)
+        {
+          pfnEventHandlerP(teStateP);
+        }
       }
     }
   }
@@ -409,6 +377,31 @@ void BatteryGuard::updateMpptState(uint8_t ubStateV)
   // save value for further usage
   //
   ubMpptStateOfOperationP = ubStateV;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
+void BatteryGuard::updateTime(uint64_t uqTimeV)
+{
+  uint64_t uqTimeDeltaT;
+
+  //---------------------------------------------------------------------------------------------------
+  // check time for plausibility
+  // If the time is further back than 4 weeks, then this value is invalid and we reset it from today to 1 week
+  //
+  uqTimeDeltaT = uqTimeV - uqFullyChargedTimeP;
+  if (uqTimeDeltaT > (BG_FULL_CHARGE_REPETITION_TIME * 2))
+  {
+    uqFullyChargedTimeP = (uqTimeV - (BG_FULL_CHARGE_REPETITION_TIME / 2));
+    if (pfnSaveTimeHandlerP)
+    {
+      pfnSaveTimeHandlerP(uqFullyChargedTimeP);
+    }
+  }
+
+  uqTimeP = uqTimeV;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
