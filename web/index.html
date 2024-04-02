@@ -166,24 +166,6 @@
         <div id="mppt_state" style="padding-bottom: 0px"></div>
         <div id="battery_state" style="padding-bottom: 0px"></div>
         <label id="info_battery_state"></label>
-        <div>
-          <div class="line_named_h4">Bedingungen für Zustandsübergänge:</div>
-          <ol>
-            <li>Charge Voltage >= CHARGE_CUTOFF_VOLTAGE (58.4 V)</li>
-            <li>Charge Voltage < (CHARGE_CUTOFF_VOLTAGE - 0.4V) (58.0 V)</li>
-            <li>Charge Voltage <= (DISCHARGE_VOLTAGE) (42.0 V)</li>
-            <li>
-              (Charge Voltage > (ABSORPTION_VOLTAGE) (51.2 V)) && (Charge
-              Current > 0.1 A)
-            </li>
-            <li>Charge Current < 0.2 A</li>
-            <li>Charge Current > 0.5 A</li>
-            <li>Charge Voltage >= (CHARGE_CUTOFF_VOLTAGE - 5.0 V)</li>
-            <li>Charge Voltage <= ABSORPTION_VOLTAGE (51.2)</li>
-            <li>(Zeitstempel - GespeicherterZeitstempel) > 2 Wochen</li>
-            <li>Charge Voltage >= CHARGE_CUTOFF_VOLTAGE (58.4 V)</li>
-          </ol>
-        </div>
       </div>
       <br />
     </div>
