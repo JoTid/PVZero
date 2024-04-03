@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning].
 
 - Add MPPT state to the GUI
 - Update State machine of battery guard, introduce new states and define optimize conditions for transitions
+- Additional MQTT entities has been introduced
+- Increase performance at communication with MPPT charger
 
 ## [0.81.07] - 2024-03-29
 
