@@ -79,6 +79,17 @@ void PVZeroClass::setup()
   _ewcMqttHA.addProperty("sensor", "totalConsumption" + I::get().config().getChipId(), "Total Consumption", "power", "totalConsumption", "W", false);
   _ewcMqttHA.addProperty("sensor", "batteryCurrent" + I::get().config().getChipId(), "Battery Current", "current", "batteryCurrent", "A", false);
 
+  _ewcMqttHA.addProperty("sensor", "actualVoltagePsu1" + I::get().config().getChipId(), "PSU1 Voltage", "voltage", "actualVoltagePsu1", "V", false);
+  _ewcMqttHA.addProperty("sensor", "actualVoltagePsu2" + I::get().config().getChipId(), "PSU2 Voltage", "voltage", "actualVoltagePsu2", "V", false);
+  _ewcMqttHA.addProperty("sensor", "actualCurrentPsu1" + I::get().config().getChipId(), "PSU1 Current", "current", "actualCurrentPsu1", "A", false);
+  _ewcMqttHA.addProperty("sensor", "actualCurrentPsu2" + I::get().config().getChipId(), "PSU2 Current", "current", "actualCurrentPsu2", "A", false);
+
+  _ewcMqttHA.addProperty("sensor", "actualVoltageMppt" + I::get().config().getChipId(), "MPPT Battery Voltage", "voltage", "actualVoltageMppt", "V", false);
+  _ewcMqttHA.addProperty("sensor", "actualCurrentMppt" + I::get().config().getChipId(), "MPPT Battery Current", "current", "actualCurrentMppt", "A", false);
+
+  _ewcMqttHA.addProperty("sensor", "batteryGuardState" + I::get().config().getChipId(), "Battery Guard State", "enum", "batteryGuardState", "", false);
+  _ewcMqttHA.addProperty("sensor", "mpptOperatingState" + I::get().config().getChipId(), "MPPT Operating State", "enum", "mpptOperatingState", "", false);
+
   _tsMeasLoopStart = millis();
   _shelly3emConnector.setCallbackState(std::bind(&PVZeroClass::_onTotalWatt, this, std::placeholders::_1, std::placeholders::_2));
 
@@ -514,6 +525,14 @@ void PVZeroClass::loop()
       _ewcMqttHA.publishState("feedIn" + I::get().config().getChipId(), String(ftRealFeedInPowerP, 0));
       _ewcMqttHA.publishState("totalConsumption" + I::get().config().getChipId(), String(ftTotalConsumptionP, 0));
       _ewcMqttHA.publishState("batteryCurrent" + I::get().config().getChipId(), String(ftBatteryCurrentP, 0));
+      _ewcMqttHA.publishState("actualVoltageMppt" + I::get().config().getChipId(), String(ftMpptBatteryVoltageP, 1));
+      _ewcMqttHA.publishState("actualCurrentMppt" + I::get().config().getChipId(), String(ftMpptBatteryCurrentP, 1));
+      _ewcMqttHA.publishState("actualVoltagePsu1" + I::get().config().getChipId(), String(aftActualVoltageOfPsuP[0], 1));
+      _ewcMqttHA.publishState("actualVoltagePsu2" + I::get().config().getChipId(), String(aftActualVoltageOfPsuP[1], 1));
+      _ewcMqttHA.publishState("actualCurrentPsu1" + I::get().config().getChipId(), String(aftActualCurrentOfPsuP[0], 1));
+      _ewcMqttHA.publishState("actualCurrentPsu2" + I::get().config().getChipId(), String(aftActualCurrentOfPsuP[1], 1));
+      _ewcMqttHA.publishState("batteryGuardState" + I::get().config().getChipId(), String(clBatGuardP.state()));
+      _ewcMqttHA.publishState("mpptOperatingState" + I::get().config().getChipId(), String(ubMpptStateOfOperationP));
     }
   }
 
