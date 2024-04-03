@@ -40,19 +40,35 @@ PvzMppt::~PvzMppt()
 //--------------------------------------------------------------------------------------------------------------------//
 void PvzMppt::updateFrame(const char *pszFrameV, const int32_t slLengthV)
 {
+  std::lock_guard<std::mutex> lck(mpptMutexP);
+
   //---------------------------------------------------------------------------------------------------
   // copy provided data to object memory
   //
-  std::lock_guard<std::mutex> lck(mpptMutexP);
   strcpy(ascFrameP, pszFrameV);
   slLengthP = slLengthV;
-  //-------------------------------------------------------------------------------------------
-  // calculate the checksum at first
+
+  //---------------------------------------------------------------------------------------------------
+  // start value of the checksum
   //
   uint32_t ulChecksumT = 0;
-  for (int i = 0; i < slLengthP; i++)
+
+  //---------------------------------------------------------------------------------------------------
+  // if the leng is less that 120 bytes than that is not plausible and not valid
+  // he
+  if (slLengthP > 120)
   {
-    ulChecksumT = ((ulChecksumT + ascFrameP[i]) & 0xFF);
+    //-------------------------------------------------------------------------------------------
+    // calculate the checksum
+    //
+    for (int i = 0; i < slLengthP; i++)
+    {
+      ulChecksumT = ((ulChecksumT + ascFrameP[i]) & 0xFF);
+    }
+  }
+  else
+  {
+    ulChecksumT = 1; // Not Valid
   }
 
   //-------------------------------------------------------------------------------------------
@@ -110,6 +126,12 @@ float PvzMppt::batteryCurrent()
   return ftBatteryCurrentP;
 }
 
+String PvzMppt::productId()
+{
+  std::lock_guard<std::mutex> lck(mpptMutexP);
+  return clProductIdP;
+}
+
 uint8_t PvzMppt::stateOfOperation()
 {
   std::lock_guard<std::mutex> lck(mpptMutexP);
@@ -151,24 +173,36 @@ void PvzMppt::parseTable(char *pscTextFrameV)
     p = strtok_r(NULL, SEP, &saveP);
     atsMpptDataP[slParamSetIndexT].pscValue = p;
 
-    //---------------------------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------------------------
     // kopiere die einzelnen Zeichenketten direkt in die entsprechende Werte
     //
-    if (String("V").equals(atsMpptDataP[slParamSetIndexT].pscName))
+    if (String("PID").equals(atsMpptDataP[slParamSetIndexT].pscName))
     {
-      ftBatteryVoltageP = (float)atoi(atsMpptDataP[slParamSetIndexT].pscValue);
-      ftBatteryVoltageP *= 0.001; // scale from mV to V
+      // SmartSolar MPPT 150 | 35: 0xA058
+      clProductIdP = atsMpptDataP[slParamSetIndexT].pscValue;
     }
 
-    if (String("I").equals(atsMpptDataP[slParamSetIndexT].pscName))
+    //-------------------------------------------------------------------------------------------
+    // proceed to process values only if product ID is valid
+    //
+    if (clProductIdP == "0xA058")
     {
-      ftBatteryCurrentP = (float)atoi(atsMpptDataP[slParamSetIndexT].pscValue);
-      ftBatteryCurrentP *= 0.001; // scale from mA to A
-    }
+      if (String("V").equals(atsMpptDataP[slParamSetIndexT].pscName))
+      {
+        ftBatteryVoltageP = (float)atoi(atsMpptDataP[slParamSetIndexT].pscValue);
+        ftBatteryVoltageP *= 0.001; // scale from mV to V
+      }
 
-    if (String("CS").equals(atsMpptDataP[slParamSetIndexT].pscName))
-    {
-      ubStateOfOperationP = (uint8_t)atoi(atsMpptDataP[slParamSetIndexT].pscValue);
+      if (String("I").equals(atsMpptDataP[slParamSetIndexT].pscName))
+      {
+        ftBatteryCurrentP = (float)atoi(atsMpptDataP[slParamSetIndexT].pscValue);
+        ftBatteryCurrentP *= 0.001; // scale from mA to A
+      }
+
+      if (String("CS").equals(atsMpptDataP[slParamSetIndexT].pscName))
+      {
+        ubStateOfOperationP = (uint8_t)atoi(atsMpptDataP[slParamSetIndexT].pscValue);
+      }
     }
 
     //-------------------------------------------------------------------------------------------

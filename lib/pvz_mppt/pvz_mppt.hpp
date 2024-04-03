@@ -66,6 +66,7 @@ public:
   float batteryCurrent();
 
   uint8_t stateOfOperation();
+  String productId();
 
   bool available();
 
@@ -127,7 +128,7 @@ private:
   uint8_t ubStateOfOperationP;
 
   bool bAvailableP = false;
-
+  String clProductIdP;
   std::mutex mpptMutexP;
 };
 
