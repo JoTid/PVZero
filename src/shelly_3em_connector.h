@@ -78,8 +78,6 @@ namespace PVZ
     long _countRequestsFailed;
 
     static void httpTask(void *_this);
-    WiFiClient wifiClient;
-    HTTPClient httpClient;
     // ------ protected by mutex -----------
     void _onTaskResult(bool valid, int32_t consumptionPower, uint64_t timestamp, int httpCode);
     bool _isTaskRunning();

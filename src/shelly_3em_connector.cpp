@@ -114,11 +114,11 @@ void Shelly3emConnector::loop()
           if (!_isRequesting)
           {
             _isRequesting = true;
-            EWC::I::get().logger() << F("Shelly3emConnector: request consumption power from ") << getUri() << endl;
+            EWC::I::get().logger() << F("Shelly3emConnector: request consumption power from ") << getUri() << ", rssi: " << WiFi.RSSI() << endl;
             I::get().led().start(LED_GREEN, 250, 150);
-            vTaskResume(_httpTaskHandle);
             std::lock_guard<std::mutex> lck(httpTaskMutex);
             _taskIsRunning = true;
+            vTaskResume(_httpTaskHandle);
           }
           else
           {
@@ -171,7 +171,7 @@ void Shelly3emConnector::loop()
         {
           // create request task
           // httpClient.useHTTP10(true);
-          httpClient.setReuse(true);
+          // httpClient.setReuse(true);
           EWC::I::get().logger() << F("Shelly3emConnector: create request task") << endl;
           xTaskCreate(
               this->httpTask,                // Function that should be called
@@ -266,31 +266,23 @@ void Shelly3emConnector::httpTask(void *_this)
   Shelly3emConnector *sc = static_cast<Shelly3emConnector *>(_this);
   while (true)
   {
+    WiFiClient wifiClient;
+    HTTPClient httpClient;
     vTaskSuspend(NULL);
     String infoState;
     bool valid = false;
     int32_t consumptionPower = 0;
     uint64_t timestamp = 0;
     String requestUri = sc->getUri();
-    sc->httpClient.begin(sc->wifiClient, requestUri.c_str());
+    httpClient.begin(wifiClient, requestUri.c_str());
 
     //-------------------------------------------------------------------------------------------
     // Send request
-    int httpCode = sc->httpClient.GET();
-    if (httpCode != HTTP_CODE_OK)
-    {
-      // Fallback on first error
-      // Before sending the Request increase the timeout time. This has been done to avoid
-      // HTTPC_ERROR_READ_TIMEOUT errors that has been occurred sometimes.
-      sc->httpClient.setTimeout(1000);
-      // Send request
-      sc->httpClient.begin(sc->wifiClient, requestUri.c_str());
-      httpCode = sc->httpClient.GET();
-    }
+    int httpCode = httpClient.GET();
     if (httpCode == HTTP_CODE_OK)
     {
       JsonDocument doc;
-      String jsonStr = sc->httpClient.getString();
+      String jsonStr = httpClient.getString();
       deserializeJson(doc, jsonStr);
       consumptionPower = (int)doc["total_power"];
       timestamp = (uint64_t)doc["unixtime"];
@@ -300,7 +292,7 @@ void Shelly3emConnector::httpTask(void *_this)
     {
       EWC::I::get().logger() << F("Shelly3emConnector: ERROR httpCode of GET: ") << httpCode << endl;
     }
-    sc->httpClient.end();
+    httpClient.end();
     sc->_onTaskResult(valid, consumptionPower, timestamp, httpCode);
   }
 }

@@ -521,7 +521,11 @@ void PVZeroClass::loop()
     if (triggerMqttSend)
     {
       triggerMqttSend = false;
-      _ewcMqttHA.publishState("consumption" + I::get().config().getChipId(), String(consumptionPower));
+      _ewcMqtt.client().clearQueue();
+      if (isConsumptionPowerValid)
+      {
+        _ewcMqttHA.publishState("consumption" + I::get().config().getChipId(), String(consumptionPower));
+      }
       _ewcMqttHA.publishState("feedIn" + I::get().config().getChipId(), String(ftRealFeedInPowerP, 0));
       _ewcMqttHA.publishState("totalConsumption" + I::get().config().getChipId(), String(ftTotalConsumptionP, 0));
       _ewcMqttHA.publishState("batteryCurrent" + I::get().config().getChipId(), String(ftBatteryCurrentP, 0));
@@ -739,10 +743,7 @@ void PVZeroClass::_onTotalWatt(bool state, int32_t totalWatt)
 
   consumptionPower = totalWatt;
   isConsumptionPowerValid = state;
-  if (isConsumptionPowerValid)
-  {
-    triggerMqttSend = true;
-  }
+  triggerMqttSend = true;
 }
 
 float PVZeroClass::handleCalibrationLow(float value)
