@@ -7,6 +7,24 @@
 using namespace EWC;
 using namespace PVZ;
 
+#ifdef UART_APP_TIME_MEASUREMENT
+static uint64_t uqTimeMeas_MpptStartP;
+static uint64_t uqTimeMeas_MpptStopP;
+static uint64_t uqTimeMeas_MpptDeltaP;
+
+static uint64_t uqTimeMeas_Psu1StartP;
+static uint64_t uqTimeMeas_Psu1StopP;
+static uint64_t uqTimeMeas_Psu1DeltaP;
+
+static uint64_t uqTimeMeas_Psu2StartP;
+static uint64_t uqTimeMeas_Psu2StopP;
+static uint64_t uqTimeMeas_Psu2DeltaP;
+
+static uint64_t uqTimeMeas_TotalStartP;
+static uint64_t uqTimeMeas_TotalStopP;
+static uint64_t uqTimeMeas_TotalDeltaP;
+#endif
+
 Uart::Uart(PvzMppt &mppt, PvzPsu &psu1, PvzPsu &psu2) : clMpptP(mppt), aclPsuP1(psu1), aclPsuP2(psu2)
 {
 }
@@ -58,7 +76,6 @@ void Uart::taskUartApp(void *_this)
 
   while (true)
   {
-    uint64_t startTs = millis();
     //-------------------------------------------------------------------------------------------
     // handle state and the corresponding transitions of the Serial2 state machine
     //
@@ -71,6 +88,12 @@ void Uart::taskUartApp(void *_this)
       //
       while (Serial2.available())
       {
+#ifdef UART_APP_TIME_MEASUREMENT
+        if (uart->slReadBytesT == 0)
+        {
+          uqTimeMeas_MpptStartP = millis();
+        }
+#endif
         // copy and increase char counter avoid invalid memory access
         if (uart->slReadBytesT < 256)
         {
@@ -92,8 +115,20 @@ void Uart::taskUartApp(void *_this)
       //-----------------------------------------------------------------------------------
       // assume that after 10 ms of silence all data has been received from victron
       //
-      if ((millis() > (uqTimeStampT + 10)) && (uart->slReadBytesT > 0))
+      if ((millis() > (uqTimeStampT + 20)) && (uart->slReadBytesT > 0))
       {
+
+#ifdef UART_APP_TIME_MEASUREMENT
+        uqTimeMeas_MpptStopP = millis();
+        uqTimeMeas_MpptDeltaP = uqTimeMeas_MpptStopP - uqTimeMeas_MpptStartP;
+        Serial.print("MT: ");
+        Serial.print(uqTimeMeas_MpptDeltaP);
+        Serial.print(" = ");
+        Serial.print(uqTimeMeas_MpptStopP);
+        Serial.print(" - ");
+        Serial.println(uqTimeMeas_MpptStartP);
+#endif
+
         //---------------------------------------------------------------------------
         // append the a null to terminate the string
         //
@@ -180,6 +215,11 @@ void Uart::taskUartApp(void *_this)
           // - in case of error this state needs about 105 ms
           // - in case of success this state needs about 55 ms
         case 1:
+
+#ifdef UART_APP_TIME_MEASUREMENT
+          uqTimeMeas_Psu1StartP = millis();
+#endif
+
           slPsuReturnT = uart->aclPsuP1.write();
           if (slPsuReturnT < 0)
           {
@@ -194,6 +234,16 @@ void Uart::taskUartApp(void *_this)
             }
             else
             {
+#ifdef UART_APP_TIME_MEASUREMENT
+              uqTimeMeas_Psu1StopP = millis();
+              uqTimeMeas_Psu1DeltaP = uqTimeMeas_Psu1StopP - uqTimeMeas_Psu1StartP;
+              Serial.print("P1: ");
+              Serial.print(uqTimeMeas_Psu1DeltaP);
+              Serial.print(" = ");
+              Serial.print(uqTimeMeas_Psu1StopP);
+              Serial.print(" - ");
+              Serial.println(uqTimeMeas_Psu1StartP);
+#endif
               aslPsuStateT[0] = 5;
             }
           }
@@ -282,6 +332,11 @@ void Uart::taskUartApp(void *_this)
           // - in case of error this state needs about 105 ms
           // - in case of success this state needs about 55 ms
         case 1:
+
+#ifdef UART_APP_TIME_MEASUREMENT
+          uqTimeMeas_Psu2StartP = millis();
+#endif
+
           slPsuReturnT = uart->aclPsuP2.write();
           if (slPsuReturnT < 0)
           {
@@ -296,6 +351,16 @@ void Uart::taskUartApp(void *_this)
             }
             else
             {
+#ifdef UART_APP_TIME_MEASUREMENT
+              uqTimeMeas_Psu2StopP = millis();
+              uqTimeMeas_Psu2DeltaP = uqTimeMeas_Psu2StopP - uqTimeMeas_Psu2StartP;
+              Serial.print("P2: ");
+              Serial.print(uqTimeMeas_Psu2DeltaP);
+              Serial.print(" = ");
+              Serial.print(uqTimeMeas_Psu2StopP);
+              Serial.print(" - ");
+              Serial.println(uqTimeMeas_Psu2StartP);
+#endif
               aslPsuStateT[1] = 5;
             }
           }
@@ -333,16 +398,6 @@ void Uart::taskUartApp(void *_this)
       break;
     }
 
-    // sleep the rest of one second
-    int64_t delayTs = 990 - (millis() - startTs);
-    if (delayTs > 0)
-    {
-      EWC::I::get().logger() << "UART: sleep for " << delayTs << " ms" << endl;
-      delay(delayTs);
-    }
-    else
-    {
-      EWC::I::get().logger() << "UART: loop tacked " << delayTs << " ms" << endl;
-    }
+    delay(10);
   }
 }

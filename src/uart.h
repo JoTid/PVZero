@@ -30,6 +30,8 @@ limitations under the License.
 namespace PVZ
 {
 
+#undef UART_APP_TIME_MEASUREMENT
+
   //---------------------------------------------------------------------------------------------------------
   typedef enum UartAppSm_e
   {
