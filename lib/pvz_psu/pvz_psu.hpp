@@ -63,6 +63,9 @@ private:
   int32_t slModelNumberP;
   DPM8600 clPsuP;
 
+  int32_t slReadCurrenTriggerP;
+  int32_t slReadVoltageTriggerP;
+
   float ftActualVoltageP;
   float ftActualCurrentP;
   float ftActualTemperatureP;

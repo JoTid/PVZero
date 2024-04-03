@@ -26,6 +26,8 @@ PvzPsu::PvzPsu()
   slModelNumberP = -1; // not initialised
   ftActualVoltageP = 0.0;
   ftActualCurrentP = 0.0;
+  slReadCurrenTriggerP = 10;
+  slReadVoltageTriggerP = 10;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -89,6 +91,7 @@ int32_t PvzPsu::read()
   int32_t slReturnT = slModelNumberP;
   float ftReadValueT;
 
+  // Serial.print("s: ");
   //---------------------------------------------------------------------------------------------------
   // read status
   //
@@ -99,10 +102,12 @@ int32_t PvzPsu::read()
     if (slReturnT > 0)
     {
       btConstantCurrentOutputP = true;
+      // Serial.print("c: ");
     }
     else
     {
       btConstantCurrentOutputP = false;
+      // Serial.print("v: ");
     }
   }
 
@@ -119,6 +124,16 @@ int32_t PvzPsu::read()
       if (btConstantCurrentOutputP == false)
       {
         ftActualVoltageP = ftReadValueT;
+        slReadVoltageTriggerP = 10;
+      }
+      else
+      {
+        slReadVoltageTriggerP--;
+        if (slReadVoltageTriggerP == 0)
+        {
+          slReadVoltageTriggerP = 10;
+          ftActualVoltageP = ftReadValueT;
+        }
       }
     }
   }
@@ -136,6 +151,16 @@ int32_t PvzPsu::read()
       if (btConstantCurrentOutputP == true)
       {
         ftActualCurrentP = ftReadValueT;
+        slReadCurrenTriggerP = 10;
+      }
+      else
+      {
+        slReadCurrenTriggerP--;
+        if (slReadCurrenTriggerP == 0)
+        {
+          slReadCurrenTriggerP = 10;
+          ftActualCurrentP = ftReadValueT;
+        }
       }
     }
   }
@@ -152,6 +177,14 @@ int32_t PvzPsu::read()
       ftActualTemperatureP = ftReadValueT;
     }
   }
+
+  // Serial.print("V");
+  // Serial.print(ftActualVoltageP, 1);
+  // Serial.print(" C");
+  // Serial.print(ftActualCurrentP, 1);
+
+  // Serial.print(" T");
+  // Serial.println(ftActualTemperatureP, 1);
 
   if (slReturnT > 0)
   {
