@@ -266,15 +266,14 @@ void Shelly3emConnector::httpTask(void *_this)
   Shelly3emConnector *sc = static_cast<Shelly3emConnector *>(_this);
   while (true)
   {
-    WiFiClient wifiClient;
-    HTTPClient httpClient;
     vTaskSuspend(NULL);
-    String infoState;
     bool valid = false;
     int32_t consumptionPower = 0;
     uint64_t timestamp = 0;
+    String infoState;
     String requestUri = sc->getUri();
-    httpClient.begin(wifiClient, requestUri.c_str());
+    HTTPClient httpClient;
+    httpClient.begin(sc->wifiClient, requestUri.c_str());
 
     //-------------------------------------------------------------------------------------------
     // Send request

@@ -67,6 +67,7 @@ namespace PVZ
     void forceUpdate() { _sleeper.wakeup(); }
 
   protected:
+    WiFiClient wifiClient;
     int _potPin;
     TaskHandle_t _httpTaskHandle = NULL;
     unsigned int _reachedUpperLimit;
