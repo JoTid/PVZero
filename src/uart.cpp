@@ -55,24 +55,34 @@ void Uart::setup()
 //--------------------------------------------------------------------------------------------------------------------//
 void Uart::taskUartApp(void *_this)
 {
+  int32_t slReadCharT;
   Uart *uart = static_cast<Uart *>(_this);
   static uint32_t uqTimeStampT = 0;
   static UartAppSm_te teUartAppStateG = eUART_APP_SM_MPPT_e;
   static int32_t aslPsuStateT[] = {0, 0};
   static int32_t aslPsuStateBeginT[] = {0, 0};
-  static bool abtPsuInitSuccessT[] = {false, false};
+  // static bool abtPsuInitSuccessT[] = {false, false};
   static int32_t slPsuReturnT;
+
+  Serial.print("enter taskUartApp() running on core ");
+  Serial.println(xPortGetCoreID());
+
+  //---------------------------------------------------------------------------------------------------
+  // perform configuration of serial 2
+  //
+  Serial2.begin(19200);
+  Serial2.flush();
+  delay(10);
+  do
+  {
+    slReadCharT = Serial2.read();
+  } while (slReadCharT >= 0);
 
   //---------------------------------------------------------------------------------------------------
   // intialise the multiplexer and enable IF 1 for victron
   //
   uart->clUartMuxP.init();
   uart->clUartMuxP.enable(UartMux::eIF_1);
-
-  //---------------------------------------------------------------------------------------------------
-  // perform configuration of serial 2
-  //
-  Serial2.begin(19200);
 
   while (true)
   {
@@ -95,13 +105,14 @@ void Uart::taskUartApp(void *_this)
         }
 #endif
         // copy and increase char counter avoid invalid memory access
-        if (uart->slReadBytesT < 256)
+        if (uart->slReadBytesT < 254)
         {
           uart->aszReadDataT[uart->slReadBytesT] = Serial2.read();
         }
         else
         {
           uart->aszReadDataT[254] = Serial2.read();
+          uart->slReadBytesT = 254;
         }
 
         uart->slReadBytesT++;
@@ -156,8 +167,13 @@ void Uart::taskUartApp(void *_this)
         //
         Serial2.flush();
         uart->clUartMuxP.enable(UartMux::eIF_2);
-        delay(10);
         Serial2.flush();
+        delay(10);
+        do
+        {
+          slReadCharT = Serial2.read();
+        } while (slReadCharT >= 0);
+
         teUartAppStateG = eUART_APP_SM_PSU1_e;
       }
       break;
@@ -181,8 +197,13 @@ void Uart::taskUartApp(void *_this)
         //
         Serial2.flush();
         uart->clUartMuxP.enable(UartMux::eIF_3);
-        delay(10);
         Serial2.flush();
+        delay(10);
+        do
+        {
+          slReadCharT = Serial2.read();
+        } while (slReadCharT >= 0);
+
         teUartAppStateG = eUART_APP_SM_PSU2_e;
       }
 
@@ -201,6 +222,7 @@ void Uart::taskUartApp(void *_this)
 
           if (slPsuReturnT == 1)
           {
+            uart->aclPsuP1.write();
             uart->aclPsuP1.enable(true);
             aslPsuStateBeginT[0] = 1;
             aslPsuStateT[0] = 1;
@@ -259,17 +281,22 @@ void Uart::taskUartApp(void *_this)
 
         case 11: // Error State: while writing to PSU
           EWC::I::get().logger() << "PSU0 Error at write: " << slPsuReturnT << endl;
-          aslPsuStateT[0] = 100;
+          aslPsuStateT[0] = 5; // Errors that occur during operation are only reported
           break;
 
         case 12: // Error State: while reading from PSU
           EWC::I::get().logger() << "PSU0 Error at read: " << slPsuReturnT << endl;
-          aslPsuStateT[0] = 100;
+          aslPsuStateT[0] = 5; // Errors that occur during operation are only reported
           break;
 
         case 100: // Error State: prepare re-initialisation
           aslPsuStateBeginT[0] = 0;
           Serial2.flush();
+          delay(10);
+          do
+          {
+            slReadCharT = Serial2.read();
+          } while (slReadCharT >= 0);
         default:
           break;
         }
@@ -298,8 +325,13 @@ void Uart::taskUartApp(void *_this)
         //
         Serial2.flush();
         uart->clUartMuxP.enable(UartMux::eIF_1);
-        delay(10);
         Serial2.flush();
+        delay(10);
+        do
+        {
+          slReadCharT = Serial2.read();
+        } while (slReadCharT >= 0);
+
         teUartAppStateG = eUART_APP_SM_MPPT_e;
       }
 
@@ -318,6 +350,7 @@ void Uart::taskUartApp(void *_this)
 
           if (slPsuReturnT == 1)
           {
+            uart->aclPsuP2.write();
             uart->aclPsuP2.enable(true);
             aslPsuStateBeginT[1] = 1;
             aslPsuStateT[1] = 1;
@@ -377,17 +410,23 @@ void Uart::taskUartApp(void *_this)
 
         case 11: // Error State: while writing to PSU
           EWC::I::get().logger() << "PSU1 Error at write: " << slPsuReturnT << endl;
-          aslPsuStateT[1] = 100;
+          aslPsuStateT[1] = 5; // Errors that occur during operation are only reported
           break;
 
         case 12: // Error State: while reading from PSU
           EWC::I::get().logger() << "PSU1 Error at read: " << slPsuReturnT << endl;
-          aslPsuStateT[1] = 100;
+          aslPsuStateT[1] = 5; // Errors that occur during operation are only reported
           break;
 
         case 100: // Error State: prepare re-initialisation
           aslPsuStateBeginT[1] = 0;
           Serial2.flush();
+          delay(10);
+          do
+          {
+            slReadCharT = Serial2.read();
+          } while (slReadCharT >= 0);
+
         default:
           break;
         }
