@@ -7,10 +7,16 @@ and this project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+## [0.81.08] - 2024-04-05
+
 - Add MPPT state to the GUI
 - Update State machine of battery guard, introduce new states and define optimize conditions for transitions
 - Additional MQTT entities has been introduced
 - Increase performance at communication with MPPT charger
+- Update communication handling with DPM86xx, especially the return value evaluation has been improved
+- Improve UART communication with MPPT and DPM86xx
+- Improve MQTT implementation
+- Bug fixes
 
 ## [0.81.07] - 2024-03-29
 
