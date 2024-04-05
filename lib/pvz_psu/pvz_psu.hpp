@@ -15,7 +15,7 @@
 \*--------------------------------------------------------------------------------------------------------------------*/
 #include <Arduino.h>
 #include <mutex>
-#include "DPM8600.h"
+#include "DPM86xx.h"
 
 /*--------------------------------------------------------------------------------------------------------------------*\
 ** Definitions and Enums                                                                                              **
@@ -42,8 +42,10 @@ public:
 
   int32_t read();
   int32_t write();
+  int32_t writeCurrent();
+  int32_t writeVoltage();
 
-  int32_t set(float ftVoltageV, float ftCurrentV);
+  void set(float ftVoltageV, float ftCurrentV);
 
   float actualVoltage();
 
@@ -61,13 +63,17 @@ public:
 
 private:
   int32_t slModelNumberP;
-  DPM8600 clPsuP;
+  DPM86xx clPsuP;
 
   int32_t slReadCurrenTriggerP;
   int32_t slReadVoltageTriggerP;
 
   float ftActualVoltageP;
+  int32_t slActualVoltageP;
+  int32_t slActualVoltageIgnoreCounterP;
   float ftActualCurrentP;
+  int32_t slActualCurrentP;
+  int32_t slActualCurrentIgnoreCounterP;
   float ftActualTemperatureP;
   bool btConstantCurrentOutputP;
 
