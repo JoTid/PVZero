@@ -345,8 +345,8 @@ void PvzPsu::set(float ftVoltageV, float ftCurrentV)
 float PvzPsu::actualVoltage()
 {
   std::lock_guard<std::mutex> lck(uartMutexP);
-  Serial.print("PSU VR:");
-  Serial.println(String(ftActualVoltageP, 3));
+  // Serial.print("PSU VR:");
+  // Serial.println(String(ftActualVoltageP, 3));
   return ftActualVoltageP;
 }
 
@@ -357,8 +357,8 @@ float PvzPsu::actualVoltage()
 float PvzPsu::actualCurrent()
 {
   std::lock_guard<std::mutex> lck(uartMutexP);
-  Serial.print("PSU IR:");
-  Serial.println(String(ftActualCurrentP, 3));
+  // Serial.print("PSU IR:");
+  // Serial.println(String(ftActualCurrentP, 3));
   return ftActualCurrentP;
 }
 
