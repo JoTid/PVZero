@@ -22,6 +22,15 @@
 \*--------------------------------------------------------------------------------------------------------------------*/
 
 #define MPPT_TEXT_FRAME_LENGTH 256
+
+/**
+ * @brief Set this define to get Debug output of received Text Frames via \c Serial interface.
+ *
+ */
+#ifndef MPPT_LOG_REQ_RESP
+#undef MPPT_LOG_REQ_RESP
+#endif
+
 /**
  * @brief
  *
@@ -121,13 +130,15 @@ private:
   float ftBatteryVoltageP;
 
   /**
-   * @brief Label 'I': Main or channel 1 battery current, given in [A]
+   * @brief Label 'I': Main or channel 1 battery current, given in [mA]
    */
-  float ftBatteryCurrentP;
+  int32_t slBatteryCurrentP;
+  int32_t slBatteryCurrentIgnoreCounterP;
+  bool btBatteryCurrentReadOkP;
 
   uint8_t ubStateOfOperationP;
 
-  bool bAvailableP = false;
+  bool btCrcIsValidP = false;
   String clProductIdP;
   std::mutex mpptMutexP;
 };

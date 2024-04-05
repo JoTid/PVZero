@@ -23,7 +23,7 @@
 //--------------------------------------------------------------------------------------------------------------------//
 PvzMppt::PvzMppt()
 {
-  // pclMpptP = NULL;
+  btBatteryCurrentReadOkP = false;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -45,7 +45,7 @@ void PvzMppt::updateFrame(const char *pszFrameV, const int32_t slLengthV)
   //---------------------------------------------------------------------------------------------------
   // copy provided data to object memory
   //
-  strcpy(ascFrameP, pszFrameV);
+  memcpy(ascFrameP, pszFrameV, slLengthV);
   slLengthP = slLengthV;
 
   //---------------------------------------------------------------------------------------------------
@@ -71,16 +71,16 @@ void PvzMppt::updateFrame(const char *pszFrameV, const int32_t slLengthV)
     ulChecksumT = 1; // Not Valid
   }
 
+#ifdef MPPT_LOG_REQ_RESP
   //-------------------------------------------------------------------------------------------
   // print the frame for debugging
   //
-  // Serial.println();
-  // Serial.println();
-  // Serial.println();
-  // Serial.print(aszFrameP);
-  // Serial.println();
-  // Serial.println();
-  // Serial.println();
+  Serial.println();
+  Serial.print("MPPT Text Frame length ");
+  Serial.print(slLengthV);
+  Serial.print(", data: ");
+  Serial.println(ascFrameP);
+#endif
 
   //-------------------------------------------------------------------------------------------
   // parse only if checksum is valid
@@ -88,22 +88,30 @@ void PvzMppt::updateFrame(const char *pszFrameV, const int32_t slLengthV)
   if (ulChecksumT == 0)
   {
     parseTable(ascFrameP);
-    bAvailableP = true;
+    btCrcIsValidP = true;
   }
   else
   {
-    bAvailableP = false;
+    btCrcIsValidP = false;
   }
 
+#ifdef MPPT_LOG_REQ_RESP
   //-------------------------------------------------------------------------------------------
   // print the parsed data for debugging
   //
-  // for (int i = 0; i < slNumberOfParsedValuesP; i++)
-  // {
-  //   Serial.print(atsMpptDataP[i].pscName);
-  //   Serial.print(": ");
-  //   Serial.println(atsMpptDataP[i].pscValue);
-  // }
+  Serial.print("CRC result is: ");
+  Serial.println(btCrcIsValidP);
+  Serial.println();
+  if (btCrcIsValidP)
+  {
+    for (int i = 0; i < slNumberOfParsedValuesP; i++)
+    {
+      Serial.print(atsMpptDataP[i].pscName);
+      Serial.print(": ");
+      Serial.println(atsMpptDataP[i].pscValue);
+    }
+  }
+#endif
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -122,8 +130,13 @@ float PvzMppt::batteryVoltage()
 //--------------------------------------------------------------------------------------------------------------------//
 float PvzMppt::batteryCurrent()
 {
+  float ftValueT;
   std::lock_guard<std::mutex> lck(mpptMutexP);
-  return ftBatteryCurrentP;
+
+  ftValueT = slBatteryCurrentP;
+  ftValueT *= 0.001; // scale from mA to A
+
+  return ftValueT;
 }
 
 String PvzMppt::productId()
@@ -141,7 +154,7 @@ uint8_t PvzMppt::stateOfOperation()
 bool PvzMppt::available()
 {
   std::lock_guard<std::mutex> lck(mpptMutexP);
-  return bAvailableP;
+  return btCrcIsValidP;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -154,6 +167,7 @@ void PvzMppt::parseTable(char *pscTextFrameV)
   const char *SEP = "\t";   // Trennzeichen zwischen parameter name und parameter wert
   int32_t slParamSetIndexT = 0;
   char *ptr, *savePtr, *p, *saveP;
+  int32_t slValueT;
 
   //---------------------------------------------------------------------------------------------------
   // Teile die Tabelle in Parametersätze auf und verarbeite jeden
@@ -195,8 +209,33 @@ void PvzMppt::parseTable(char *pscTextFrameV)
 
       if (String("I").equals(atsMpptDataP[slParamSetIndexT].pscName))
       {
-        ftBatteryCurrentP = (float)atoi(atsMpptDataP[slParamSetIndexT].pscValue);
-        ftBatteryCurrentP *= 0.001; // scale from mA to A
+        slValueT = atoi(atsMpptDataP[slParamSetIndexT].pscValue);
+
+        if (((slValueT > (slBatteryCurrentP + 200)) || (slValueT < (slBatteryCurrentP - 200))) &&
+            (btBatteryCurrentReadOkP) && (slBatteryCurrentIgnoreCounterP > 0))
+        {
+          slBatteryCurrentIgnoreCounterP--;
+          if (slValueT > slBatteryCurrentP)
+          {
+            slBatteryCurrentP += 50;
+          }
+          else
+          {
+            slBatteryCurrentP -= 50;
+            if (slBatteryCurrentP < 0)
+            {
+              slBatteryCurrentP = 0;
+            }
+          }
+        }
+        else
+        {
+          btBatteryCurrentReadOkP = true;
+          slBatteryCurrentIgnoreCounterP = 30;
+          slBatteryCurrentP = slValueT;
+        }
+
+        // ftBatteryCurrentP *= 0.001; // scale from mA to A
       }
 
       if (String("CS").equals(atsMpptDataP[slParamSetIndexT].pscName))
