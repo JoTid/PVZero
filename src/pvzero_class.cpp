@@ -521,7 +521,6 @@ void PVZeroClass::loop()
     if (triggerMqttSend)
     {
       triggerMqttSend = false;
-      _ewcMqtt.client().clearQueue();
       if (isConsumptionPowerValid)
       {
         _ewcMqttHA.publishState("consumption" + I::get().config().getChipId(), String(consumptionPower));
@@ -539,7 +538,7 @@ void PVZeroClass::loop()
       _ewcMqttHA.publishState("mpptOperatingState" + I::get().config().getChipId(), String(ubMpptStateOfOperationP));
     }
   }
-
+  _ewcMqtt.loop();
   if (_config.isEnabledLcd())
   {
     //---------------------------------------------------------------------------------------------------
