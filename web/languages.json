@@ -179,6 +179,12 @@
   "lbl_mqtt_prefix": {
     "de": "Discovery prefix"
   },
+  "lbl_mqtt_send_interval": {
+    "de": "Sendeintervall"
+  },
+  "info_mqtt_send_interval": {
+    "de": "Sendeintervall in Sekunden. Standard: 0 (bei jeder Änderung)"
+  },
 
   "lbl_on_warning": {
     "de": "Sende Warnungen"

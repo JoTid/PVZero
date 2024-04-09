@@ -471,16 +471,16 @@ void PVZeroClass::loop()
   //
   if (PZI::get().ewcServer().isConnected())
   {
+    //-----------------------------------------------------------------------------------
+    // trigger Shelly 3EM loop
+    //
+    _shelly3emConnector.loop();
 
     //-----------------------------------------------------------------------------------
     // trigger mqtt client loop to trigger reconnection
     //
     _ewcMqtt.loop();
-
-    //-----------------------------------------------------------------------------------
-    // trigger Shelly 3EM loop
-    //
-    _shelly3emConnector.loop();
+    _ewcMqttHA.loop();
   }
 
   //---------------------------------------------------------------------------------------------------
@@ -542,7 +542,7 @@ void PVZeroClass::loop()
       _ewcMqttHA.publishState("mpptOperatingState" + I::get().config().getChipId(), String(ubMpptStateOfOperationP));
     }
   }
-  _ewcMqtt.loop();
+
   if (_config.isEnabledLcd())
   {
     //---------------------------------------------------------------------------------------------------
