@@ -86,14 +86,9 @@ function fillPVZeroState(data, url) {
   document.getElementById("pvzero_title").innerText = data["name"];
   document.getElementById("version").innerText = "v" + data["version"];
 
-  document.getElementById("total_consumption").innerText =
-    data["total_consumption"].toFixed(0) + " W";
-  document.getElementById("battery_current").innerText =
-    data["battery_current"].toFixed(1) + " A";
-  document.getElementById("battery_current_sum_in").innerText =
-    "+ " + data["battery_current_sum_in"].toFixed(1) + " Ah";
-  document.getElementById("battery_current_sum_out").innerText =
-    "- " + data["battery_current_sum_out"].toFixed(1) + " Ah";
+  document.getElementById("total_consumption").innerText = data["total_consumption"].toFixed(0) + " W";
+  document.getElementById("battery_current").innerText = data["battery_current"].toFixed(1) + " A";
+  document.getElementById("feedin_powert_today").innerText = data["feedin_powert_today"].toFixed(2) + " kWh";
 
   document.getElementById("consumption_power").innerText =
     data["consumption_power"].toFixed(0) + " W";

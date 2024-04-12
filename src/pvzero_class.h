@@ -88,17 +88,18 @@ namespace PVZ
     bool abtPsuIsAvailableP[2];
     float ftMpptBatteryCurrentP;
     float ftMpptBatteryVoltageP;
+    float ftMpptYieldTodayP;
     float ftLimitedTargetCurrentP;
     uint8_t ubMpptStateOfOperationP;
 
-    float ftRealFeedInPowerP;
+    float ftYieldEfficiencyTodayP;
+    float ftFeedInPowerP;
     float ftTotalConsumptionP;
     float ftBatteryCurrentP;
-    float ftBatteryCurrentSumInSecP;
-    float ftBatteryCurrentSumOutSecP;
-    float ftBatteryCurrentSumInP;
-    float ftBatteryCurrentSumOutP;
-
+    float ftFeedInPowerSumP;
+    float ftFeedInPowerTodayP;
+    float ftFeedInPowerTodayRealP;
+    BatteryGuard::State_te teBatteryGuardStatePreviousP;
     BatteryGuard clBatGuardP;
 
     float ftPsuVccT = 0.0;
