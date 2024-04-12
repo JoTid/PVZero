@@ -65,6 +65,9 @@ private:
   int32_t slModelNumberP;
   DPM86xx clPsuP;
 
+  // values for current and voltage are taken in account only at corresponding constant phase of PSU
+  // the slReadCurrenTriggerP and slReadVoltageTriggerP variables are used to take values after
+  // given number of tries although when the corresponding constant phase was not available.
   int32_t slReadCurrenTriggerP;
   int32_t slReadVoltageTriggerP;
 

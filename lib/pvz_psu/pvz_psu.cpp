@@ -222,7 +222,7 @@ int32_t PvzPsu::read()
         slActualCurrentP = slStatusT;
         ftActualCurrentP = clPsuP.measuredCurrent();
       }
-      slReadCurrenTriggerP = 20;
+      slReadCurrenTriggerP = 10;
     }
   }
 
