@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+## [0.81.09] - 2024-04-12
+
+- Send dump per e-mail after a crash
+- Fix access to a null pointer while number conversion in mppt module
+- Adjust values for battery guard
+- Provide additional value via MQTT
+
 ## [0.81.08] - 2024-04-05
 
 - Add MPPT state to the GUI
