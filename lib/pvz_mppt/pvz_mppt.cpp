@@ -157,6 +157,24 @@ bool PvzMppt::available()
   return btCrcIsValidP;
 }
 
+float PvzMppt::powerYieldToday()
+{
+  std::lock_guard<std::mutex> lck(mpptMutexP);
+  return ftPowerYieldTodayP;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                    //
+//                                                                                                                    //
+//--------------------------------------------------------------------------------------------------------------------//
+bool PvzMppt::isNumber(const std::string &s)
+{
+  std::string::const_iterator it = s.begin();
+  while (it != s.end() && std::isdigit(*it))
+    ++it;
+  return !s.empty() && it == s.end();
+}
+
 //--------------------------------------------------------------------------------------------------------------------//
 //                                                                                                                    //
 //                                                                                                                    //
@@ -193,23 +211,26 @@ void PvzMppt::parseTable(char *pscTextFrameV)
     if (String("PID").equals(atsMpptDataP[slParamSetIndexT].pscName))
     {
       // SmartSolar MPPT 150 | 35: 0xA058
-      clProductIdP = atsMpptDataP[slParamSetIndexT].pscValue;
+      clProductIdP = p;
     }
 
     //-------------------------------------------------------------------------------------------
     // proceed to process values only if product ID is valid
     //
-    if (clProductIdP == "0xA058")
+    if ((p != nullptr) &&
+        (clProductIdP != nullptr) &&
+        (isNumber(p) == true) &&
+        (clProductIdP == "0xA058"))
     {
       if (String("V").equals(atsMpptDataP[slParamSetIndexT].pscName))
       {
-        ftBatteryVoltageP = (float)atoi(atsMpptDataP[slParamSetIndexT].pscValue);
+        ftBatteryVoltageP = (float)atoi(p);
         ftBatteryVoltageP *= 0.001; // scale from mV to V
       }
 
       if (String("I").equals(atsMpptDataP[slParamSetIndexT].pscName))
       {
-        slValueT = atoi(atsMpptDataP[slParamSetIndexT].pscValue);
+        slValueT = atoi(p);
 
         if (((slValueT > (slBatteryCurrentP + 200)) || (slValueT < (slBatteryCurrentP - 200))) &&
             (btBatteryCurrentReadOkP) && (slBatteryCurrentIgnoreCounterP > 0))
@@ -240,7 +261,13 @@ void PvzMppt::parseTable(char *pscTextFrameV)
 
       if (String("CS").equals(atsMpptDataP[slParamSetIndexT].pscName))
       {
-        ubStateOfOperationP = (uint8_t)atoi(atsMpptDataP[slParamSetIndexT].pscValue);
+        ubStateOfOperationP = (uint8_t)atoi(p);
+      }
+
+      if (String("H20").equals(atsMpptDataP[slParamSetIndexT].pscName))
+      {
+        ftPowerYieldTodayP = (float)atoi(p);
+        ftPowerYieldTodayP *= 0.01; // H20 0.01 kWh
       }
     }
 

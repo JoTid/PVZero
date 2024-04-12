@@ -74,6 +74,8 @@ public:
    */
   float batteryCurrent();
 
+  float powerYieldToday();
+
   uint8_t stateOfOperation();
   String productId();
 
@@ -119,6 +121,8 @@ private:
    */
   void parseTable(char *pscTextFrameV);
 
+  bool isNumber(const std::string &s);
+
   //---------------------------------------------------------------------------------------------------
   // parameter extract from frame
   // corresponding to https://www.victronenergy.de/upload/documents/VE.Direct-Protocol-3.33.pdf
@@ -140,6 +144,8 @@ private:
 
   bool btCrcIsValidP = false;
   String clProductIdP;
+  float ftPowerYieldTodayP; // H20 0.01 kWh
+
   std::mutex mpptMutexP;
 };
 
