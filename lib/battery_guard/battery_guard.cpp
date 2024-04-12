@@ -258,9 +258,9 @@ void BatteryGuard::process(void)
         }
 
         //---------------------------------------------------------------------------
-        // 5. Charge Current < 0.2 A
+        // 5. Charge Current < 0.4 A
         //
-        else if (slBatteryCurrentP < 20)
+        else if (slBatteryCurrentP < 40)
         {
           teStateP = eDischarge;
         }
@@ -320,9 +320,9 @@ void BatteryGuard::process(void)
         }
 
         //---------------------------------------------------------------------------
-        // 6. Charge Current > 0.5 A
+        // 6. Charge Current > 0.6 A
         //
-        else if (slBatteryCurrentP > 50)
+        else if (slBatteryCurrentP > 60)
         {
           teStateP = eCharge;
         }
@@ -335,10 +335,10 @@ void BatteryGuard::process(void)
       case eDischarged:
 
         //---------------------------------------------------------------------------
-        // 4. (Charge Voltage > (ABSORPTION_VOLTAGE) (51.2 V)) && (Charge Current > 0.2 A)
+        // 4. (Charge Voltage > (ABSORPTION_VOLTAGE) (51.2 V))
         // do not check the current, as the start can be performed at evening
         //
-        if ((slBatteryVoltageP > BG_ABSORPTION_VOLTAGE)) // && (slBatteryCurrentP > 20))
+        if ((slBatteryVoltageP > BG_ABSORPTION_VOLTAGE))
         {
           teStateP = eCharge;
         }
