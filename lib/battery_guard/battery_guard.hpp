@@ -50,7 +50,7 @@
  * Value in batter is defined to 40V.
  * Define a value that has an offset.
  */
-#define BG_DISCHARGE_VOLTAGE 480
+#define BG_DISCHARGE_VOLTAGE 486
 
 /**
  * [V] as fixed comma value with 1 DD

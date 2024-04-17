@@ -98,7 +98,7 @@ namespace PVZ
     float ftBatteryCurrentP;
     float ftFeedInPowerSumP;
     float ftFeedInPowerTodayP;
-    float ftFeedInPowerTodayRealP;
+    float ftExpectedYieldTodayP;
     BatteryGuard::State_te teBatteryGuardStatePreviousP;
     BatteryGuard clBatGuardP;
 
