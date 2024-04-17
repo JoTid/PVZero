@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+- Add expected yield for today, that is derived from MPPT yield value
+
 ## [0.81.09] - 2024-04-12
 
 - Send dump per e-mail after a crash
