@@ -64,35 +64,22 @@ int32_t PvzPsu::init(HardwareSerial &clSerialR)
   //
   clPsuP.init(clSerialR);
 
-  slModelNumberP = clPsuP.readFunction(DPM86xx::eFUNC_MAX_VOLTAGE);
-  // Serial.print("My Max Voltage: ");
-  // Serial.println(slModelNumberP);
-
+  //---------------------------------------------------------------------------------------------------
+  // at first step read the maximal current, that corresponds to the model number of the PSU
+  //
   slModelNumberP = clPsuP.readFunction(DPM86xx::eFUNC_MAX_CURRENT);
-  // Serial.print("My Max Current: ");
-  // Serial.println(slModelNumberP);
 
   //---------------------------------------------------------------------------------------------------
   // read the model number of PSU, or negative value in case of an error
   //
   if (slModelNumberP > 0)
   {
-    // slModelNumberP = clPsuP.writeFunction(DPM86xx::eFUNC_OUTPUT_STATUS, 0);
-    //   Serial.print("write Result: ");
-    //   Serial.println(slModelNumberP);
-    // if (slModelNumberP == DPM86xx::eFUNC_WRITE_OK)
-    // {
-    slModelNumberP = 1;
-    // }
+    slModelNumberP /= 1000;
   }
-  // else
-  // {
-  //   // reset actual values
-  //   ftActualVoltageP = 0.0;
-  //   ftActualCurrentP = 0.0;
-  //   ftActualTemperatureP = -7000.0; // invalid temperature
-  // }
 
+  //---------------------------------------------------------------------------------------------------
+  // return value
+  //
   return slModelNumberP;
 }
 
@@ -104,9 +91,7 @@ int32_t PvzPsu::read()
 {
   std::lock_guard<std::mutex> lck(uartMutexP);
   int32_t slStatusT = 0;
-  // float ftReadValueT;
 
-  // Serial.print("s: ");
   //---------------------------------------------------------------------------------------------------
   // read status
   //
