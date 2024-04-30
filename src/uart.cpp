@@ -61,6 +61,7 @@ void Uart::taskUartApp(void *_this)
   static UartAppSm_te teUartAppStateG = eUART_APP_SM_MPPT_e;
   static int32_t aslPsuStateT[] = {0, 0};
   static int32_t aslPsuStateBeginT[] = {0, 0};
+  static int32_t aslPsuErrorCounterT[] = {0, 0};
   // static bool abtPsuInitSuccessT[] = {false, false};
   static int32_t slPsuReturnT;
 
@@ -220,12 +221,13 @@ void Uart::taskUartApp(void *_this)
         case 0:
           slPsuReturnT = uart->aclPsuP1.init(Serial2);
 
-          if (slPsuReturnT == 1)
+          if (slPsuReturnT > 0)
           {
             uart->aclPsuP1.write();
             uart->aclPsuP1.enable(true);
             aslPsuStateBeginT[0] = 1;
             aslPsuStateT[0] = 1;
+            aslPsuErrorCounterT[0] = 0;
           }
           else
           {
@@ -271,7 +273,7 @@ void Uart::taskUartApp(void *_this)
           }
           break;
 
-        case 5: // Success, we are finish in this cycle, stay in here
+        case 5: // Success, we are finish in this cycle, stay in here while time slot expires
           break;
 
         case 10: // Error State: Fail to init the PSU
@@ -281,12 +283,27 @@ void Uart::taskUartApp(void *_this)
 
         case 11: // Error State: while writing to PSU
           EWC::I::get().logger() << "PSU0 Error at write: " << slPsuReturnT << endl;
-          aslPsuStateT[0] = 5; // Errors that occur during operation are only reported
+          aslPsuStateT[0] = 15; // Errors that occur during operation are only reported
           break;
 
         case 12: // Error State: while reading from PSU
           EWC::I::get().logger() << "PSU0 Error at read: " << slPsuReturnT << endl;
-          aslPsuStateT[0] = 5; // Errors that occur during operation are only reported
+          aslPsuStateT[0] = 15; // Errors that occur during operation are only reported
+          break;
+
+        case 15:
+          // increase the number of errors that have occurred in sequence
+          aslPsuErrorCounterT[0]++;
+          if (aslPsuErrorCounterT[0] > 5)
+          {
+            // perform initialisation of PSU
+            aslPsuStateT[0] = 100;
+          }
+          else
+          {
+            // try to read / write values in next time slot
+            aslPsuStateT[0] = 5;
+          }
           break;
 
         case 100: // Error State: prepare re-initialisation
@@ -297,6 +314,13 @@ void Uart::taskUartApp(void *_this)
           {
             slReadCharT = Serial2.read();
           } while (slReadCharT >= 0);
+
+          aslPsuStateT[0] = 101;
+          break;
+
+        case 101: // Fail, we are finish in this cycle, stay in here while time slot expires
+          break;
+
         default:
           break;
         }
@@ -348,12 +372,13 @@ void Uart::taskUartApp(void *_this)
         case 0:
           slPsuReturnT = uart->aclPsuP2.init(Serial2);
 
-          if (slPsuReturnT == 1)
+          if (slPsuReturnT > 0)
           {
             uart->aclPsuP2.write();
             uart->aclPsuP2.enable(true);
             aslPsuStateBeginT[1] = 1;
             aslPsuStateT[1] = 1;
+            aslPsuErrorCounterT[1] = 0;
           }
           else
           {
@@ -400,7 +425,7 @@ void Uart::taskUartApp(void *_this)
 
           break;
 
-        case 5: // Success, we are finish in this cycle, stay in here
+        case 5: // Success, we are finish in this cycle, stay in here while time slot expires
           break;
 
         case 10: // Error State: Fail to init the PSU
@@ -410,12 +435,27 @@ void Uart::taskUartApp(void *_this)
 
         case 11: // Error State: while writing to PSU
           EWC::I::get().logger() << "PSU1 Error at write: " << slPsuReturnT << endl;
-          aslPsuStateT[1] = 5; // Errors that occur during operation are only reported
+          aslPsuStateT[1] = 15; // Errors that occur during operation are only reported
           break;
 
         case 12: // Error State: while reading from PSU
           EWC::I::get().logger() << "PSU1 Error at read: " << slPsuReturnT << endl;
-          aslPsuStateT[1] = 5; // Errors that occur during operation are only reported
+          aslPsuStateT[1] = 15; // Errors that occur during operation are only reported
+          break;
+
+        case 15:
+          // increase the number of errors that have occurred in sequence
+          aslPsuErrorCounterT[1]++;
+          if (aslPsuErrorCounterT[1] > 5)
+          {
+            // perform initialisation of PSU
+            aslPsuStateT[1] = 100;
+          }
+          else
+          {
+            // try to read / write values in next time slot
+            aslPsuStateT[1] = 5;
+          }
           break;
 
         case 100: // Error State: prepare re-initialisation
@@ -426,6 +466,12 @@ void Uart::taskUartApp(void *_this)
           {
             slReadCharT = Serial2.read();
           } while (slReadCharT >= 0);
+
+          aslPsuStateT[1] = 101;
+          break;
+
+        case 101: // Fail, we are finish in this cycle, stay in here while time slot expires
+          break;
 
         default:
           break;
