@@ -83,8 +83,6 @@ namespace PVZ
 
     float aftActualVoltageOfPsuP[2];
     float aftActualCurrentOfPsuP[2];
-    MovAvFilter aclPsuActualVoltageFilterP[2];
-    MovAvFilter aclPsuActualCurrentFilterP[2];
     bool abtPsuIsAvailableP[2];
     float ftMpptBatteryCurrentP;
     float ftMpptBatteryVoltageP;

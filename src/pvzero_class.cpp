@@ -145,14 +145,6 @@ void PVZeroClass::setup()
   ftFeedInPowerTodayP = 0.0;
 
   //---------------------------------------------------------------------------------------------------
-  // filter value from PSUs a little bit to avoid outlier
-  //
-  aclPsuActualCurrentFilterP[0].init(0);
-  aclPsuActualCurrentFilterP[1].init(0);
-  aclPsuActualVoltageFilterP[0].init(0);
-  aclPsuActualVoltageFilterP[1].init(0);
-
-  //---------------------------------------------------------------------------------------------------
   // initialisation of the LCD
   //
   enableLcd();
@@ -164,58 +156,10 @@ void PVZeroClass::setup()
 //--------------------------------------------------------------------------------------------------------------------//
 void PVZeroClass::processControlAlgorithm(void)
 {
-  float ftActualCurrentTotalT = 0.0; // holds the current sum of both PSUs
-  float ftTargetVoltageT = 0.0;      // is typically is equal to the MPPT voltage except the PSUs should be switched off
+  float ftTargetVoltageT = 0.0; // is typically is equal to the MPPT voltage except the PSUs should be switched off
   float ftValueT;
   int32_t slValueT;
-  int32_t slNumberOfStringsT = 0; // number of available strings, typically number of PSUs
-
-  //---------------------------------------------------------------------------------------------------
-  // take values from PSU, make sure they are not negative
-  //
-  ftValueT = aclPsuP[0].actualVoltage();
-  slValueT = ((int32_t)(ftValueT * 100));
-  if (slValueT > 0)
-  {
-    aftActualVoltageOfPsuP[0] = aclPsuActualVoltageFilterP[0].process(ftValueT);
-  }
-  else
-  {
-    aftActualVoltageOfPsuP[0] = 0.0;
-  }
-
-  ftValueT = aclPsuP[0].actualCurrent();
-  slValueT = ((int32_t)(ftValueT * 100));
-  if (slValueT > 0)
-  {
-    aftActualCurrentOfPsuP[0] = aclPsuActualCurrentFilterP[0].process(ftValueT);
-  }
-  else
-  {
-    aftActualCurrentOfPsuP[0] = 0.0;
-  }
-
-  ftValueT = aclPsuP[1].actualVoltage();
-  slValueT = ((int32_t)(slValueT * 100));
-  if (ftValueT > 0)
-  {
-    aftActualVoltageOfPsuP[1] = aclPsuActualVoltageFilterP[1].process(ftValueT);
-  }
-  else
-  {
-    aftActualVoltageOfPsuP[1] = 0.0;
-  }
-
-  ftValueT = aclPsuP[1].actualCurrent();
-  slValueT = ((int32_t)(slValueT * 100));
-  if (slValueT > 0)
-  {
-    aftActualCurrentOfPsuP[1] = aclPsuActualCurrentFilterP[1].process(ftValueT);
-  }
-  else
-  {
-    aftActualCurrentOfPsuP[1] = 0.0;
-  }
+  int32_t slNumberOfStringsT; // number of available strings, typically number of PSUs
 
   //---------------------------------------------------------------------------------------------------
   // update availability flags
@@ -226,16 +170,37 @@ void PVZeroClass::processControlAlgorithm(void)
   //---------------------------------------------------------------------------------------------------
   // depending on availability of the PSUs update number of Strings and Current sum
   //
-  if (abtPsuIsAvailableP[0])
+  slNumberOfStringsT = 0;
+  if (abtPsuIsAvailableP[0] == true)
   {
-    ftActualCurrentTotalT += aftActualCurrentOfPsuP[0];
     slNumberOfStringsT++;
+
+    //-------------------------------------------------------------------------------------------
+    // take values from PSU
+    //
+    aftActualVoltageOfPsuP[0] = aclPsuP[0].actualVoltage();
+    aftActualCurrentOfPsuP[0] = aclPsuP[0].actualCurrent();
+  }
+  else
+  {
+    aftActualVoltageOfPsuP[0] = 0.0;
+    aftActualCurrentOfPsuP[0] = 0.0;
   }
 
-  if (abtPsuIsAvailableP[1])
+  if (abtPsuIsAvailableP[1] == true)
   {
-    ftActualCurrentTotalT += aftActualCurrentOfPsuP[1];
     slNumberOfStringsT++;
+
+    //-------------------------------------------------------------------------------------------
+    // take values from PSU
+    //
+    aftActualVoltageOfPsuP[1] = aclPsuP[1].actualVoltage();
+    aftActualCurrentOfPsuP[1] = aclPsuP[1].actualCurrent();
+  }
+  else
+  {
+    aftActualVoltageOfPsuP[1] = 0.0;
+    aftActualCurrentOfPsuP[1] = 0.0;
   }
 
   //---------------------------------------------------------------------------------------------------
@@ -355,7 +320,6 @@ void PVZeroClass::processControlAlgorithm(void)
   clCaP.updateFeedInActualDcValues(ftMpptBatteryVoltageP, ftLimitedTargetCurrentP * slNumberOfStringsT);
 
   // I::get().logger() << F("Actual Values for CA: Consumption ") << String((float)consumptionPower, 3) << " W " << String((ftMpptBatteryVoltageP), 1) << " V, " << String(clBatGuardP.limitedCurrent(clCaP.feedInTargetDcCurrent()), 3) << " A" << endl;
-  // I::get().logger() << F("Actual Values for CA: Consumption ") << String((float)consumptionPower, 3) << " W " << String(ftActualVoltageTotalT, 3) << " V, " << String(ftActualCurrentTotalT, 3) << " A" << endl;
 
   //---------------------------------------------------------------------------------------------------
   // finally trigger the processing of data
