@@ -338,7 +338,7 @@ void BatteryGuard::process(void)
         // 4. (Charge Voltage > (ABSORPTION_VOLTAGE) (51.2 V))
         // do not check the current, as the start can be performed at evening
         //
-        if ((slBatteryVoltageP > BG_ABSORPTION_VOLTAGE))
+        if ((slBatteryVoltageP > (BG_ABSORPTION_VOLTAGE + 8)))
         {
           teStateP = eCharge;
         }
