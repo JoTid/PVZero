@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+## [0.81.10] - 2024-04-30
+
+- Adjust values for battery guard
 - Add expected yield for today, that is derived from MPPT yield value
+- Increase performance of the USART communication with the PSUs
 
 ## [0.81.09] - 2024-04-12
 
