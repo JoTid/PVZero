@@ -109,8 +109,14 @@ Nur mit dem Wert **Charge Voltage** verschmelzen die Beiden Zustände _charging_
 es kann lediglich nur eine Sicherheitsabschaltung für das Entladen der Batterie realisiert werden. Zudem Muss eine
 Entscheidung getroffen werden, wann die Einspeisung wieder eingeschaltet werden soll.
 
-### Sicher Zustand
+### Sicherer Zustand
 
 Die Batterieüberwachung basiert auf **Charge Voltage** und **Charge Current**. Fehlt der Parameter für Strom, kann
 nur eine Abschaltung, also Begrenzung des Stroms auf 0.0A nur bei geringer Spannung erfolgen. Ist neben dem Strom auch
 der Spannungswert nicht vorhanden ist Batterieüberwachung nicht möglich und der Strom wird nicht begrenzt.
+
+Example of Decode stacktrace:
+
+```shell
+C:\Users\jotid\.platformio\packages\toolchain-xtensa-esp32@8.4.0+2021r2-patch5\bin\xtensa-esp32-elf-addr2line.exe -aipfC -e G:\Projekte_JT\PVZero\.pio\build\az-delivery-devkit-v4\firmware.elf 40083971 4008fa81 400950e9 401949db 40194a22 40194983 40195693 4012588d 40125972 40125c31 400ec4a1
+```

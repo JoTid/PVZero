@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
+- Read additional parameter from MPPT loader: Panel Voltage and Panel Power
+- Update API of the MQTT Property method to provide additional required configuration variables.
+  So there are no errors or warnings at Home Assistant server
+- Set QoS of MQTT to 0 (fire and forget), as that values are send cyclic each second and no acknowledge is required
+
 ## [0.81.10] - 2024-04-30
 
 - Adjust values for battery guard
