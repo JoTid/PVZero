@@ -43,7 +43,7 @@ limitations under the License.
 namespace PVZ
 {
 
-#define FIRMWARE_VERSION "0.81.11"
+#define FIRMWARE_VERSION "0.81.12"
 
 #undef LCD_SUPPORT
 
@@ -87,18 +87,37 @@ namespace PVZ
     float ftMpptBatteryCurrentP;
     float ftMpptBatteryVoltageP;
     float ftMpptYieldTodayP;
+    /** Actual panel voltage in [V]                                           */
     float ftMpptPanelVoltageP;
+    /** Actual panel power in [W]                                             */
     float ftMpptPanelPowerP;
     float ftLimitedTargetCurrentP;
     uint8_t ubMpptStateOfOperationP;
 
     float ftYieldEfficiencyTodayP;
+    /** Actual feed in power in [W] calculated using
+     *  current and voltage of both PSUs                                      */
     float ftFeedInPowerP;
     float ftTotalConsumptionP;
     float ftBatteryCurrentP;
     float ftFeedInPowerSumP;
-    float ftFeedInPowerTodayP;
+    /** Total feed in energy that flows into the net given in [Wh]            */
+    float ftFeedInEnergyTodayP;
+
     float ftExpectedYieldTodayP;
+
+    /** Total energy that flows into the battery given in [Wh]                */
+    float ftBatteryEnergyInTotalP;
+    /** Total energy that flows out from the battery given in [Wh]            */
+    float ftBatteryEnergyOutTotalP;
+    /** Sum value for calculation of \c #ftBatteryEnergyInTotalP              */
+    float ftBatteryEnergyInSumP;
+    /** Sum value for calculation of \c #ftBatteryEnergyOutTotalP             */
+    float ftBatteryEnergyOutSumP;
+    /** Actual power flow of the battery given in [W]
+     *  Combined entity (an entity with positive and negative values)         */
+    float ftBatteryPowerFlowP;
+
     BatteryGuard::State_te teBatteryGuardStatePreviousP;
     BatteryGuard clBatGuardP;
 
