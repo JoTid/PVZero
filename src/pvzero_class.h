@@ -87,6 +87,8 @@ namespace PVZ
     float ftMpptBatteryCurrentP;
     float ftMpptBatteryVoltageP;
     float ftMpptYieldTodayP;
+    float ftMpptPanelVoltageP;
+    float ftMpptPanelPowerP;
     float ftLimitedTargetCurrentP;
     uint8_t ubMpptStateOfOperationP;
 
