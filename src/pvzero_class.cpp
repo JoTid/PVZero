@@ -53,7 +53,7 @@ PVZeroClass::~PVZeroClass()
 }
 
 #ifndef BUILD_DEPLOY_RELEASE
-#define BUILD_DEPLOY_RELEASE 0
+#define BUILD_DEPLOY_RELEASE 1
 #endif
 
 /**
