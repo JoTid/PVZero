@@ -75,6 +75,8 @@ public:
   float batteryCurrent();
 
   float powerYieldToday();
+  float panelVoltage();
+  float panelPower();
 
   uint8_t stateOfOperation();
   String productId();
@@ -145,6 +147,9 @@ private:
   bool btCrcIsValidP = false;
   String clProductIdP;
   float ftPowerYieldTodayP; // H20 0.01 kWh
+
+  float ftPanelVoltageP; // VPV : V Panel voltage
+  float ftPanelPowerP;   // PPV : W Panel power
 
   std::mutex mpptMutexP;
 };

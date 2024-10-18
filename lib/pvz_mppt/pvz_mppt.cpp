@@ -163,6 +163,18 @@ float PvzMppt::powerYieldToday()
   return ftPowerYieldTodayP;
 }
 
+float PvzMppt::panelVoltage()
+{
+  std::lock_guard<std::mutex> lck(mpptMutexP);
+  return ftPanelVoltageP;
+}
+
+float PvzMppt::panelPower()
+{
+  std::lock_guard<std::mutex> lck(mpptMutexP);
+  return ftPanelPowerP;
+}
+
 //--------------------------------------------------------------------------------------------------------------------//
 //                                                                                                                    //
 //                                                                                                                    //
@@ -226,6 +238,17 @@ void PvzMppt::parseTable(char *pscTextFrameV)
       {
         ftBatteryVoltageP = (float)atoi(p);
         ftBatteryVoltageP *= 0.001; // scale from mV to V
+      }
+
+      if (String("VPV").equals(atsMpptDataP[slParamSetIndexT].pscName))
+      {
+        ftPanelVoltageP = (float)atoi(p);
+        ftPanelVoltageP *= 0.001; // scale from mV to V
+      }
+
+      if (String("PPV").equals(atsMpptDataP[slParamSetIndexT].pscName))
+      {
+        ftPanelPowerP = (float)atoi(p); // value provided in W
       }
 
       if (String("I").equals(atsMpptDataP[slParamSetIndexT].pscName))
