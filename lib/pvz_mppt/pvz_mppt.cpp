@@ -290,7 +290,7 @@ void PvzMppt::parseTable(char *pscTextFrameV)
       if (String("H20").equals(atsMpptDataP[slParamSetIndexT].pscName))
       {
         ftPowerYieldTodayP = (float)atoi(p);
-        ftPowerYieldTodayP *= 0.01; // H20 0.01 kWh
+        ftPowerYieldTodayP *= 10.0; // H20 0.01 kWh => provide value in Wh
       }
     }
 
