@@ -97,8 +97,10 @@ void PVZeroClass::setup()
   // Add properties for Home Assistant
   //
   _ewcMqttHA.addProperty("sensor", "consumption" + I::get().config().getChipId(), "3EM Consumption", "power", "measurement", "consumption", "W", false);
-  _ewcMqttHA.addProperty("sensor", "feedIn" + I::get().config().getChipId(), "PVZ Feed-In", "power", "measurement", "feedIn", "W", false);
-  _ewcMqttHA.addProperty("sensor", "totalConsumption" + I::get().config().getChipId(), "PVZ Consumption", "power", "measurement", "totalConsumption", "W", false);
+  _ewcMqttHA.addProperty("sensor", "ftFeedInPowerP" + I::get().config().getChipId(), "PVZ Feed-In", "power", "measurement", "ftFeedInPowerP", "W", false);
+  _ewcMqttHA.addProperty("sensor", "ftFeedInPowerFromPanelP" + I::get().config().getChipId(), "PVZ Feed-In from panel", "power", "measurement", "ftFeedInPowerFromPanelP", "W", false);
+
+  _ewcMqttHA.addProperty("sensor", "ftTotalConsumptionP" + I::get().config().getChipId(), "PVZ Consumption", "power", "measurement", "ftTotalConsumptionP", "W", false);
   _ewcMqttHA.addProperty("sensor", "batteryCurrent" + I::get().config().getChipId(), "PVZ Battery Current", "current", "measurement", "batteryCurrent", "A", false);
   _ewcMqttHA.addProperty("sensor", "ftYieldEfficiencyTodayP" + I::get().config().getChipId(), "PVZ Yield Efficiency Today", "battery", "measurement", "ftYieldEfficiencyTodayP", "%", false);
 
@@ -109,13 +111,13 @@ void PVZeroClass::setup()
 
   _ewcMqttHA.addProperty("sensor", "actualVoltageMppt" + I::get().config().getChipId(), "MPPT Battery Voltage", "voltage", "measurement", "actualVoltageMppt", "V", false);
   _ewcMqttHA.addProperty("sensor", "actualCurrentMppt" + I::get().config().getChipId(), "MPPT Battery Current", "current", "measurement", "actualCurrentMppt", "A", false);
-  _ewcMqttHA.addProperty("sensor", "mpptPowerYieldToday" + I::get().config().getChipId(), "MPPT Power Yield Today", "energy", "total_increasing", "mpptPowerYieldToday", "kWh", false);
-  _ewcMqttHA.addProperty("sensor", "mpptPanelVoltage" + I::get().config().getChipId(), "MPPT Panel Voltage", "voltage", "measurement", "mpptPanelVoltage", "V", false);
-  _ewcMqttHA.addProperty("sensor", "mpptPanelPower" + I::get().config().getChipId(), "MPPT Panel Power", "power", "measurement", "mpptPanelPower", "W", false);
+  _ewcMqttHA.addProperty("sensor", "mpptPowerYieldToday" + I::get().config().getChipId(), "MPPT Power Yield Today", "energy", "total_increasing", "mpptPowerYieldToday", "Wh", false);
+  _ewcMqttHA.addProperty("sensor", "ftMpptPanelVoltageP" + I::get().config().getChipId(), "MPPT Panel Voltage", "voltage", "measurement", "ftMpptPanelVoltageP", "V", false);
+  _ewcMqttHA.addProperty("sensor", "ftMpptPanelPowerP" + I::get().config().getChipId(), "MPPT Panel Power", "power", "measurement", "ftMpptPanelPowerP", "W", false);
 
   _ewcMqttHA.addProperty("number", "batteryGuardState" + I::get().config().getChipId(), "PVZ Battery State", "", "", "batteryGuardState", "", false);
   _ewcMqttHA.addProperty("sensor", "ftFeedInEnergyTodayP" + I::get().config().getChipId(), "PVZ Feed-In Energy Today", "energy", "total_increasing", "PVZ_FeedIn_Today_Energy", "kWh", false);
-  _ewcMqttHA.addProperty("sensor", "pvzExpectedYieldToday" + I::get().config().getChipId(), "PVZ Expected Power Yield Today", "energy", "total_increasing", "pvzExpectedYieldToday", "kWh", false);
+  _ewcMqttHA.addProperty("sensor", "pvzExpectedYieldToday" + I::get().config().getChipId(), "PVZ Expected Power Yield Today", "energy", "total_increasing", "pvzExpectedYieldToday", "Wh", false);
 
   _ewcMqttHA.addProperty("sensor", "ftBatteryEnergyInTotalP" + I::get().config().getChipId(), "PVZ Battery Energy Today In", "energy", "total_increasing", "ftBatteryEnergyInTotalP", "Wh", false);
   _ewcMqttHA.addProperty("sensor", "ftBatteryEnergyOutTotalP" + I::get().config().getChipId(), "PVZ Battery Energy Today Out", "energy", "total_increasing", "ftBatteryEnergyOutTotalP", "Wh", false);
@@ -179,6 +181,8 @@ void PVZeroClass::setup()
   ftBatteryEnergyOutTotalP = 0.0;
   ftYieldEfficiencyTodayP = 0.0;
   ftMpptYieldTodayP = 0.0;
+  ftFeedInPowerFromPanelP = 0.0;
+  ulFeedInZeroTimeP = 0;
 
   //---------------------------------------------------------------------------------------------------
   // initialisation of the LCD
@@ -287,11 +291,11 @@ void PVZeroClass::processControlAlgorithm(void)
   //---------------------------------------------------------------------------------------------------
   // calculate the real feed in power and other values for display in GUI
   // The efficiency is not considered by that value.
+  //
   // There are three sources for which the efficiency must be taken into account
   // - inverter 95%
   // - PSU 92%
   // - Battery 95% (83% - 88%)
-  // The efficiency will be tracked in ftEfficiency
   //
   ftFeedInPowerP = (((aftActualVoltageOfPsuP[0] * aftActualCurrentOfPsuP[0]) +
                      (aftActualVoltageOfPsuP[1] * aftActualCurrentOfPsuP[1])));
@@ -309,19 +313,57 @@ void PVZeroClass::processControlAlgorithm(void)
   ftFeedInEnergyTodayP /= 1000;                      // value should be in [kWh]
 
   //---------------------------------------------------------------------------------------------------
+  // Monitor feed in value and when it is static for 20 minutes at 0 W, so reset sum values once
+  //
+  if (ftFeedInPowerP < 0.01)
+  {
+    //-------------------------------------------------------------------------------------------
+    // reset value only when time counter is exact at 20 minutes
+    //
+    if (ulFeedInZeroTimeP == (20 * 60)) // 20 minutes
+    {
+      // reset sum values
+      ftFeedInPowerSumP = 0.0;
+      ftBatteryEnergyInSumP = 0.0;
+      ftBatteryEnergyOutSumP = 0.0;
+      ftBatteryEnergyInTotalP = 0.0;
+      ftBatteryEnergyOutTotalP = 0.0;
+      ulFeedInZeroTimeP++;
+    }
+
+    //-------------------------------------------------------------------------------------------
+    // time counter did not reach 20 minutes increment it
+    //
+    else if (ulFeedInZeroTimeP < (20 * 60))
+    {
+      ulFeedInZeroTimeP++;
+    }
+  }
+
+  //---------------------------------------------------------------------------------------------------
+  // value is not 0 so reset time counter
+  //
+  else
+  {
+    ulFeedInZeroTimeP = 0;
+  }
+
+  //---------------------------------------------------------------------------------------------------
   // pending energy flow of the battery
   //
-  ftBatteryPowerFlowP = (ftMpptPanelPowerP * POWER_LOSS_TOTAL) - (ftFeedInPowerP * POWER_LOSS_INVERTER);
+  ftFeedInPowerFromPanelP = (ftMpptPanelPowerP * POWER_LOSS_TOTAL); // value in [W]
+  ftBatteryPowerFlowP = (ftFeedInPowerP * POWER_LOSS_INVERTER);
+  ftBatteryPowerFlowP -= ftFeedInPowerFromPanelP;
 
   //---------------------------------------------------------------------------------------------------
   // Check whether the energy is flowing from the battery or to the battery
   //
-  if (ftBatteryPowerFlowP > 0.0)
+  if (ftBatteryPowerFlowP < 0.0)
   {
     //-------------------------------------------------------------------------------------------
     // if actual panel power is higher than feed in power, than the difference flows in to battery
     //
-    ftBatteryEnergyInSumP += ftBatteryPowerFlowP;             // value in [W]
+    ftBatteryEnergyInSumP -= ftBatteryPowerFlowP;             // value in [W]
     ftBatteryEnergyInTotalP = (ftBatteryEnergyInSumP / 3600); // value should be in [Wh]
   }
   else
@@ -329,7 +371,7 @@ void PVZeroClass::processControlAlgorithm(void)
     //-------------------------------------------------------------------------------------------
     // if actual panel power is lower than feed in power, than the difference flows out of battery
     //
-    ftBatteryEnergyOutSumP -= ftBatteryPowerFlowP;              // value in [W]
+    ftBatteryEnergyOutSumP += ftBatteryPowerFlowP;              // value in [W]
     ftBatteryEnergyOutTotalP = (ftBatteryEnergyOutSumP / 3600); // value should be in [Wh]
   }
 
@@ -565,8 +607,9 @@ void PVZeroClass::loop()
       {
         _ewcMqttHA.publishState("consumption" + I::get().config().getChipId(), String(consumptionPower));
       }
-      _ewcMqttHA.publishState("feedIn" + I::get().config().getChipId(), String(ftFeedInPowerP, 0));
-      _ewcMqttHA.publishState("totalConsumption" + I::get().config().getChipId(), String(ftTotalConsumptionP, 0));
+      _ewcMqttHA.publishState("ftFeedInPowerP" + I::get().config().getChipId(), String(ftFeedInPowerP, 0));
+      _ewcMqttHA.publishState("ftFeedInPowerFromPanelP" + I::get().config().getChipId(), String(ftFeedInPowerFromPanelP, 0));
+      _ewcMqttHA.publishState("ftTotalConsumptionP" + I::get().config().getChipId(), String(ftTotalConsumptionP, 0));
       _ewcMqttHA.publishState("batteryCurrent" + I::get().config().getChipId(), String(ftBatteryCurrentP, 0));
       _ewcMqttHA.publishState("mpptPowerYieldToday" + I::get().config().getChipId(), String(ftMpptYieldTodayP, 0));
       _ewcMqttHA.publishState("actualVoltageMppt" + I::get().config().getChipId(), String(ftMpptBatteryVoltageP, 0));
@@ -581,8 +624,8 @@ void PVZeroClass::loop()
       _ewcMqttHA.publishState("pvzExpectedYieldToday" + I::get().config().getChipId(), String(ftExpectedYieldTodayP, 0));
       _ewcMqttHA.publishState("ftYieldEfficiencyTodayP" + I::get().config().getChipId(), String(ftYieldEfficiencyTodayP, 0));
 
-      _ewcMqttHA.publishState("mpptPanelVoltage" + I::get().config().getChipId(), String(ftMpptPanelVoltageP, 0));
-      _ewcMqttHA.publishState("mpptPanelPower" + I::get().config().getChipId(), String(ftMpptPanelPowerP, 0));
+      _ewcMqttHA.publishState("ftMpptPanelVoltageP" + I::get().config().getChipId(), String(ftMpptPanelVoltageP, 0));
+      _ewcMqttHA.publishState("ftMpptPanelPowerP" + I::get().config().getChipId(), String((ftMpptPanelPowerP * POWER_LOSS_TOTAL), 0));
 
       _ewcMqttHA.publishState("ftBatteryEnergyInTotalP" + I::get().config().getChipId(), String(ftBatteryEnergyInTotalP, 0));
       _ewcMqttHA.publishState("ftBatteryEnergyOutTotalP" + I::get().config().getChipId(), String(ftBatteryEnergyOutTotalP, 0));
@@ -876,13 +919,6 @@ void PVZeroClass::batteryGuard_EventCallback(BatteryGuard::State_te teStateV)
   {
   case BatteryGuard::State_te::eCharge:
     strBatteryState = String("charge");
-    // reset power counter in case the battery was discharged before
-    if (teBatteryGuardStatePreviousP == BatteryGuard::State_te::eDischarged)
-    {
-      ftFeedInPowerSumP = 0.0;
-      ftBatteryEnergyInSumP = 0.0;
-      ftBatteryEnergyOutSumP = 0.0;
-    }
     break;
   case BatteryGuard::State_te::eChargeAndDischarge:
     strBatteryState = String("charge and discharge");

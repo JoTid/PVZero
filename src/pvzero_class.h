@@ -95,11 +95,22 @@ namespace PVZ
     uint8_t ubMpptStateOfOperationP;
 
     float ftYieldEfficiencyTodayP;
-    /** Actual feed in power in [W] calculated using
-     *  current and voltage of both PSUs                                      */
+    /** Actual feed in power in [W] calculated using current and voltage of both PSUs.
+     *  Additionally that value is used to reset the sum values (total and total_increasing) when it is 0 for more
+     *  than 30 minutes.
+     */
     float ftFeedInPowerP;
+
+    /** Time counter to count seconds when \c ftFeedInPowerP value is set to 0.
+     *  In case this values reach 20 minutes (20 * 60) that sum values are reset and new cycle begins.
+     */
+    uint32_t ulFeedInZeroTimeP;
+
+    /** Total consumption of the Home consists of measured \c ftFeedInPowerP and \c consumptionPower from 3EM */
     float ftTotalConsumptionP;
     float ftBatteryCurrentP;
+
+    /** Sum value for calculation fo \c ftFeedInEnergyTodayP */
     float ftFeedInPowerSumP;
     /** Total feed in energy that flows into the net given in [Wh]            */
     float ftFeedInEnergyTodayP;
@@ -110,18 +121,29 @@ namespace PVZ
     float ftBatteryEnergyInTotalP;
     /** Total energy that flows out from the battery given in [Wh]            */
     float ftBatteryEnergyOutTotalP;
-    /** Sum value for calculation of \c #ftBatteryEnergyInTotalP              */
+    /** Sum value for calculation of \c ftBatteryEnergyInTotalP              */
     float ftBatteryEnergyInSumP;
-    /** Sum value for calculation of \c #ftBatteryEnergyOutTotalP             */
+    /** Sum value for calculation of \c ftBatteryEnergyOutTotalP             */
     float ftBatteryEnergyOutSumP;
     /** Actual power flow of the battery given in [W]
-     *  Combined entity (an entity with positive and negative values)         */
+     *  Combined entity (an entity with positive and negative values)
+     *  - Negative Value means energy flows into the battery
+     *  - Positive value means energy flows from the battery                  */
     float ftBatteryPowerFlowP;
+
+    /** Actual power flow from panels to the inverter given in [W]
+     *  Sum of \c ftFeedInPowerFromPanelP and \c ftBatteryPowerFlowP results in to the value \c ftFeedInPowerP
+     */
+    float ftFeedInPowerFromPanelP;
 
     BatteryGuard::State_te teBatteryGuardStatePreviousP;
     BatteryGuard clBatGuardP;
 
     float ftPsuVccT = 0.0;
+
+    /**
+     * Sum of the power of the three channels [W], that is provided by the Shelly 3EM
+     */
     int32_t consumptionPower = -1;
     bool isConsumptionPowerValid = false;
     bool triggerMqttSend = false;
