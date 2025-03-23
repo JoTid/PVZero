@@ -7,10 +7,14 @@ and this project adheres to [Semantic Versioning].
 
 ## [Unreleased]
 
-## [0.81.12] - 2024-10-xx
+## [0.82.00] - 2025-03-23
 
 - calculate battery power flow and energy that flows in to the battery and out from it
   and Send that parameters via MQTT
+- The time for resetting the accumulated total values is now determined based on the current feed-in.
+  The values are reset as soon as there is no feed-in for 20 minutes.
+- Transmit MPPT power yield value in [Wh] instead of [kWh], so that value can be better plotted in Home Assistant.
+- If the PSU voltage falls below 20V and the current is set higher than 0.2 A, the current is limited to 0.2 A so that the voltage reaches a higher level again.
 
 ## [0.81.11] - 2024-10-18
 

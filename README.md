@@ -120,3 +120,7 @@ Example of Decode stacktrace:
 ```shell
 C:\Users\jotid\.platformio\packages\toolchain-xtensa-esp32@8.4.0+2021r2-patch5\bin\xtensa-esp32-elf-addr2line.exe -aipfC -e G:\Projekte_JT\PVZero\.pio\build\az-delivery-devkit-v4\firmware.elf 40083971 4008fa81 400950e9 401949db 40194a22 40194983 40195693 4012588d 40125972 40125c31 400ec4a1
 ```
+
+```shell
+C:\Users\jotid\.platformio\packages\toolchain-xtensa-esp32@8.4.0+2021r2-patch5\bin\xtensa-esp32-elf-addr2line.exe -aipfC -e D:\Projekte_JT\PVZero\.pio\build\az-delivery-devkit-v4\firmware.elf 40138562 401375ca 40137630 40083602 40083681 40137f6e 40137c64 40137c85 4013784e 40137c03 40083a15 40085144 40083971 4008fa81 40092fe9 40091919 11
+```
