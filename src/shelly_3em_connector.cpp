@@ -276,15 +276,53 @@ void Shelly3emConnector::httpTask(void *_this)
     httpClient.begin(sc->wifiClient, requestUri.c_str());
 
     //-------------------------------------------------------------------------------------------
-    // Send request
+    // Send request like: <http://192.168.2.18/status>
+    // and get response like:
+    // {"wifi_sta": {"connected":true,"ssid":"TiHo","ip":"192.168.2.18","rssi":-69},
+    //  "cloud":{"enabled":true,"connected":true},
+    //  "mqtt":{"connected":false},
+    //  "time":"19:24","unixtime":1729272273,"serial":21275,"has_update":false,"mac":"8CAAB561F822","
+    //   cfg_changed_cnt":0,"actions_stats":{"skipped":0},
+    //   "relays":[{"ison":false,"has_timer":false,"timer_started":0,"timer_duration":0,"timer_remaining":0,"overpower":false,"is_valid":true,"source":"input"}],
+    //   "emeters":[
+    //      {"power":3883.29,"pf":0.86,"current":19.56,"voltage":231.24,"is_valid":true,"total":7047963.3,"total_returned":96056.5},
+    //      {"power":6887.17,"pf":1.00,"current":29.91,"voltage":230.25,"is_valid":true,"total":10596202.7,"total_returned":268858.0},
+    //      {"power":3393.38,"pf":0.88,"current":16.89,"voltage":231.74,"is_valid":true,"total":6386482.5,"total_returned":547784.1}
+    //      ],
+    //      "total_power":14163.84,"emeter_n":{"current":0.00,"ixsum":2.55,"mismatch":false,"is_valid":false},
+    //      "fs_mounted":true,"v_data":1,"ct_calst":0,
+    //      "update":{"status":"idle","has_update":false,"new_version":"20230913-114244/v1.14.0-gcb84623","old_version":"20230913-114244/v1.14.0-gcb84623","beta_version":"20231107-165007/v1.14.1-rc1-g0617c15"},
+    //      "ram_total":49920,"ram_free":30108,"fs_size":233681,"fs_free":152859,"uptime":16932401}
+    //
     int httpCode = httpClient.GET();
     if (httpCode == HTTP_CODE_OK)
     {
       JsonDocument doc;
+      // JsonDocument doc1;
+      // JsonDocument doc2;
+      // String jsonDebugStr;
       String jsonStr = httpClient.getString();
       deserializeJson(doc, jsonStr);
       consumptionPower = (int)doc["total_power"];
       timestamp = (uint64_t)doc["unixtime"];
+
+      // deserializeJson(doc1, doc["emeters"]);
+
+      // serializeJson(doc, jsonDebugStr);
+      // EWC::I::get().logger() << "doc[emeters]: " << jsonDebugStr << endl;
+
+      // deserializeJson(doc2, doc1[0]);
+      // EWC::I::get().logger() << "doc2[emeters[0].power]: " << (float)doc["emeters"][0]["total"] << endl;
+      // deserializeJson(doc2, doc1[1]);
+      // EWC::I::get().logger() << "doc2[emeters[1].power]: " << (float)doc["emeters"][1]["total"] << endl;
+      // deserializeJson(doc2, doc1[2]);
+      // EWC::I::get().logger() << "doc2[emeters[2].power]: " << (float)doc["emeters"][2]["total"] << endl;
+
+      // float totalConsumption = (float)doc["emeters"][0]["total"];
+      // totalConsumption += (float)doc["emeters"][1]["total"];
+      // totalConsumption += (float)doc["emeters"][2]["total"];
+      // EWC::I::get().logger() << " total consumption: " << String(totalConsumption, 0) << endl;
+
       valid = true;
     }
     else
