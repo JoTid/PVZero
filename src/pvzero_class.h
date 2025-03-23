@@ -43,7 +43,7 @@ limitations under the License.
 namespace PVZ
 {
 
-#define FIRMWARE_VERSION "0.81.12"
+#define FIRMWARE_VERSION "0.82.00"
 
 #undef LCD_SUPPORT
 

@@ -493,6 +493,16 @@ void PVZeroClass::processControlAlgorithm(void)
   //
   if (abtPsuIsAvailableP[0])
   {
+    // in case the voltage is lower than 20 V, the current is limited to 0.2 A
+    // to avoid undervoltage at string input of the inverter
+    // This adjustment is performed only in case the voltage breaks down to 20 V
+    if (aftActualVoltageOfPsuP[0] < 20.0)
+    {
+      if (ftLimitedTargetCurrentP > 0.2)
+      {
+        ftLimitedTargetCurrentP = 0.2;
+      }
+    }
     aclPsuP[0].set(ftTargetVoltageT, ftLimitedTargetCurrentP);
   }
   else
@@ -506,6 +516,16 @@ void PVZeroClass::processControlAlgorithm(void)
   //
   if (abtPsuIsAvailableP[1])
   {
+    // in case the voltage is lower than 20 V, the current is limited to 0.2 A
+    // to avoid undervoltage at string input of the inverter
+    // This adjustment is performed only in case the voltage breaks down to 20 V
+    if (aftActualVoltageOfPsuP[1] < 20.0)
+    {
+      if (ftLimitedTargetCurrentP > 0.2)
+      {
+        ftLimitedTargetCurrentP = 0.2;
+      }
+    }
     aclPsuP[1].set(ftTargetVoltageT, ftLimitedTargetCurrentP);
   }
   else
